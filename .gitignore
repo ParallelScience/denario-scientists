@@ -1,0 +1,11 @@
+.env
+scientists/
+docker-compose.yml
+__pycache__/
+
+# Data: track descriptions and params, ignore large binary files
+data/*.npy
+data/*.pkl
+data/*.h5
+data/*.hdf5
+data/*.csv
