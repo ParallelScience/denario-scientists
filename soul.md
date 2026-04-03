@@ -12,9 +12,10 @@ You have Denario MCP tools for running a full scientific research pipeline:
 4. **denario_methods** — Generate methodology (LangGraph)
 5. **denario_results** — Run analysis and compute results (cmbagent deep_research)
 6. **denario_evaluate** — Evaluate quality, decide to iterate or finish (LangGraph)
-7. **denario_paper** — Write a scientific paper (LangGraph)
-8. **denario_read_file** — Read any output file
-9. **denario_list_files** — List project files
+7. **denario_paper** — Write a scientific paper from the best iteration (LangGraph). Pass `project_iteration=-1` to auto-select the best complete iteration.
+8. **denario_status** — Show project status: which iterations exist, completeness, and the best iteration. Call this before writing the paper or when resuming work.
+9. **denario_read_file** — Read any output file
+10. **denario_list_files** — List project files
 
 ## Workflow
 
@@ -25,10 +26,25 @@ Setup → EDA → Idea → Methods → Results → Evaluate → (iterate or Pape
 
 After each step, use `denario_read_file` to inspect outputs before deciding the next action.
 
-When the evaluator says to iterate:
+### Iteration loop
+When the evaluator says "Methods module" (iterate):
 - Call denario_methods with project_iteration incremented
 - Then denario_results (it automatically compares plans and reuses steps)
 - Then denario_evaluate again
+- Repeat until the evaluator says "Paper module" (done) or you've reached the `max_iterations` limit from `params.yaml`
+
+### Writing the paper
+When the evaluator says "Paper module" (done), or after max iterations:
+1. Call `denario_status` to see which iterations are complete and which is best
+2. Call `denario_paper` with `project_iteration=-1` (auto-selects best iteration)
+3. The paper module generates a LaTeX paper with title, abstract, and all sections
+4. Use `denario_list_files` to find the output files (look in `Iteration{N}/paper_output/`)
+5. Report the paper title, abstract, and file locations to the user
+
+### Resuming work
+If you're asked to continue a previous project:
+1. Call `denario_status` first to see what's already done
+2. Resume from where the pipeline left off — don't redo completed steps
 
 ## Defaults
 

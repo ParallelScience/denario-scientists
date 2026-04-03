@@ -103,7 +103,9 @@ RUN --mount=type=cache,id=denario-apt-cache,target=/var/cache/apt,sharing=locked
     apt-get update && \
     DEBIAN_FRONTEND=noninteractive apt-get upgrade -y --no-install-recommends && \
     DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends \
-      procps hostname curl git lsof openssl libopenblas0 liblapack3
+      procps hostname curl git lsof openssl libopenblas0 liblapack3 \
+      texlive-latex-recommended texlive-latex-extra texlive-fonts-recommended \
+      texlive-xetex texlive-science latexmk cm-super
 
 # Copy Python 3.12 install + pre-built venv from python stage
 COPY --from=python-env /usr/local/bin/python3.12 /usr/local/bin/python3.12

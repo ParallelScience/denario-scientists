@@ -73,6 +73,7 @@ def generate_compose(fleet):
                 f"./scientists/{name}/work:/home/node/.openclaw/workspace/denario",
                 "./auto-pair.sh:/app/auto-pair.sh:ro",
                 "./entrypoint.sh:/app/entrypoint.sh:ro",
+                "./bootstrap:/app/bootstrap:ro",
                 "${DATA_DIR:-./data}:/home/node/data:ro",
             ],
             "ports": [
@@ -148,9 +149,27 @@ def generate_compose(fleet):
     print(f"  Generated docker-compose.yml ({len(fleet)} scientists)")
 
 
+def install_bootstrap_files():
+    """Copy SOUL.md and AGENTS.md to the shared bootstrap/ directory.
+
+    The entrypoint.sh copies these into each scientist's workspace on every
+    container start, BEFORE the gateway runs. This ensures our files take
+    priority over OpenClaw's default templates.
+    """
+    bootstrap_dir = os.path.join(PROJECT_DIR, "bootstrap")
+    os.makedirs(bootstrap_dir, exist_ok=True)
+
+    for src_name, dst_name in [("soul.md", "SOUL.md"), ("agents.md", "AGENTS.md")]:
+        src = os.path.join(PROJECT_DIR, src_name)
+        if os.path.exists(src):
+            shutil.copy2(src, os.path.join(bootstrap_dir, dst_name))
+
+    print(f"  Installed bootstrap files: {os.listdir(bootstrap_dir)}")
+
+
 def _install_workspace_files(config_dir: str, workspace_dir: str, scientist: dict):
-    """Replace OpenClaw default workspace files with Denario research-focused versions."""
-    # SOUL.md
+    """Install per-scientist workspace files."""
+    # SOUL.md + AGENTS.md also go to workspace (for setup.py --reset scenarios)
     soul_src = os.path.join(PROJECT_DIR, "soul.md")
     if os.path.exists(soul_src):
         shutil.copy2(soul_src, os.path.join(workspace_dir, "SOUL.md"))
@@ -158,7 +177,11 @@ def _install_workspace_files(config_dir: str, workspace_dir: str, scientist: dic
         os.makedirs(soul_dir, exist_ok=True)
         shutil.copy2(soul_src, os.path.join(soul_dir, "soul.md"))
 
-    # IDENTITY.md
+    agents_src = os.path.join(PROJECT_DIR, "agents.md")
+    if os.path.exists(agents_src):
+        shutil.copy2(agents_src, os.path.join(workspace_dir, "AGENTS.md"))
+
+    # IDENTITY.md — per-scientist
     with open(os.path.join(workspace_dir, "IDENTITY.md"), "w") as f:
         f.write(f"""# Identity
 
@@ -354,6 +377,9 @@ def main():
     elif args.reset:
         print("\nResetting configs...")
         reset_configs(fleet)
+
+    print("\nInstalling bootstrap files...")
+    install_bootstrap_files()
 
     print("\nGenerating configs...")
     generate_dirs_and_configs(fleet)

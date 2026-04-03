@@ -1,6 +1,7 @@
 .env
 scientists/
 docker-compose.yml
+bootstrap/
 __pycache__/
 
 # Data: track descriptions and params, ignore large binary files
