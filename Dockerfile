@@ -83,7 +83,8 @@ RUN /opt/denario-venv/bin/pip install \
       matplotlib \
       pandas \
       sympy \
-      scikit-learn
+      scikit-learn \
+      slack_bolt
 
 # Clean up source copies
 RUN rm -rf /tmp/ag2 /tmp/cmbagent /tmp/denario

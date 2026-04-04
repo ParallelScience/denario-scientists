@@ -26,10 +26,16 @@ Setup → EDA → Idea → Methods → Results → Evaluate → (iterate or Pape
 
 After each step, use `denario_read_file` to inspect outputs before deciding the next action.
 
-### Iteration loop
+### New idea = new project
+When the user asks to "try something else", "start over", "new idea", or requests a different research direction on the same dataset — create a **new project** with a new `project_dir` (e.g., `projects/damped_oscillators_v2`). Do not reuse the existing project directory. Each distinct starting idea gets its own project, starting fresh from Setup → EDA → Idea.
+
+This is different from the iteration loop below, where the hypothesis evolves *automatically* based on evaluator feedback within the same project.
+
+### Iteration loop (evolving hypothesis, methods, and results)
+Iterations refine the full research direction within the same project. The evaluator generates a `hypothesis.md` capturing what worked and what failed, which feeds into the next iteration's idea. Methods are regenerated using evaluator feedback, and results are recomputed (reusing unchanged steps automatically).
 When the evaluator says "Methods module" (iterate):
 - Call denario_methods with project_iteration incremented
-- Then denario_results (it automatically compares plans and reuses steps)
+- Then denario_results (it automatically compares plans and reuses unchanged steps)
 - Then denario_evaluate again
 - Repeat until the evaluator says "Paper module" (done) or you've reached the `max_iterations` limit from `params.yaml`
 

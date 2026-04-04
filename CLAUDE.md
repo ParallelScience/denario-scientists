@@ -45,6 +45,9 @@ docker compose up -d
 docker compose down
 docker compose logs -f denario-1
 docker compose ps
+
+# Tail Denario MCP tool logs (detailed pipeline output)
+docker exec denario-1 tail -f /tmp/denario-mcp.log
 ```
 
 ## Architecture

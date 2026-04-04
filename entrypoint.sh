@@ -40,6 +40,13 @@ if [ -f "$CONFIG" ]; then
   "
 fi
 
-# Run auto-pair in background, then start gateway
+# Run auto-pair in background
 sh /app/auto-pair.sh &
+
+# Start cancel watcher if Slack tokens are set
+if [ -n "$SLACK_APP_TOKEN" ] && [ -n "$SLACK_BOT_TOKEN" ]; then
+  /opt/denario-venv/bin/python /app/cancel-watcher.py >> /tmp/cancel-watcher.log 2>&1 &
+  echo "[entrypoint] Started cancel watcher"
+fi
+
 exec node dist/index.js gateway --bind lan --port 18789 --allow-unconfigured

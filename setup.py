@@ -73,6 +73,7 @@ def generate_compose(fleet):
                 f"./scientists/{name}/work:/home/node/.openclaw/workspace/denario",
                 "./auto-pair.sh:/app/auto-pair.sh:ro",
                 "./entrypoint.sh:/app/entrypoint.sh:ro",
+                "./cancel-watcher.py:/app/cancel-watcher.py:ro",
                 "./bootstrap:/app/bootstrap:ro",
                 "${DATA_DIR:-./data}:/home/node/data:ro",
             ],
