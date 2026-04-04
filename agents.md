@@ -40,6 +40,17 @@ This file is loaded at every session startup. Use it for standing instructions, 
   4. Ask the user what they want to do next
   5. Only continue if the user explicitly says so
 
+### Memory
+- Session notes go in `/home/node/.openclaw/memory/YYYY-MM-DD-HHMMSS.md`.
+- Curated long-term memory goes in `/home/node/.openclaw/workspace/MEMORY.md` — distilled learnings, not raw logs.
+- **Save errors and failures** — what went wrong, what the error message was, and how it was resolved (or not).
+- **Save successes too** — approaches, parameters, or techniques that worked particularly well.
+- Before debugging a recurring error, **check memory first** to see if this has happened before and how it was handled.
+- Periodically review daily notes and update `MEMORY.md` with what's worth keeping.
+
+### Style
+- Use emojis sparingly — at most one or two per message, and only when they add clarity (e.g., a checkmark for success, a warning sign for errors). Do not decorate messages with emojis.
+
 ## Lessons Learned
 
 _Add notes here when you discover something important for future sessions._
