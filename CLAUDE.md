@@ -82,7 +82,7 @@ The Dockerfile extends OpenClaw with a Python 3.12 venv containing the full Dena
 - **`config.py`** — Single source of truth: number of scientists, default model, port allocation, resource limits, MCP server path
 - **`soul.md`** — Agent system prompt: defines the Denario research pipeline workflow, tool usage, reporting rules. Gets installed as `SOUL.md` in each scientist's workspace
 - **`agents.md`** — Standing instructions loaded at every agent session: tool usage notes, shell capabilities, lessons learned. Gets installed as `AGENTS.md`
-- **`data/params.yaml`** — Model configuration for all Denario pipeline modules (EDA, Idea, Methods, Analysis, Paper, etc.). Mounted read-only into containers at `/home/node/data/`
+- **`data/params.yaml`** — Single source of truth for all Denario pipeline configuration: models, temperatures, and hyperparameters (max_n_steps, max_n_attempts, code_execution_timeout, enable_vlm_review) for EDA and Analysis modules. Mounted read-only into containers at `/home/node/data/`. Also used by `Denario/tests/denario_test/` via relative path.
 - **`data/data_description.md`** — Schema and physics documentation for the bundled damped oscillator dataset
 
 ### Port Scheme

@@ -4,6 +4,10 @@
 max_iterations: 3
 
 EDA module:
+   max_n_steps: 3
+   max_n_attempts: 3
+   code_execution_timeout: 120
+   enable_vlm_review: true
    engineer:
       model: gemini-3.1-flash-lite-preview
       temperature: 0.2
@@ -72,6 +76,10 @@ Methods module:
       temperature: 0.2
 
 Analysis module:
+   max_n_steps: 3
+   max_n_attempts: 5
+   code_execution_timeout: 120
+   enable_vlm_review: false
    engineer:
       model: gemini-3.1-flash-lite-preview
       temperature: 0.1
