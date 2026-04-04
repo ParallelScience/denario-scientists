@@ -52,6 +52,7 @@ def generate_compose(fleet):
             "environment": {
                 "HOME": "/home/node",
                 "TERM": "xterm-256color",
+                "SCIENTIST_NAME": name,
                 "OPENCLAW_GATEWAY_TOKEN": f"${{{name.upper().replace('-', '_')}_TOKEN:-{s['token']}}}",
                 "OPENCLAW_ALLOW_INSECURE_PRIVATE_WS": "1",
                 "ANTHROPIC_API_KEY": "${ANTHROPIC_API_KEY}",
@@ -59,7 +60,9 @@ def generate_compose(fleet):
                 "GEMINI_API_KEY": "${GEMINI_API_KEY}",
                 "GOOGLE_API_KEY": "${GOOGLE_API_KEY}",
                 "GOOGLE_GEMINI_API_KEY": "${GOOGLE_GEMINI_API_KEY}",
-                "DENARIO_WORK_DIR": "/home/node/.openclaw/workspace/denario",
+                "GITHUB_TOKEN": "${GITHUB_TOKEN}",
+                "GITHUB_ORG": "${GITHUB_ORG:-ParallelScience}",
+                "DENARIO_WORK_DIR": "/home/node/work",
                 "TZ": "${TZ:-UTC}",
                 # Slack only on first scientist
                 **({
@@ -70,7 +73,7 @@ def generate_compose(fleet):
             "volumes": [
                 f"./scientists/{name}/config:/home/node/.openclaw",
                 f"./scientists/{name}/workspace:/home/node/.openclaw/workspace",
-                f"./scientists/{name}/work:/home/node/.openclaw/workspace/denario",
+                f"./scientists/{name}/work:/home/node/work",
                 "./auto-pair.sh:/app/auto-pair.sh:ro",
                 "./entrypoint.sh:/app/entrypoint.sh:ro",
                 "./cancel-watcher.py:/app/cancel-watcher.py:ro",

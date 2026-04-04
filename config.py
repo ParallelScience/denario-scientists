@@ -21,7 +21,7 @@ MODEL_OVERRIDES = {
 
 # Denario MCP server path inside container
 DENARIO_MCP_SERVER_PATH = "/opt/denario-venv/lib/python3.12/site-packages/denario/mcp_servers/denario_server.py"
-DENARIO_PARAMS_FILE = "/home/node/.openclaw/workspace/denario/params.yaml"
+DENARIO_PARAMS_FILE = "/home/node/work/params.yaml"
 
 
 def scientists(n=None):

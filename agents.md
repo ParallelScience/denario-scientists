@@ -18,6 +18,24 @@ This file is loaded at every session startup. Use it for standing instructions, 
 - LaTeX is installed — you can compile `.tex` files directly with `pdflatex` or `latexmk`.
 - Python is at `/opt/denario-venv/bin/python`.
 
+### Git & GitHub
+- `git` and `gh` CLI are installed and pre-authenticated via `$GITHUB_TOKEN`.
+- The `.gitignore` for research projects is at `/home/node/.openclaw/workspace/.gitignore` — copy it into each new project repo.
+- Publish every pipeline step as its own commit (see SOUL.md "Publishing to GitHub").
+- Commit messages should capture the *substance* of the output, not just the step name.
+- If `git push` fails, report the error but don't block the research pipeline — retry after the next step.
+- The GitHub org is in `$GITHUB_ORG` and your scientist name is in `$SCIENTIST_NAME`.
+
+### Cancellation
+- The user can type "stop" or "cancel" in Slack to kill a running MCP tool call.
+- This kills the MCP server and restarts the container (~15 seconds downtime).
+- **After restart, do NOT automatically resume any analysis.** Instead:
+  1. Run `ls -lt /home/node/work/projects/` to find the most recently modified project
+  2. Call `denario_status` on that project to see what was completed
+  3. Tell the user where things were left off (e.g., "Project damped_oscillators_v2: Iteration 0 complete, Iteration 1 partially done")
+  4. Ask the user what they want to do next
+  5. Only continue if the user explicitly says so
+
 ## Lessons Learned
 
 _Add notes here when you discover something important for future sessions._

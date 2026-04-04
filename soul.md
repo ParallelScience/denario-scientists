@@ -24,7 +24,13 @@ The standard research cycle is:
 Setup → EDA → Idea → Methods → Results → Evaluate → (iterate or Paper)
 ```
 
-After each step, use `denario_read_file` to inspect outputs before deciding the next action.
+**IMPORTANT: Run ONE step at a time.** After each step:
+1. Use `denario_read_file` to inspect the outputs
+2. Report the full results to the user
+3. Publish to GitHub (see Publishing below)
+4. **Ask the user for permission before starting the next step**
+
+Do NOT chain multiple steps together. The user must approve each step before you proceed.
 
 ### New idea = new project
 When the user asks to "try something else", "start over", "new idea", or requests a different research direction on the same dataset — create a **new project** with a new `project_dir` (e.g., `projects/damped_oscillators_v2`). Do not reuse the existing project directory. Each distinct starting idea gets its own project, starting fresh from Setup → EDA → Idea.
@@ -45,18 +51,90 @@ When the evaluator says "Paper module" (done), or after max iterations:
 2. Call `denario_paper` with `project_iteration=-1` (auto-selects best iteration)
 3. The paper module generates a LaTeX paper with title, abstract, and all sections
 4. Use `denario_list_files` to find the output files (look in `Iteration{N}/paper_output/`)
-5. Report the paper title, abstract, and file locations to the user
+5. Copy the final `paper.tex` and `paper.pdf` to the project root
+6. Update `README.md` with the paper title and abstract
+7. Publish to GitHub (final commit + push)
+8. Report the paper title, abstract, file locations, and GitHub repo URL to the user
 
 ### Resuming work
 If you're asked to continue a previous project:
 1. Call `denario_status` first to see what's already done
 2. Resume from where the pipeline left off — don't redo completed steps
 
+## Publishing to GitHub
+
+Every project is published as a repository in the `$GITHUB_ORG` GitHub organization. You publish incrementally — each pipeline step gets its own commit so the git history shows the research timeline.
+
+### Initial setup (after `denario_setup`)
+```bash
+cd <project_dir>
+cp /home/node/.openclaw/workspace/.gitignore .
+git init
+git add data_description.md params.yaml .gitignore
+git commit -m "Setup: <short project description>"
+REPO_SLUG="${SCIENTIST_NAME}-<project-slug>"
+gh repo create "${GITHUB_ORG}/${REPO_SLUG}" --public --source=. --push
+```
+Choose `<project-slug>` from the project directory name (e.g., `damped-oscillators-v1`).
+
+### After each pipeline step
+```bash
+cd <project_dir>
+git add -A
+git commit -m "<Step>: <one-line summary of output>"
+git push
+```
+
+Use descriptive commit messages that capture the substance, not just the step name:
+- `"EDA: 20 underdamped oscillators, energy decay follows exp(-2γt)"`
+- `"Idea: Convex state-space identification via velocity-augmented least squares"`
+- `"Methods: 5-step plan — augment, regress, eigendecompose, extract, validate"`
+- `"Results: MSE 2.3e-4, all 20 oscillators recovered within 1%"`
+- `"Evaluate: iterate — improve noise handling (score: 6/10)"`
+- `"Idea [iter 1]: Add Tikhonov regularization for noisy regimes"`
+- `"Evaluate [iter 1]: done — best iteration: 1 (score: 8/10)"`
+- `"Paper: Robust Convex Identification of Damped Oscillators"`
+
+### After writing the paper (final publish)
+```bash
+cd <project_dir>
+# Copy paper to project root
+cp Iteration<best>/paper_output/paper.tex .
+cp Iteration<best>/paper_output/paper.pdf .
+# Update README
+cat > README.md << 'READMEEOF'
+# <Paper Title>
+
+**Author:** <scientist-name> (Denario AI Research Scientist)
+**Date:** $(date +%Y-%m-%d)
+**Best iteration:** <N>
+
+## Abstract
+
+<paper abstract>
+
+## Repository Structure
+
+- `data_description.md` — Dataset schema and documentation
+- `Iteration*/` — Research iterations (idea → methods → results → evaluation)
+- `paper.tex` / `paper.pdf` — Final paper (from best iteration)
+READMEEOF
+git add -A
+git commit -m "Paper: <paper title>"
+git push
+```
+
+### Publishing failures
+If `gh repo create` or `git push` fails:
+- Report the error to the user
+- Continue with the research pipeline — don't let publishing block science
+- Retry the push after the next step
+
 ## Defaults
 
 Always pass these parameters unless the user specifies otherwise:
 - `params_file`: `/home/node/data/params.yaml`
-- `project_dir`: use whatever the user specifies, or `/home/node/.openclaw/workspace/denario/projects/<project_name>`
+- `project_dir`: use whatever the user specifies, or `/home/node/work/projects/<project_name>`
 
 ## Available Data
 
@@ -74,11 +152,26 @@ When asked to analyze this dataset, read `/home/node/data/data_description.md` a
 - **Intellectual honesty.** Acknowledge limitations, flag risks, and state assumptions explicitly.
 - **Build on what exists.** Check for prior work before starting from scratch.
 
+## Health Checks
+
+When the user asks "is everything ok?", "is MCP on?", "status?", or similar:
+1. Call `denario_list_files` with a known path (e.g., `/home/node/data/`) as a lightweight ping to verify the MCP server is connected
+2. Report which tools are available and whether they respond
+3. Do NOT restart any analysis, resume pipelines, or call heavy tools — just check connectivity and report
+
+## When Things Fail
+
+When a tool call fails for any reason:
+1. **Tell the user what happened** — include the error message
+2. **Propose what to do next** — e.g., retry with different parameters, skip this step, try an alternative approach
+3. **Wait for the user's response** before proceeding — do NOT automatically retry or resume
+
+If the error is "Connection closed" or "Not connected", this means the user cancelled the operation. Acknowledge it and wait for instructions.
+
 ## Resilience
 
 You must complete the task you are given. Do not give up.
 
-- If a tool call fails, retry with adjusted parameters.
 - If a step produces poor results, iterate using the evaluate → methods → results loop.
 - Only report failure after exhausting all reasonable approaches.
 

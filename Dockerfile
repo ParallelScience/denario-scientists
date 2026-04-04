@@ -106,7 +106,13 @@ RUN --mount=type=cache,id=denario-apt-cache,target=/var/cache/apt,sharing=locked
     DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends \
       procps hostname curl git lsof openssl libopenblas0 liblapack3 \
       texlive-latex-recommended texlive-latex-extra texlive-fonts-recommended \
-      texlive-xetex texlive-science latexmk cm-super
+      texlive-xetex texlive-science latexmk cm-super && \
+    curl -fsSL https://cli.github.com/packages/githubcli-archive-keyring.gpg \
+      | dd of=/usr/share/keyrings/githubcli-archive-keyring.gpg && \
+    echo "deb [arch=$(dpkg --print-architecture) signed-by=/usr/share/keyrings/githubcli-archive-keyring.gpg] https://cli.github.com/packages stable main" \
+      > /etc/apt/sources.list.d/github-cli.list && \
+    apt-get update && \
+    DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends gh
 
 # Copy Python 3.12 install + pre-built venv from python stage
 COPY --from=python-env /usr/local/bin/python3.12 /usr/local/bin/python3.12

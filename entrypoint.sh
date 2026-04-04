@@ -10,7 +10,9 @@ CONFIG="/home/node/.openclaw/openclaw.json"
 # into the workspace BEFORE the gateway runs, so OpenClaw's writeFileIfMissing
 # sees them and doesn't overwrite with defaults.
 if [ -d /app/bootstrap ]; then
-  for f in /app/bootstrap/*; do
+  # Copy all files including dotfiles (e.g. .gitignore)
+  for f in /app/bootstrap/* /app/bootstrap/.*; do
+    [ -f "$f" ] || continue
     target="$WORKSPACE/$(basename "$f")"
     cp -f "$f" "$target"
   done
@@ -38,6 +40,16 @@ if [ -f "$CONFIG" ]; then
     fs.writeFileSync('$CONFIG', JSON.stringify(cfg, null, 2));
     console.log('[entrypoint] Patched MCP env with API keys');
   "
+fi
+
+# Configure git identity for this scientist
+git config --global user.name "${SCIENTIST_NAME:-denario}"
+git config --global user.email "${SCIENTIST_NAME:-denario}@parallelscience.ai"
+
+# Authenticate gh CLI if GITHUB_TOKEN is set
+if [ -n "$GITHUB_TOKEN" ]; then
+  echo "$GITHUB_TOKEN" | gh auth login --with-token 2>/dev/null
+  echo "[entrypoint] GitHub CLI authenticated"
 fi
 
 # Run auto-pair in background

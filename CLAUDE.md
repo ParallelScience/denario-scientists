@@ -48,6 +48,14 @@ docker compose ps
 
 # Tail Denario MCP tool logs (detailed pipeline output)
 docker exec denario-1 tail -f /tmp/denario-mcp.log
+
+# Cancel a running operation from Slack: type "stop", "cancel", "abort", or "kill"
+# The cancel-watcher.py (independent Slack listener) kills the MCP server
+# and restarts the container (OpenClaw does not auto-respawn MCP processes).
+# cancel-watcher.py is mounted read-only; changes take effect on container restart.
+
+# Tail cancel watcher logs
+docker exec denario-1 tail -f /tmp/cancel-watcher.log
 ```
 
 ## Architecture
@@ -55,7 +63,7 @@ docker exec denario-1 tail -f /tmp/denario-mcp.log
 ### Fleet Generation Pipeline
 
 `setup.py` is the central orchestrator. Running it:
-1. Copies `soul.md` and `agents.md` into `bootstrap/` (as `SOUL.md`, `AGENTS.md`)
+1. Copies `soul.md`, `agents.md`, and `bootstrap/.gitignore` into `bootstrap/` (as `SOUL.md`, `AGENTS.md`, `.gitignore`)
 2. Creates per-scientist directories under `scientists/denario-N/` with `config/`, `workspace/`, and `work/` subdirs
 3. Generates `openclaw.json` config for each scientist (model, MCP server, Slack, plugins)
 4. Ensures `.env` has gateway auth tokens for each scientist
@@ -64,9 +72,10 @@ docker exec denario-1 tail -f /tmp/denario-mcp.log
 ### Container Internals
 
 The Dockerfile extends OpenClaw with a Python 3.12 venv containing the full Denario stack (ag2 → cmbagent → Denario). On startup, `entrypoint.sh`:
-1. Copies bootstrap files (`SOUL.md`, `AGENTS.md`) into the workspace before the gateway writes defaults
+1. Copies bootstrap files (`SOUL.md`, `AGENTS.md`, `.gitignore`) into the workspace before the gateway writes defaults
 2. Patches `openclaw.json` MCP server entries with container API keys
-3. Starts the OpenClaw gateway
+3. Configures git identity and authenticates `gh` CLI (if `GITHUB_TOKEN` is set)
+4. Starts the OpenClaw gateway
 
 ### Key File Roles
 
@@ -89,7 +98,7 @@ Control UI accessible at `http://localhost:{gateway_port}/#token={token}`
 Each scientist gets isolated volumes:
 - `scientists/<name>/config/` → `/home/node/.openclaw` (OpenClaw config + agent state)
 - `scientists/<name>/workspace/` → `/home/node/.openclaw/workspace` (workspace files)
-- `scientists/<name>/work/` → `/home/node/.openclaw/workspace/denario` (Denario project outputs, overlays workspace/denario/)
+- `scientists/<name>/work/` → `/home/node/work` (Denario project outputs)
 - `./data/` → `/home/node/data:ro` (shared read-only data)
 
 Slack integration is enabled only on denario-1 (Socket Mode).
@@ -108,6 +117,8 @@ Required in `.env`:
 
 Optional:
 - `GEMINI_API_KEY`, `GOOGLE_API_KEY`, `GOOGLE_GEMINI_API_KEY`
+- `GITHUB_TOKEN` — GitHub PAT for publishing research projects to the org (fine-grained, scoped to `ParallelScience` with repo Administration + Contents permissions)
+- `GITHUB_ORG` — GitHub org name (default: `ParallelScience`)
 - `SLACK_BOT_TOKEN`, `SLACK_APP_TOKEN` — for denario-1 Slack integration
 - `DATA_DIR` — override shared data mount (default: `./data`)
 - `TZ` — timezone (default: UTC)
