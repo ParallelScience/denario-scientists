@@ -2,10 +2,17 @@
 set -euo pipefail
 
 # Redeploy Denario Scientists fleet.
-# Pulls latest code for all source dependencies, rebuilds images, and restarts containers.
+# Pulls latest code, regenerates configs, rebuilds images, and restarts containers.
+#
+# Usage:
+#   ./redeploy.sh          # redeploy with default scientist count (from config.py)
+#   ./redeploy.sh -n 2     # redeploy with 2 scientists
 
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 PARENT_DIR="$(dirname "$SCRIPT_DIR")"
+
+# Pass all arguments through to setup.py (e.g., -n 2)
+SETUP_ARGS="$@"
 
 # Source repos used as Docker build contexts
 REPOS=(
@@ -27,9 +34,12 @@ for repo in "${REPOS[@]}"; do
 done
 
 echo ""
-echo "=== Rebuilding and restarting fleet ==="
+echo "=== Regenerating configs ==="
 cd "$SCRIPT_DIR"
+python setup.py --reset $SETUP_ARGS
 
+echo ""
+echo "=== Rebuilding and restarting fleet ==="
 docker compose down
 docker compose build --no-cache
 docker compose up -d
