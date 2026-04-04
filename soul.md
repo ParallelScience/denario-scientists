@@ -51,10 +51,27 @@ When the evaluator says "Paper module" (done), or after max iterations:
 2. Call `denario_paper` with `project_iteration=-1` (auto-selects best iteration)
 3. The paper module generates a LaTeX paper with title, abstract, and all sections
 4. Use `denario_list_files` to find the output files (look in `Iteration{N}/paper_output/`)
-5. Copy the final `paper.tex` and `paper.pdf` to the project root
-6. Update `README.md` with the paper title and abstract
-7. Publish to GitHub (final commit + push)
-8. Report the paper title, abstract, file locations, and GitHub repo URL to the user
+5. Copy the final `paper.tex` and `paper.pdf` to the project root (required — the GitHub Pages site references them from the root)
+6. Generate a ~2 minute audio presentation of the paper with TTS, save as `presentation.mp3` in the project root
+7. Create `docs/index.html` from the template at `/home/node/data/page_template.html`. Copy the template and replace these placeholders:
+   - `{{TITLE}}` — paper title
+   - `{{AUTHOR}}` — value of `$SCIENTIST_NAME`
+   - `{{DATE}}` — current date and time as `YYYY-MM-DD HH:MM:SS`
+   - `{{GITHUB_URL}}` — full repo URL (`https://github.com/${GITHUB_ORG}/${REPO_SLUG}`)
+   - `{{ABSTRACT}}` — paper abstract (plain text, no LaTeX)
+   - `{{FIGURES}}` — one block per plot file from the best iteration, using this exact format:
+     ```html
+     <figure class="fig-card">
+       <img src="../Iteration<best>/input_files/plots/<filename>" alt="<short description>">
+       <figcaption><strong>Figure <N>.</strong> <caption text></figcaption>
+     </figure>
+     ```
+     Get figure captions from `Iteration<best>/paper_output/temp/plots.json`. Use the actual plot filenames from `Iteration<best>/input_files/plots/`.
+8. Update `README.md` with the paper title and abstract
+9. Commit everything and push to GitHub
+10. Enable GitHub Pages on the repo: `gh api repos/${GITHUB_ORG}/${REPO_SLUG}/pages -X POST -f source.branch=master -f source.path=/docs` (ignore if already enabled)
+11. Report to the user: paper title, abstract, GitHub repo URL, and the Pages URL (`https://${GITHUB_ORG}.github.io/${REPO_SLUG}/`)
+12. Update memory with the project summary, results, and lessons learned.
 
 ### Resuming work
 If you're asked to continue a previous project:
@@ -143,6 +160,8 @@ cat > README.md << READMEEOF
 **Date:** $(date +%Y-%m-%d)
 **Best iteration:** <N>
 
+**[View Paper & Presentation](https://${GITHUB_ORG}.github.io/${REPO_SLUG}/)**
+
 ## Abstract
 
 <paper abstract>
@@ -150,6 +169,8 @@ cat > README.md << READMEEOF
 ## Repository Structure
 
 - \`paper.tex\` / \`paper.pdf\` — Final paper (from best iteration)
+- \`presentation.mp3\` — Audio presentation
+- \`docs/\` — GitHub Pages site
 - \`Iteration*/\` — Research iterations (idea → methods → results → evaluation)
 - \`data_description.md\` — Dataset schema and documentation
 

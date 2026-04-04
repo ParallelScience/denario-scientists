@@ -1,0 +1,257 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>{{TITLE}}</title>
+<style>
+  :root {
+    --bg: #fafafa;
+    --surface: #ffffff;
+    --text: #1a1a2e;
+    --text-secondary: #555;
+    --accent: #2563eb;
+    --border: #e5e7eb;
+    --code-bg: #f3f4f6;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #0f0f1a;
+      --surface: #1a1a2e;
+      --text: #e5e5ef;
+      --text-secondary: #9ca3af;
+      --accent: #60a5fa;
+      --border: #2d2d44;
+      --code-bg: #16162a;
+    }
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    line-height: 1.6;
+  }
+  .hero {
+    max-width: 900px;
+    margin: 0 auto;
+    padding: 4rem 2rem 2rem;
+    text-align: center;
+  }
+  .hero h1 {
+    font-size: 2rem;
+    font-weight: 700;
+    letter-spacing: -0.02em;
+    line-height: 1.2;
+    margin-bottom: 1.5rem;
+  }
+  .meta {
+    display: flex;
+    gap: 1.5rem;
+    justify-content: center;
+    flex-wrap: wrap;
+    font-size: 0.85rem;
+    color: var(--text-secondary);
+    margin-bottom: 2rem;
+  }
+  .meta span {
+    display: flex;
+    align-items: center;
+    gap: 0.35rem;
+  }
+  .abstract {
+    max-width: 750px;
+    margin: 0 auto 3rem;
+    padding: 1.5rem 2rem;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    text-align: left;
+    font-size: 0.95rem;
+    color: var(--text-secondary);
+  }
+  .abstract h2 {
+    font-size: 0.75rem;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    color: var(--accent);
+    margin-bottom: 0.75rem;
+  }
+  .audio-section {
+    max-width: 750px;
+    margin: 0 auto 3rem;
+    padding: 1.5rem 2rem;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+  }
+  .audio-section h2 {
+    font-size: 0.75rem;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    color: var(--accent);
+    margin-bottom: 1rem;
+  }
+  audio {
+    width: 100%;
+    height: 40px;
+  }
+  .figures {
+    max-width: 900px;
+    margin: 0 auto 3rem;
+  }
+  .figures h2 {
+    font-size: 0.75rem;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    color: var(--accent);
+    margin-bottom: 1rem;
+    padding: 0 2rem;
+  }
+  .fig-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    margin: 0 2rem 1.5rem;
+    overflow: hidden;
+  }
+  .fig-card img {
+    width: 100%;
+    display: block;
+  }
+  .fig-card figcaption {
+    padding: 1rem 1.5rem;
+    font-size: 0.85rem;
+    color: var(--text-secondary);
+    border-top: 1px solid var(--border);
+  }
+  .paper-embed {
+    max-width: 900px;
+    margin: 0 auto 3rem;
+  }
+  .paper-embed h2 {
+    font-size: 0.75rem;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    color: var(--accent);
+    margin-bottom: 1rem;
+    padding: 0 2rem;
+  }
+  .pdf-container {
+    margin: 0 2rem;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    overflow: hidden;
+    background: var(--surface);
+  }
+  .pdf-container iframe {
+    width: 100%;
+    height: 80vh;
+    border: none;
+  }
+  .pdf-fallback {
+    padding: 2rem;
+    text-align: center;
+    font-size: 0.9rem;
+    color: var(--text-secondary);
+  }
+  .pdf-fallback a {
+    color: var(--accent);
+    text-decoration: none;
+    font-weight: 600;
+  }
+  .pdf-fallback a:hover {
+    text-decoration: underline;
+  }
+  .links {
+    max-width: 750px;
+    margin: 0 auto 4rem;
+    display: flex;
+    gap: 1rem;
+    justify-content: center;
+    flex-wrap: wrap;
+    padding: 0 2rem;
+  }
+  .links a {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.6rem 1.2rem;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    color: var(--text);
+    text-decoration: none;
+    font-size: 0.85rem;
+    font-weight: 500;
+    transition: border-color 0.15s, background 0.15s;
+  }
+  .links a:hover {
+    border-color: var(--accent);
+    background: var(--code-bg);
+  }
+  .footer {
+    max-width: 900px;
+    margin: 0 auto;
+    padding: 2rem;
+    border-top: 1px solid var(--border);
+    text-align: center;
+    font-size: 0.8rem;
+    color: var(--text-secondary);
+  }
+  .footer a {
+    color: var(--accent);
+    text-decoration: none;
+  }
+</style>
+</head>
+<body>
+
+<div class="hero">
+  <h1>{{TITLE}}</h1>
+  <div class="meta">
+    <span>Author: {{AUTHOR}}</span>
+    <span>Date: {{DATE}}</span>
+  </div>
+  <div class="links">
+    <a href="../paper.pdf">PDF</a>
+    <a href="../paper.tex">LaTeX Source</a>
+    <a href="../presentation.mp3">Audio</a>
+    <a href="{{GITHUB_URL}}">GitHub</a>
+  </div>
+</div>
+
+<div class="audio-section">
+  <h2>Audio Presentation</h2>
+  <audio controls preload="metadata">
+    <source src="../presentation.mp3" type="audio/mpeg">
+    Your browser does not support the audio element.
+  </audio>
+</div>
+
+<div class="abstract">
+  <h2>Abstract</h2>
+  <p>{{ABSTRACT}}</p>
+</div>
+
+<section class="figures">
+  <h2>Figures</h2>
+  {{FIGURES}}
+</section>
+
+<section class="paper-embed">
+  <h2>Full Paper</h2>
+  <div class="pdf-container">
+    <iframe src="../paper.pdf" title="Paper PDF"></iframe>
+    <div class="pdf-fallback">
+      <noscript>PDF viewer requires JavaScript.</noscript>
+    </div>
+  </div>
+</section>
+
+<div class="footer">
+  Generated by <a href="https://github.com/AstroPilot-AI/Denario">Denario</a> for <a href="https://github.com/ParallelScience">ParallelScience</a>. All rights reserved.
+</div>
+
+</body>
+</html>
