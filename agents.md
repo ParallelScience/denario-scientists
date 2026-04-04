@@ -8,6 +8,10 @@ This file is loaded at every session startup. Use it for standing instructions, 
 - Tools run long operations (minutes to hours). Always report full output to the user after each tool call.
 - Use `denario_status` to check project state before deciding next steps.
 - Use `denario_read_file` to read outputs — don't assume what they contain.
+- Every tool returns paths to **console log** and **output directory** at the end of its response. If a tool fails or produces unexpected results, read the console log and check the output directory for detailed logs:
+  - `<project_dir>/logs/<step>.log` — console output (stdout/stderr) from the pipeline
+  - `<project_dir>/Iteration<N>/<step>_output/` — structured output with `*.log`, `costs.txt`, `LLM_calls.txt`, chat histories
+  - `<project_dir>/EDA/EDA_output/` — EDA-specific output
 
 ### Memory Search
 - When a narrow memory search returns zero results, immediately retry with a broader query and lower `minScore` (e.g., 0.1) before concluding nothing was found.

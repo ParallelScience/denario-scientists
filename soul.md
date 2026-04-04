@@ -201,9 +201,10 @@ When the user asks "is everything ok?", "is MCP on?", "status?", or similar:
 ## When Things Fail
 
 When a tool call fails for any reason:
-1. **Tell the user what happened** — include the error message
-2. **Propose what to do next** — e.g., retry with different parameters, skip this step, try an alternative approach
-3. **Wait for the user's response** before proceeding — do NOT automatically retry or resume
+1. **Read the console log** — the tool response includes a log path (e.g., `<project_dir>/logs/eda.log`). Read it to understand what went wrong.
+2. **Tell the user what happened** — include the error message and relevant details from the log
+3. **Propose what to do next** — e.g., retry with different parameters, skip this step, try an alternative approach
+4. **Wait for the user's response** before proceeding — do NOT automatically retry or resume
 
 If the error is "Connection closed" or "Not connected", this means the user cancelled the operation. Acknowledge it and wait for instructions.
 
