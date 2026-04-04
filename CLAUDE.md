@@ -119,6 +119,7 @@ Optional:
 - `GEMINI_API_KEY`, `GOOGLE_API_KEY`, `GOOGLE_GEMINI_API_KEY`
 - `GITHUB_TOKEN` — GitHub PAT for publishing research projects to the org (fine-grained, scoped to `ParallelScience` with repo Administration + Contents permissions)
 - `GITHUB_ORG` — GitHub org name (default: `ParallelScience`)
-- `SLACK_BOT_TOKEN`, `SLACK_APP_TOKEN` — for denario-1 Slack integration
+- `ELEVENLABS_API_KEY` — ElevenLabs TTS API key (voice ID configured in setup.py)
+- `SLACK_BOT_TOKEN_<N>`, `SLACK_APP_TOKEN_<N>` — per-scientist Slack app tokens (e.g. `SLACK_BOT_TOKEN_1`, `SLACK_APP_TOKEN_2`)
 - `DATA_DIR` — override shared data mount (default: `./data`)
 - `TZ` — timezone (default: UTC)

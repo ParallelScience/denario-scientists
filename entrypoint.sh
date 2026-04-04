@@ -46,10 +46,11 @@ fi
 git config --global user.name "${SCIENTIST_NAME:-denario}"
 git config --global user.email "${SCIENTIST_NAME:-denario}@parallelscience.ai"
 
-# Authenticate gh CLI if GITHUB_TOKEN is set
+# Authenticate gh CLI and configure git to use it for HTTPS credentials
 if [ -n "$GITHUB_TOKEN" ]; then
   echo "$GITHUB_TOKEN" | gh auth login --with-token 2>/dev/null
-  echo "[entrypoint] GitHub CLI authenticated"
+  gh auth setup-git
+  echo "[entrypoint] GitHub CLI authenticated + git credential helper configured"
 fi
 
 # Run auto-pair in background

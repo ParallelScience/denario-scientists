@@ -19,6 +19,15 @@ MODEL_OVERRIDES = {
     # "denario-1": "google/gemini-3.1-flash-lite-preview",
 }
 
+# Per-scientist ElevenLabs voice IDs
+DEFAULT_VOICE_ID = "sJKq4p1ljb8oxmfBK2hp"
+VOICE_OVERRIDES = {
+    "denario-2": "4nLKNoWGCgxnhFTvHPNL",
+    "denario-3": "GPQBwvkAgD34c9QL6VOy",
+    "denario-4": "wHmPF60BN2ikHIqbdAP6",
+    "denario-5": "W2ZOpTX05dpEry2h5LQb",
+}
+
 # Denario MCP server path inside container
 DENARIO_MCP_SERVER_PATH = "/opt/denario-venv/lib/python3.12/site-packages/denario/mcp_servers/denario_server.py"
 DENARIO_PARAMS_FILE = "/home/node/work/params.yaml"
@@ -36,6 +45,7 @@ def scientists(n=None):
             "bridge_port": BASE_BRIDGE_PORT + i - 1,
             "token": f"denario-{i}-token",
             "model": MODEL_OVERRIDES.get(f"denario-{i}", DEFAULT_MODEL),
+            "voice_id": VOICE_OVERRIDES.get(f"denario-{i}", DEFAULT_VOICE_ID),
             "memory": DEFAULT_MEMORY,
             "cpus": DEFAULT_CPUS,
         }

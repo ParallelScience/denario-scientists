@@ -84,7 +84,8 @@ RUN /opt/denario-venv/bin/pip install \
       pandas \
       sympy \
       scikit-learn \
-      slack_bolt
+      slack_bolt \
+      beautifulsoup4
 
 # Clean up source copies
 RUN rm -rf /tmp/ag2 /tmp/cmbagent /tmp/denario

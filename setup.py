@@ -62,13 +62,12 @@ def generate_compose(fleet):
                 "GOOGLE_GEMINI_API_KEY": "${GOOGLE_GEMINI_API_KEY}",
                 "GITHUB_TOKEN": "${GITHUB_TOKEN}",
                 "GITHUB_ORG": "${GITHUB_ORG:-ParallelScience}",
+                "ELEVENLABS_API_KEY": "${ELEVENLABS_API_KEY}",
                 "DENARIO_WORK_DIR": "/home/node/work",
                 "TZ": "${TZ:-UTC}",
-                # Slack only on first scientist
-                **({
-                    "SLACK_BOT_TOKEN": "${SLACK_BOT_TOKEN}",
-                    "SLACK_APP_TOKEN": "${SLACK_APP_TOKEN}",
-                } if name == "denario-1" else {}),
+                # Per-scientist Slack app tokens (e.g. SLACK_BOT_TOKEN_1, SLACK_APP_TOKEN_1)
+                "SLACK_BOT_TOKEN": f"${{SLACK_BOT_TOKEN_{name.split('-')[1]}}}",
+                "SLACK_APP_TOKEN": f"${{SLACK_APP_TOKEN_{name.split('-')[1]}}}",
             },
             "volumes": [
                 f"./scientists/{name}/config:/home/node/.openclaw",
@@ -239,7 +238,7 @@ def generate_dirs_and_configs(fleet):
                 "channels": {
                     "slack": {
                         "mode": "socket",
-                        "enabled": name == "denario-1",
+                        "enabled": True,
                         "allowBots": False,
                         "groupPolicy": "open",
                         "dmPolicy": "open",
@@ -256,15 +255,36 @@ def generate_dirs_and_configs(fleet):
                         }
                     }
                 },
+                "talk": {
+                    "provider": "elevenlabs",
+                    "providers": {
+                        "elevenlabs": {
+                            "voiceId": s["voice_id"],
+                            "modelId": "eleven_multilingual_v2",
+                        }
+                    },
+                },
+                "messages": {
+                    "tts": {
+                        "provider": "elevenlabs",
+                        "providers": {
+                            "elevenlabs": {
+                                "voiceId": s["voice_id"],
+                                "modelId": "eleven_multilingual_v2",
+                            }
+                        },
+                    }
+                },
                 "browser": {"enabled": False},
                 "cron": {"enabled": False},
                 "plugins": {
                     "entries": {
-                        "slack": {"enabled": name == "denario-1"},
+                        "slack": {"enabled": True},
                         "memory-core": {"enabled": True},
                         "device-pair": {"enabled": False},
                         "phone-control": {"enabled": False},
-                        "talk-voice": {"enabled": False},
+                        "talk-voice": {"enabled": True},
+                        "elevenlabs": {"enabled": True},
                     }
                 },
                 "skills": {"entries": {}},

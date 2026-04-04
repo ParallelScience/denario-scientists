@@ -69,8 +69,11 @@ Every project is published as a repository in the `$GITHUB_ORG` GitHub organizat
 ```bash
 cd <project_dir>
 cp /home/node/.openclaw/workspace/.gitignore .
+# Create README from data description
+echo "# <short project description>\n\n**Scientist:** ${SCIENTIST_NAME}\n**Date:** $(date +%Y-%m-%d)\n" > README.md
+cat data_description.md >> README.md
 git init
-git add data_description.md params.yaml .gitignore
+git add README.md data_description.md params.yaml .gitignore
 git commit -m "Setup: <short project description>"
 REPO_SLUG="${SCIENTIST_NAME}-<project-slug>"
 gh repo create "${GITHUB_ORG}/${REPO_SLUG}" --public --source=. --push
@@ -78,14 +81,44 @@ gh repo create "${GITHUB_ORG}/${REPO_SLUG}" --public --source=. --push
 Choose `<project-slug>` from the project directory name (e.g., `damped-oscillators-v1`).
 
 ### After each pipeline step
+
+Update the README to reflect the current project state, then commit and push:
+
 ```bash
 cd <project_dir>
+# Regenerate README with current progress
+cat > README.md << READMEEOF
+# <project title or current idea title>
+
+**Scientist:** ${SCIENTIST_NAME} (Denario AI Research Scientist)
+**Date:** $(date +%Y-%m-%d)
+**Status:** <current step, e.g. "Idea generated — awaiting methods">
+
+## Latest: <step name>
+
+<brief summary of what this step produced — the idea title, methods outline, key results, or evaluation verdict>
+
+## Progress
+
+| Step | Iteration 0 | Iteration 1 | ... |
+|------|------------|------------|-----|
+| EDA | done | — | |
+| Idea | done | | |
+| Methods | | | |
+| Results | | | |
+| Evaluate | | | |
+| Paper | | | |
+
+---
+
+READMEEOF
+cat data_description.md >> README.md
 git add -A
 git commit -m "<Step>: <one-line summary of output>"
 git push
 ```
 
-Use descriptive commit messages that capture the substance, not just the step name:
+Fill in the progress table with what's actually completed. Use descriptive commit messages that capture the substance:
 - `"EDA: 20 underdamped oscillators, energy decay follows exp(-2γt)"`
 - `"Idea: Convex state-space identification via velocity-augmented least squares"`
 - `"Methods: 5-step plan — augment, regress, eigendecompose, extract, validate"`
@@ -101,11 +134,12 @@ cd <project_dir>
 # Copy paper to project root
 cp Iteration<best>/paper_output/paper.tex .
 cp Iteration<best>/paper_output/paper.pdf .
-# Update README
-cat > README.md << 'READMEEOF'
+# Prepend paper info to README (data description stays below)
+mv README.md README.old
+cat > README.md << READMEEOF
 # <Paper Title>
 
-**Author:** <scientist-name> (Denario AI Research Scientist)
+**Scientist:** ${SCIENTIST_NAME} (Denario AI Research Scientist)
 **Date:** $(date +%Y-%m-%d)
 **Best iteration:** <N>
 
@@ -115,10 +149,15 @@ cat > README.md << 'READMEEOF'
 
 ## Repository Structure
 
-- `data_description.md` — Dataset schema and documentation
-- `Iteration*/` — Research iterations (idea → methods → results → evaluation)
-- `paper.tex` / `paper.pdf` — Final paper (from best iteration)
+- \`paper.tex\` / \`paper.pdf\` — Final paper (from best iteration)
+- \`Iteration*/\` — Research iterations (idea → methods → results → evaluation)
+- \`data_description.md\` — Dataset schema and documentation
+
+---
+
 READMEEOF
+cat README.old >> README.md
+rm README.old
 git add -A
 git commit -m "Paper: <paper title>"
 git push
