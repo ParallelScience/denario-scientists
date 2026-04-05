@@ -16,7 +16,7 @@ import os
 import re
 import shutil
 import sys
-from datetime import datetime
+from datetime import datetime, timezone, timedelta
 
 
 def extract_title(tex: str) -> str:
@@ -59,14 +59,17 @@ def build(project_dir: str, repo_url: str, author: str):
 
     title = extract_title(tex)
     abstract = extract_abstract(tex)
-    date = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+    # AOE = UTC-12
+    aoe = timezone(timedelta(hours=-12))
+    now = datetime.now(aoe)
+    date = now.strftime("%Y-%m-%d")
+    time = now.strftime("%H:%M:%S") + " AOE"
 
     # Create docs/ and copy assets
     os.makedirs(docs_dir, exist_ok=True)
 
     if os.path.exists(paper_pdf_path):
         shutil.copy2(paper_pdf_path, docs_dir)
-    shutil.copy2(paper_tex_path, docs_dir)
     if os.path.exists(presentation_path):
         shutil.copy2(presentation_path, docs_dir)
 
@@ -77,9 +80,9 @@ def build(project_dir: str, repo_url: str, author: str):
     html = html.replace("{{TITLE}}", title)
     html = html.replace("{{AUTHOR}}", author)
     html = html.replace("{{DATE}}", date)
+    html = html.replace("{{TIME}}", time)
     html = html.replace("{{GITHUB_URL}}", repo_url)
     html = html.replace("{{ABSTRACT}}", abstract)
-    html = html.replace("{{FIGURES}}", "")  # no figures on the page
 
     # Write index.html
     index_path = os.path.join(docs_dir, "index.html")

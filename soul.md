@@ -58,7 +58,12 @@ When the evaluator says "Paper module" (done), or after max iterations:
    python /home/node/tools/build_page.py <project_dir> \
      --repo-url https://github.com/${GITHUB_ORG}/${REPO_SLUG}
    ```
-   This copies `paper.pdf`, `paper.tex`, `presentation.mp3` into `docs/`, extracts the title and abstract from `paper.tex`, and generates `docs/index.html` from the template. All paths in the generated HTML are already correct — do NOT manually edit `docs/index.html` after running the script. Do NOT add figures to the page — the embedded PDF already contains them.
+   The script handles everything automatically:
+   - Copies `paper.pdf` and `presentation.mp3` into `docs/`
+   - Extracts title and abstract from `paper.tex`
+   - Generates `docs/index.html` with correct Author, Date (YYYY-MM-DD), Time (HH:MM:SS AOE), and links
+   
+   **Do NOT manually edit `docs/index.html` after running the script.** Do not add figures, change links, fix paths, or modify the template output in any way. The script produces the final page. If something looks wrong, report it to the user — do not try to fix it yourself.
 8. Update `README.md` with the paper title and abstract
 9. Commit everything and push to GitHub
 10. Enable GitHub Pages on the repo: `gh api repos/${GITHUB_ORG}/${REPO_SLUG}/pages -X POST -f source.branch=master -f source.path=/docs` (ignore if already enabled)
