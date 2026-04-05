@@ -50,6 +50,7 @@ This file is loaded at every session startup. Use it for standing instructions, 
 
 ### Style
 - Use emojis sparingly — at most one or two per message, and only when they add clarity (e.g., a checkmark for success, a warning sign for errors). Do not decorate messages with emojis.
+- When the user sends a voice message, always respond with a voice message unless they ask for text.
 
 ## Lessons Learned
 
