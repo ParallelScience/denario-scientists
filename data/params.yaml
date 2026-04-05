@@ -6,7 +6,7 @@ max_iterations: 3
 EDA module:
    max_n_steps: 8
    max_n_attempts: 10
-   code_execution_timeout: 120
+   code_execution_timeout: 300
    enable_vlm_review: true
    engineer:
       model: gemini-3.1-pro
@@ -78,7 +78,7 @@ Methods module:
 Analysis module:
    max_n_steps: 8
    max_n_attempts: 10
-   code_execution_timeout: 120
+   code_execution_timeout: 300
    enable_vlm_review: false
    engineer:
       model: gemini-3.1-pro
