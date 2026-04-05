@@ -1,17 +1,21 @@
 #!/usr/bin/env python3
 """Build GitHub Pages site for a Denario research project.
 
-Reads paper.tex from the project root to extract title and abstract,
+Reads paper.tex and classification.json from the project,
 copies assets into docs/, and generates index.html from the template.
 
 Usage:
     python build_page.py <project_dir> --repo-url <url> [--author <name>]
+    python build_page.py <project_dir> --validate  # check page has all required fields
 
 Expects in <project_dir>:
     paper.tex, paper.pdf, presentation.mp3 (optional)
+    Iteration<N>/input_files/classification.json (optional)
 """
 
 import argparse
+import glob
+import json
 import os
 import re
 import shutil
@@ -38,6 +42,21 @@ def extract_abstract(tex: str) -> str:
     return abstract
 
 
+def find_classification(project_dir: str) -> str:
+    """Find and read the primary category from classification.json."""
+    # Search all iterations for classification.json, take the latest
+    pattern = os.path.join(project_dir, "Iteration*", "input_files", "classification.json")
+    files = sorted(glob.glob(pattern))
+    if not files:
+        return ""
+    with open(files[-1]) as f:
+        data = json.load(f)
+    primary = data.get("primary_category", "")
+    secondary = data.get("secondary_categories", [])
+    parts = [primary] + secondary
+    return "; ".join(parts) if parts else ""
+
+
 def build(project_dir: str, repo_url: str, author: str):
     template_path = os.path.join(os.path.dirname(__file__), "page_template.html")
     paper_tex_path = os.path.join(project_dir, "paper.tex")
@@ -59,6 +78,8 @@ def build(project_dir: str, repo_url: str, author: str):
 
     title = extract_title(tex)
     abstract = extract_abstract(tex)
+    primary_category = find_classification(project_dir)
+
     # AOE = UTC-12
     aoe = timezone(timedelta(hours=-12))
     now = datetime.now(aoe)
@@ -81,6 +102,7 @@ def build(project_dir: str, repo_url: str, author: str):
     html = html.replace("{{AUTHOR}}", author)
     html = html.replace("{{DATE}}", date)
     html = html.replace("{{TIME}}", time)
+    html = html.replace("{{PRIMARY_CATEGORY}}", primary_category)
     html = html.replace("{{GITHUB_URL}}", repo_url)
     html = html.replace("{{ABSTRACT}}", abstract)
 
@@ -92,15 +114,80 @@ def build(project_dir: str, repo_url: str, author: str):
     print(f"Built GitHub Pages site in {docs_dir}")
     print(f"  Title: {title}")
     print(f"  Author: {author}")
+    print(f"  Category: {primary_category}")
     print(f"  Files: {os.listdir(docs_dir)}")
+
+    # Validate
+    errors = validate_page(docs_dir)
+    if errors:
+        print(f"\n  WARNINGS:")
+        for e in errors:
+            print(f"    - {e}")
+
+
+REQUIRED_FIELDS = {
+    "{{TITLE}}": "title",
+    "{{AUTHOR}}": "author",
+    "{{DATE}}": "date",
+    "{{TIME}}": "time",
+    "{{ABSTRACT}}": "abstract",
+    "{{PRIMARY_CATEGORY}}": "classification",
+    "{{GITHUB_URL}}": "GitHub URL",
+}
+
+
+def validate_page(docs_dir: str) -> list[str]:
+    """Check that the generated page has all required fields populated."""
+    errors = []
+    index_path = os.path.join(docs_dir, "index.html")
+
+    if not os.path.exists(index_path):
+        return ["index.html not found"]
+
+    with open(index_path) as f:
+        html = f.read()
+
+    # Check no unreplaced placeholders remain
+    for placeholder, name in REQUIRED_FIELDS.items():
+        if placeholder in html:
+            errors.append(f"{name} not set (placeholder {placeholder} still in HTML)")
+
+    # Check required assets
+    if not os.path.exists(os.path.join(docs_dir, "paper.pdf")):
+        errors.append("paper.pdf missing from docs/")
+
+    # Check content is not empty
+    for field, label in [("Author: </span>", "author is empty"),
+                         ("<p></p>", "abstract is empty"),
+                         ("Subject: </span>", "classification is empty")]:
+        if field in html:
+            errors.append(label)
+
+    return errors
 
 
 def main():
     parser = argparse.ArgumentParser(description="Build GitHub Pages site for a Denario project")
     parser.add_argument("project_dir", help="Path to the project directory")
     parser.add_argument("--repo-url", required=True, help="GitHub repo URL")
-    parser.add_argument("--author", default=os.environ.get("SCIENTIST_NAME", "denario"), help="Author name (default: $SCIENTIST_NAME)")
+    parser.add_argument("--author", default=os.environ.get("SCIENTIST_NAME", "denario"),
+                        help="Author name (default: $SCIENTIST_NAME)")
+    parser.add_argument("--validate", action="store_true",
+                        help="Only validate an existing docs/ page, don't build")
     args = parser.parse_args()
+
+    if args.validate:
+        docs_dir = os.path.join(args.project_dir, "docs")
+        errors = validate_page(docs_dir)
+        if errors:
+            print("Validation FAILED:")
+            for e in errors:
+                print(f"  - {e}")
+            sys.exit(1)
+        else:
+            print("Validation OK")
+            sys.exit(0)
+
     build(args.project_dir, args.repo_url, args.author)
 
 
