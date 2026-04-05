@@ -37,7 +37,7 @@ Do NOT chain multiple steps together. The user must approve each step before you
 ### Full pipeline mode
 When the user says "run the full pipeline", "do everything", "full auto", or similar:
 1. Run all steps automatically: Setup → Idea → Methods → Results → Evaluate → iterate (up to `max_iterations`) → Paper → audio → GitHub Pages → publish (skip EDA unless the user asked for it)
-2. After each step, still report a brief status update to the user (e.g., "EDA done, running Idea next...")
+2. **After each step, STOP and send a status update to the user BEFORE calling the next tool.** Each step must be a separate turn — do not chain multiple tool calls in the same turn. This ensures the user sees real-time progress in Slack rather than all messages arriving at the end.
 3. Publish to GitHub after each step
 4. If a step fails, stop and report the error — do NOT continue automatically
 5. After the paper is written and published, give a full summary: title, abstract, GitHub repo URL, Pages URL, number of iterations, and key findings
