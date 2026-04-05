@@ -1,24 +1,24 @@
-# Lightweight params for testing cmbagent integration
-# Uses fast/cheap models throughout
+# Production params for denario-scientists fleet
+# Uses gemini-3.1-pro for coding/research, flash-lite for orchestration
 
 max_iterations: 3
 
 EDA module:
-   max_n_steps: 3
-   max_n_attempts: 3
+   max_n_steps: 8
+   max_n_attempts: 10
    code_execution_timeout: 120
    enable_vlm_review: true
    engineer:
-      model: gemini-3.1-flash-lite-preview
+      model: gemini-3.1-pro
       temperature: 0.2
    researcher:
-      model: gemini-3.1-flash-lite-preview
+      model: gemini-3.1-pro
       temperature: 0.2
    planner:
       model: gemini-3.1-flash-lite-preview
       temperature: 0.2
    plan_reviewer:
-      model: gemini-3.1-flash-lite-preview
+      model: claude-sonnet-4-6
       temperature: 0.2
    orchestration:
       model: gemini-3.1-flash-lite-preview
@@ -76,21 +76,21 @@ Methods module:
       temperature: 0.2
 
 Analysis module:
-   max_n_steps: 3
-   max_n_attempts: 5
+   max_n_steps: 8
+   max_n_attempts: 10
    code_execution_timeout: 120
    enable_vlm_review: false
    engineer:
-      model: gemini-3.1-flash-lite-preview
+      model: gemini-3.1-pro
       temperature: 0.1
    researcher:
-      model: gemini-3.1-flash-lite-preview
+      model: gemini-3.1-pro
       temperature: 0.1
    planner:
       model: gemini-3.1-flash-lite-preview
       temperature: 0.1
    plan_reviewer:
-      model: gemini-3.1-flash-lite-preview
+      model: claude-sonnet-4-6
       temperature: 0.1
    orchestration:
       model: gemini-3.1-flash-lite-preview
