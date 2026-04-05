@@ -19,6 +19,13 @@ MODEL_OVERRIDES = {
     # "denario-1": "google/gemini-3.1-flash-lite-preview",
 }
 
+# GPU assignment (optional). Key = scientist name, value = list of GPU device IDs.
+# Only listed scientists get GPU access; others get none.
+GPU_ASSIGNMENT = {
+    "denario-3": ["0"],  # GPU 0 only
+    # "denario-2": ["1"],  # GPU 1 only
+}
+
 # Per-scientist ElevenLabs voice IDs
 DEFAULT_VOICE_ID = "sJKq4p1ljb8oxmfBK2hp"
 VOICE_OVERRIDES = {
@@ -48,6 +55,7 @@ def scientists(n=None):
             "voice_id": VOICE_OVERRIDES.get(f"denario-{i}", DEFAULT_VOICE_ID),
             "memory": DEFAULT_MEMORY,
             "cpus": DEFAULT_CPUS,
+            "gpus": GPU_ASSIGNMENT.get(f"denario-{i}"),
         }
         for i in range(1, count + 1)
     ]

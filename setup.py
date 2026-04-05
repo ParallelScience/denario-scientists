@@ -89,7 +89,14 @@ def generate_compose(fleet):
                     "limits": {
                         "cpus": s.get("cpus", "4"),
                         "memory": s.get("memory", "8g"),
-                    }
+                    },
+                    **({"reservations": {
+                        "devices": [{
+                            "driver": "nvidia",
+                            "device_ids": s["gpus"],
+                            "capabilities": ["gpu"],
+                        }]
+                    }} if s.get("gpus") else {}),
                 }
             },
             "init": True,
@@ -132,6 +139,18 @@ def generate_compose(fleet):
         lines.append(f"        limits:")
         lines.append(f"          cpus: \"{svc['deploy']['resources']['limits']['cpus']}\"")
         lines.append(f"          memory: {svc['deploy']['resources']['limits']['memory']}")
+        if "reservations" in svc["deploy"]["resources"]:
+            res = svc["deploy"]["resources"]["reservations"]
+            lines.append(f"        reservations:")
+            lines.append(f"          devices:")
+            for dev in res["devices"]:
+                lines.append(f"            - driver: {dev['driver']}")
+                lines.append(f"              device_ids:")
+                for did in dev["device_ids"]:
+                    lines.append(f"                - \"{did}\"")
+                lines.append(f"              capabilities:")
+                for cap in dev["capabilities"]:
+                    lines.append(f"                - {cap}")
         lines.append(f"    init: true")
         lines.append(f"    restart: unless-stopped")
         cmd = svc["command"]
