@@ -84,6 +84,8 @@ The Dockerfile extends OpenClaw with a Python 3.12 venv containing the full Dena
 - **`agents.md`** — Standing instructions loaded at every agent session: tool usage notes, shell capabilities, lessons learned. Gets installed as `AGENTS.md`
 - **`data/params.yaml`** — Single source of truth for all Denario pipeline configuration: models, temperatures, and hyperparameters (max_n_steps, max_n_attempts, code_execution_timeout, enable_vlm_review) for EDA and Analysis modules. Mounted read-only into containers at `/home/node/data/`. Also used by `Denario/tests/denario_test/` via relative path.
 - **`data/data_description.md`** — Schema and physics documentation for the bundled damped oscillator dataset
+- **`tools/build_page.py`** — Generates GitHub Pages site (`docs/index.html`) from `paper.tex`. Mounted read-only at `/home/node/tools/`
+- **`tools/page_template.html`** — HTML template with `{{TITLE}}`, `{{AUTHOR}}`, `{{DATE}}`, `{{GITHUB_URL}}`, `{{ABSTRACT}}` placeholders
 
 ### Port Scheme
 
@@ -100,6 +102,7 @@ Each scientist gets isolated volumes:
 - `scientists/<name>/workspace/` → `/home/node/.openclaw/workspace` (workspace files)
 - `scientists/<name>/work/` → `/home/node/work` (Denario project outputs)
 - `./data/` → `/home/node/data:ro` (shared read-only data)
+- `./tools/` → `/home/node/tools:ro` (shared read-only tooling)
 
 Slack integration is enabled only on denario-1 (Socket Mode).
 

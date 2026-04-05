@@ -214,9 +214,9 @@
     <span>Date: {{DATE}}</span>
   </div>
   <div class="links">
-    <a href="../paper.pdf">PDF</a>
-    <a href="../paper.tex">LaTeX Source</a>
-    <a href="../presentation.mp3">Audio</a>
+    <a href="paper.pdf">PDF</a>
+    <a href="paper.tex">LaTeX Source</a>
+    <a href="presentation.mp3">Audio</a>
     <a href="{{GITHUB_URL}}">GitHub</a>
   </div>
 </div>
@@ -224,7 +224,7 @@
 <div class="audio-section">
   <h2>Audio Presentation</h2>
   <audio controls preload="metadata">
-    <source src="../presentation.mp3" type="audio/mpeg">
+    <source src="presentation.mp3" type="audio/mpeg">
     Your browser does not support the audio element.
   </audio>
 </div>
@@ -234,15 +234,10 @@
   <p>{{ABSTRACT}}</p>
 </div>
 
-<section class="figures">
-  <h2>Figures</h2>
-  {{FIGURES}}
-</section>
-
 <section class="paper-embed">
   <h2>Full Paper</h2>
   <div class="pdf-container">
-    <iframe src="../paper.pdf" title="Paper PDF"></iframe>
+    <iframe src="paper.pdf" title="Paper PDF"></iframe>
     <div class="pdf-fallback">
       <noscript>PDF viewer requires JavaScript.</noscript>
     </div>

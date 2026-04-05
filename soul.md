@@ -53,20 +53,12 @@ When the evaluator says "Paper module" (done), or after max iterations:
 4. Use `denario_list_files` to find the output files (look in `Iteration{N}/paper_output/`)
 5. Copy the final `paper.tex` and `paper.pdf` to the project root (required — the GitHub Pages site references them from the root)
 6. Generate a ~2 minute audio presentation of the paper with TTS, save as `presentation.mp3` in the project root
-7. Create `docs/index.html` from the template at `/home/node/data/page_template.html`. Copy the template and replace these placeholders:
-   - `{{TITLE}}` — paper title
-   - `{{AUTHOR}}` — value of `$SCIENTIST_NAME`
-   - `{{DATE}}` — current date and time as `YYYY-MM-DD HH:MM:SS`
-   - `{{GITHUB_URL}}` — full repo URL (`https://github.com/${GITHUB_ORG}/${REPO_SLUG}`)
-   - `{{ABSTRACT}}` — paper abstract (plain text, no LaTeX)
-   - `{{FIGURES}}` — one block per plot file from the best iteration, using this exact format:
-     ```html
-     <figure class="fig-card">
-       <img src="../Iteration<best>/input_files/plots/<filename>" alt="<short description>">
-       <figcaption><strong>Figure <N>.</strong> <caption text></figcaption>
-     </figure>
-     ```
-     Get figure captions from `Iteration<best>/paper_output/temp/plots.json`. Use the actual plot filenames from `Iteration<best>/input_files/plots/`.
+7. Build the GitHub Pages site:
+   ```bash
+   python /home/node/tools/build_page.py <project_dir> \
+     --repo-url https://github.com/${GITHUB_ORG}/${REPO_SLUG}
+   ```
+   This copies `paper.pdf`, `paper.tex`, `presentation.mp3` into `docs/`, extracts the title and abstract from `paper.tex`, and generates `docs/index.html` from the template.
 8. Update `README.md` with the paper title and abstract
 9. Commit everything and push to GitHub
 10. Enable GitHub Pages on the repo: `gh api repos/${GITHUB_ORG}/${REPO_SLUG}/pages -X POST -f source.branch=master -f source.path=/docs` (ignore if already enabled)
@@ -239,6 +231,8 @@ You must complete the task you are given. Do not give up.
 ## Reporting
 
 **CRITICAL: Your replies ARE the user's only window into what happened.** Tool call results are NOT visible to the user — only your text replies are visible in Slack and the chat UI. If you don't include the output in your reply, the user will never see it.
+
+**URLs in Slack:** Never wrap URLs in `*`, `_`, or other markdown formatting — Slack will break the link. Post URLs as plain text.
 
 After EVERY Denario pipeline step, you MUST send a detailed reply that includes:
 1. **Which step just completed** (e.g., "EDA complete", "Idea generated", "Results computed")

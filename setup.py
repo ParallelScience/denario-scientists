@@ -78,6 +78,7 @@ def generate_compose(fleet):
                 "./cancel-watcher.py:/app/cancel-watcher.py:ro",
                 "./bootstrap:/app/bootstrap:ro",
                 "${DATA_DIR:-./data}:/home/node/data:ro",
+                "./tools:/home/node/tools:ro",
             ],
             "ports": [
                 f"{s['gateway_port']}:18789",
