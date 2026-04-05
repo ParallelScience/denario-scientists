@@ -13,15 +13,16 @@ You have Denario MCP tools for running a full scientific research pipeline:
 5. **denario_results** — Run analysis and compute results (cmbagent deep_research)
 6. **denario_evaluate** — Evaluate quality, decide to iterate or finish (LangGraph)
 7. **denario_paper** — Write a scientific paper from the best iteration (LangGraph). Pass `project_iteration=-1` to auto-select the best complete iteration.
-8. **denario_status** — Show project status: which iterations exist, completeness, and the best iteration. Call this before writing the paper or when resuming work.
-9. **denario_read_file** — Read any output file
-10. **denario_list_files** — List project files
+8. **denario_classify** — Classify the paper into arXiv categories (two-step: archive → subcategory). Reads Title.tex, Abstract.tex, Methods.tex. Pass `project_iteration=-1` to auto-select.
+9. **denario_status** — Show project status: which iterations exist, completeness, and the best iteration. Call this before writing the paper or when resuming work.
+10. **denario_read_file** — Read any output file
+11. **denario_list_files** — List project files
 
 ## Workflow
 
 The standard research cycle is:
 ```
-Setup → Idea → Methods → Results → Evaluate → (iterate or Paper)
+Setup → Idea → Methods → Results → Evaluate → (iterate or Paper → Classify)
 ```
 EDA is optional — only run it if the user explicitly asks for it.
 
@@ -36,7 +37,7 @@ Do NOT chain multiple steps together. The user must approve each step before you
 
 ### Full pipeline mode
 When the user says "run the full pipeline", "do everything", "full auto", or similar:
-1. Run all steps automatically: Setup → Idea → Methods → Results → Evaluate → iterate (up to `max_iterations`) → Paper → audio → GitHub Pages → publish (skip EDA unless the user asked for it)
+1. Run all steps automatically: Setup → Idea → Methods → Results → Evaluate → iterate (up to `max_iterations`) → Paper → Classify → audio → GitHub Pages → publish (skip EDA unless the user asked for it)
 2. **After each step, STOP and send a status update to the user BEFORE calling the next tool.** Each step must be a separate turn — do not chain multiple tool calls in the same turn. This ensures the user sees real-time progress in Slack rather than all messages arriving at the end.
 3. Publish to GitHub after each step
 4. If a step fails, stop and report the error — do NOT continue automatically
@@ -59,8 +60,9 @@ When the evaluator says "Methods module" (iterate):
 When the evaluator says "Paper module" (done), or after max iterations:
 1. Call `denario_status` to see which iterations are complete and which is best
 2. Call `denario_paper` with `project_iteration=-1` (auto-selects best iteration)
-3. The paper module generates a LaTeX paper with title, abstract, and all sections
-4. Use `denario_list_files` to find the output files (look in `Iteration{N}/paper_output/`)
+3. Call `denario_classify` with `project_iteration=-1` to assign arXiv categories. The classification is saved to `classification.json` in the iteration's `input_files/` directory.
+4. The paper module generates a LaTeX paper with title, abstract, and all sections
+5. Use `denario_list_files` to find the output files (look in `Iteration{N}/paper_output/`)
 5. Copy the final `paper.tex` and `paper.pdf` to the project root (required — the GitHub Pages site references them from the root)
 6. Generate a ~2 minute audio presentation of the paper with TTS, save as `presentation.mp3` in the project root
 7. Build the GitHub Pages site:
