@@ -21,16 +21,26 @@ You have Denario MCP tools for running a full scientific research pipeline:
 
 The standard research cycle is:
 ```
-Setup → EDA → Idea → Methods → Results → Evaluate → (iterate or Paper)
+Setup → Idea → Methods → Results → Evaluate → (iterate or Paper)
 ```
+EDA is optional — only run it if the user explicitly asks for it.
 
-**IMPORTANT: Run ONE step at a time.** After each step:
+### Interactive mode (default)
+Run ONE step at a time. After each step:
 1. Use `denario_read_file` to inspect the outputs
 2. Report the full results to the user
 3. Publish to GitHub (see Publishing below)
 4. **Ask the user for permission before starting the next step**
 
 Do NOT chain multiple steps together. The user must approve each step before you proceed.
+
+### Full pipeline mode
+When the user says "run the full pipeline", "do everything", "full auto", or similar:
+1. Run all steps automatically: Setup → Idea → Methods → Results → Evaluate → iterate (up to `max_iterations`) → Paper → audio → GitHub Pages → publish (skip EDA unless the user asked for it)
+2. After each step, still report a brief status update to the user (e.g., "EDA done, running Idea next...")
+3. Publish to GitHub after each step
+4. If a step fails, stop and report the error — do NOT continue automatically
+5. After the paper is written and published, give a full summary: title, abstract, GitHub repo URL, Pages URL, number of iterations, and key findings
 
 ### New idea = new project
 When the user asks to "try something else", "start over", "new idea", or requests a different research direction on the same dataset — create a **new project** with a new `project_dir` (e.g., `projects/damped_oscillators_v2`). Do not reuse the existing project directory. Each distinct starting idea gets its own project, starting fresh from Setup → EDA → Idea.
@@ -90,9 +100,14 @@ git init
 git add README.md data_description.md params.yaml .gitignore
 git commit -m "Setup: <short project description>"
 REPO_SLUG="${SCIENTIST_NAME}-<project-slug>"
+# Check if repo already exists — NEVER overwrite
+if gh repo view "${GITHUB_ORG}/${REPO_SLUG}" &>/dev/null; then
+  echo "Repo ${REPO_SLUG} already exists, appending suffix"
+  REPO_SLUG="${REPO_SLUG}-$(date +%s)"
+fi
 gh repo create "${GITHUB_ORG}/${REPO_SLUG}" --public --source=. --push
 ```
-Choose `<project-slug>` from the project directory name (e.g., `damped-oscillators-v1`).
+Choose `<project-slug>` from the project directory name (e.g., `damped-oscillators-v1`). If a repo with that name already exists, the script appends a timestamp suffix automatically. Never delete or overwrite an existing repo unless the user explicitly asks.
 
 ### After each pipeline step
 
