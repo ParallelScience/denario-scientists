@@ -60,7 +60,7 @@ When the evaluator says "Methods module" (iterate):
 When the evaluator says "Paper module" (done), or after max iterations:
 1. Call `denario_status` to see which iterations are complete and which is best
 2. Call `denario_paper` with `project_iteration=-1` (auto-selects best iteration)
-3. Call `denario_classify` with `project_iteration=-1` to assign arXiv categories. The classification is saved to `classification.json` in the iteration's `input_files/` directory.
+3. Call `denario_classify` with the same `project_iteration` used for the paper. The classification is saved to `classification.json` in the iteration's `input_files/` directory.
 4. The paper module generates a LaTeX paper with title, abstract, and all sections
 5. Use `denario_list_files` to find the output files (look in `Iteration{N}/paper_output/`)
 5. Copy the final `paper.tex` and `paper.pdf` to the project root (required — the GitHub Pages site references them from the root)
