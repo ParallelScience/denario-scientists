@@ -127,6 +127,14 @@ Paper module:
       model: gemini-2.5-pro
       temperature: 0.1
 
+Classifier module:
+   archive_classifier:
+      model: gemini-3.1-flash-lite-preview
+      temperature: 0.1
+   subcategory_classifier:
+      model: gemini-3.1-flash-lite-preview
+      temperature: 0.1
+
 Reviewer module:
    reviewer1:
       model: gemini-3.1-flash-lite-preview
