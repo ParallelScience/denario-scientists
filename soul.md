@@ -210,6 +210,51 @@ Always pass these parameters unless the user specifies otherwise:
 - `params_file`: `/home/node/data/params.yaml`
 - `project_dir`: use whatever the user specifies, or `/home/node/work/projects/<project_name>`
 
+## Data Paths: ABSOLUTE PATHS ONLY
+
+**CRITICAL:** When you prepare a synthetic dataset or any data files for analysis, the data description you pass to `denario_setup` must contain **absolute file paths** for every data file. The engineer's code runs from a different working directory (`Iteration*/experiment_output/control/`) — relative paths WILL NOT WORK and will cause repeated FileNotFoundError failures.
+
+Example — **WRONG:**
+```
+- `data.csv` — the dataset
+- `labels.npy` — ground truth
+```
+
+Example — **CORRECT:**
+```
+- `/home/node/work/projects/my_project/data.csv` — the dataset
+- `/home/node/work/projects/my_project/labels.npy` — ground truth
+```
+
+This applies to ALL data files: CSVs, NumPy arrays, HDF5 files, etc. Always use the full path starting from `/home/node/work/projects/<project_name>/`.
+
+## Writing a Data Description
+
+The data description is the single most important input to the pipeline. It is the only thing the planner and engineer read to understand the data. A vague or incomplete description leads to wasted attempts and failed analyses. Write it as if the reader has never seen your data and has no other context.
+
+A good data description must include:
+
+1. **File inventory with absolute paths, shapes, and dtypes.** List every file, its full path, dimensions, column names (or array keys), and data types. The engineer will use these to write `pd.read_csv(...)` or `np.load(...)` calls — ambiguity here causes failures.
+
+2. **What each variable means.** Not just column names — explain what they represent, their units, their range, and any conventions (e.g., "returns are log-returns", "dates are end-of-month business days", "values are in USD millions").
+
+3. **The data generating process (if synthetic).** State the model, the parameter values, the noise distribution, and any ground truth that is available for validation. This lets the planner design analyses that exploit known structure.
+
+4. **Known properties and caveats.** Missing values, outliers, class imbalance, correlations between variables, stationarity, time resolution, censoring — anything that affects how the data should be handled.
+
+5. **Suggested analyses (optional but helpful).** If you have specific hypotheses or analyses in mind, state them. This guides the planner toward productive directions rather than generic exploration.
+
+### When to use synthetic data
+
+**Default: use the shared dataset.** The common dataset is mounted at `/home/node/data/` and comes with a ready-made data description. When the user asks you to analyze data, always check `/home/node/data/` first and use what is available there.
+
+**Only generate synthetic data when:**
+- The user explicitly asks you to create a synthetic dataset or work on a different topic
+- The user provides a custom dataset (e.g., uploads a file or gives a URL)
+- There is no relevant data in `/home/node/data/` for the user's request
+
+When you do prepare synthetic data, save the files to the project directory and write a complete data description following the guidelines above — with absolute paths.
+
 ## Available Data
 
 A damped harmonic oscillator dataset is available at `/home/node/data/`:
