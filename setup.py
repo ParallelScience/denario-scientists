@@ -8,6 +8,7 @@ Usage:
 """
 
 import argparse
+import copy
 import glob
 import json
 import os
@@ -15,6 +16,8 @@ import shutil
 import subprocess
 import sys
 import time
+
+import yaml
 
 import config as cfg
 
@@ -84,21 +87,21 @@ def generate_compose(fleet):
                 f"{s['gateway_port']}:18789",
                 f"{s['bridge_port']}:18790",
             ],
-            "deploy": {
+            # Service-level resource limits (enforced by docker compose up)
+            "cpus": s.get("cpus", "4"),
+            "mem_limit": s.get("memory", "8g"),
+            # deploy.resources.reservations for GPU passthrough only
+            **({"deploy": {
                 "resources": {
-                    "limits": {
-                        "cpus": s.get("cpus", "4"),
-                        "memory": s.get("memory", "8g"),
-                    },
-                    **({"reservations": {
+                    "reservations": {
                         "devices": [{
                             "driver": "nvidia",
                             "device_ids": s["gpus"],
                             "capabilities": ["gpu"],
                         }]
-                    }} if s.get("gpus") else {}),
+                    }
                 }
-            },
+            }} if s.get("gpus") else {}),
             "init": True,
             "restart": "unless-stopped",
             "command": [
@@ -134,13 +137,12 @@ def generate_compose(fleet):
         lines.append(f"    ports:")
         for p in svc["ports"]:
             lines.append(f'      - "{p}"')
-        lines.append(f"    deploy:")
-        lines.append(f"      resources:")
-        lines.append(f"        limits:")
-        lines.append(f"          cpus: \"{svc['deploy']['resources']['limits']['cpus']}\"")
-        lines.append(f"          memory: {svc['deploy']['resources']['limits']['memory']}")
-        if "reservations" in svc["deploy"]["resources"]:
+        lines.append(f"    cpus: \"{svc['cpus']}\"")
+        lines.append(f"    mem_limit: {svc['mem_limit']}")
+        if "deploy" in svc:
             res = svc["deploy"]["resources"]["reservations"]
+            lines.append(f"    deploy:")
+            lines.append(f"      resources:")
             lines.append(f"        reservations:")
             lines.append(f"          devices:")
             for dev in res["devices"]:
@@ -336,7 +338,35 @@ def generate_dirs_and_configs(fleet):
             print(f"  Config exists for {name}")
 
         _install_workspace_files(config_dir, workspace_dir, s)
+        _install_params(work_dir, s)
         print(f"  Installed workspace for {name}")
+
+
+def _deep_merge(base: dict, overrides: dict) -> dict:
+    """Recursively merge overrides into a copy of base."""
+    result = copy.deepcopy(base)
+    for k, v in overrides.items():
+        if k in result and isinstance(result[k], dict) and isinstance(v, dict):
+            result[k] = _deep_merge(result[k], v)
+        else:
+            result[k] = copy.deepcopy(v)
+    return result
+
+
+def _install_params(work_dir: str, scientist: dict):
+    """Generate per-scientist params.yaml (base + overrides from config)."""
+    base_path = os.path.join(PROJECT_DIR, "data", "params.yaml")
+    out_path = os.path.join(work_dir, "params.yaml")
+
+    with open(base_path) as f:
+        params = yaml.safe_load(f)
+
+    overrides = cfg.PARAMS_OVERRIDES.get(scientist["name"])
+    if overrides:
+        params = _deep_merge(params, overrides)
+
+    with open(out_path, "w") as f:
+        yaml.dump(params, f, default_flow_style=False, sort_keys=False)
 
 
 def ensure_env_tokens(fleet):

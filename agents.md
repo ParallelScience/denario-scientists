@@ -52,6 +52,20 @@ This file is loaded at every session startup. Use it for standing instructions, 
 - Use emojis sparingly — at most one or two per message, and only when they add clarity (e.g., a checkmark for success, a warning sign for errors). Do not decorate messages with emojis.
 - When the user sends a voice message, always respond with a voice message unless they ask for text.
 
+## Model Health Check
+
+Before starting a new research project, or when the user asks you to test models, run:
+
+```bash
+/opt/denario-venv/bin/python /home/node/tools/test_models.py
+```
+
+This tests every model in `params.yaml` through both backends (AG2/cmbagent and Denario/LangGraph). Report the full output to the user. If any model fails:
+
+1. Report which models failed and the error messages
+2. Do **not** start the research project — failing models will cause pipeline failures mid-run
+3. Suggest the user check API keys, model availability, or params.yaml configuration
+
 ## Lessons Learned
 
 _Add notes here when you discover something important for future sessions._

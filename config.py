@@ -22,8 +22,30 @@ MODEL_OVERRIDES = {
 # GPU assignment (optional). Key = scientist name, value = list of GPU device IDs.
 # Only listed scientists get GPU access; others get none.
 GPU_ASSIGNMENT = {
-    "denario-3": ["0"],  # GPU 0 only
-    # "denario-2": ["1"],  # GPU 1 only
+    "denario-3": ["0"],  # GPU 0 — NVIDIA RTX PRO 6000 Blackwell (96 GB VRAM)
+    # "denario-2": ["1"],  # GPU 1
+}
+
+# Per-scientist resource overrides (optional). Key = scientist name.
+# Scientists not listed here get DEFAULT_MEMORY / DEFAULT_CPUS.
+RESOURCE_OVERRIDES = {
+    "denario-3": {"memory": "64g", "cpus": "32"},  # GPU scientist gets more resources
+}
+
+# Per-scientist params.yaml overrides (optional).
+# Deep-merged on top of data/params.yaml. Use dotted module paths.
+# Unset scientists get the base params.yaml as-is.
+PARAMS_OVERRIDES = {
+    "denario-3": {
+        "EDA module": {
+            "code_execution_timeout": 1800,
+            "enable_vlm_review": True,
+        },
+        "Analysis module": {
+            "code_execution_timeout": 1800,
+            "enable_vlm_review": True,
+        },
+    },
 }
 
 # Per-scientist ElevenLabs voice IDs
@@ -53,8 +75,8 @@ def scientists(n=None):
             "token": f"denario-{i}-token",
             "model": MODEL_OVERRIDES.get(f"denario-{i}", DEFAULT_MODEL),
             "voice_id": VOICE_OVERRIDES.get(f"denario-{i}", DEFAULT_VOICE_ID),
-            "memory": DEFAULT_MEMORY,
-            "cpus": DEFAULT_CPUS,
+            "memory": RESOURCE_OVERRIDES.get(f"denario-{i}", {}).get("memory", DEFAULT_MEMORY),
+            "cpus": RESOURCE_OVERRIDES.get(f"denario-{i}", {}).get("cpus", DEFAULT_CPUS),
             "gpus": GPU_ASSIGNMENT.get(f"denario-{i}"),
         }
         for i in range(1, count + 1)
