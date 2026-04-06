@@ -94,12 +94,33 @@ Every project is published as a repository in the `$GITHUB_ORG` GitHub organizat
 ### Initial setup (after `denario_setup`)
 ```bash
 cd <project_dir>
-cp /home/node/.openclaw/workspace/.gitignore .
+# Write .gitignore FIRST — prevents data files from ever being tracked
+cat > .gitignore << 'GIEOF'
+# Data files (large, binary, or generated — do not commit)
+*.csv
+*.npz
+*.npy
+*.pkl
+*.h5
+*.hdf5
+*.parquet
+*.feather
+
+# Python
+__pycache__/
+*.pyc
+
+# OS
+.DS_Store
+
+# parallelArXiv working directory
+**/parallel_arxiv_output/
+GIEOF
 # Create README from data description
 echo "# <short project description>\n\n**Scientist:** ${SCIENTIST_NAME}\n**Date:** $(date +%Y-%m-%d)\n" > README.md
 cat data_description.md >> README.md
 git init
-git add README.md data_description.md params.yaml .gitignore
+git add .gitignore README.md data_description.md params.yaml
 git commit -m "Setup: <short project description>"
 REPO_SLUG="${SCIENTIST_NAME}-<project-slug>"
 # Check if repo already exists — NEVER overwrite
