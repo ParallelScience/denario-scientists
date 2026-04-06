@@ -205,12 +205,20 @@ def _install_workspace_files(config_dir: str, workspace_dir: str, scientist: dic
         shutil.copy2(agents_src, os.path.join(workspace_dir, "AGENTS.md"))
 
     # IDENTITY.md — per-scientist
+    gpu_info = ""
+    if scientist.get("gpus"):
+        gpu_ids = ", ".join(scientist["gpus"])
+        gpu_info = f"""
+## Hardware
+
+You have **GPU access** (device ID: {gpu_ids}). Use it for heavy computation — PyTorch, TensorFlow, JAX, and CUDA are available. When writing code that could benefit from GPU acceleration, use it. Other scientists do NOT have GPU access, so this is your advantage for compute-intensive tasks.
+"""
     with open(os.path.join(workspace_dir, "IDENTITY.md"), "w") as f:
         f.write(f"""# Identity
 
 - **Name:** {scientist['name']}
 - **Role:** Denario research scientist
-""")
+{gpu_info}""")
 
     # Remove files we don't need
     for filename in ["BOOTSTRAP.md", "HEARTBEAT.md", "TOOLS.md", "USER.md"]:
