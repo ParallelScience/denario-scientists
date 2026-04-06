@@ -37,6 +37,14 @@ RESOURCE_OVERRIDES = {
 # Unset scientists get the base params.yaml as-is.
 PARAMS_OVERRIDES = {
     "denario-3": {
+        "hardware_constraints": (
+            "- Linux x86_64 Docker container\n"
+            "- 32 CPUs (AMD Ryzen Threadripper PRO 9995WX), 64 GB RAM\n"
+            "- NVIDIA RTX PRO 6000 Blackwell Edition (96 GB VRAM), CUDA 13.0\n"
+            "- For PyTorch GPU: use device='cuda'\n"
+            "- Multiprocessing: limit to ~8-16 workers to avoid oversubscription\n"
+            "- NumPy/SciPy use OpenBLAS — set OMP_NUM_THREADS to avoid thread oversubscription with multiprocessing"
+        ),
         "EDA module": {
             "code_execution_timeout": 1800,
             "enable_vlm_review": True,
@@ -47,6 +55,16 @@ PARAMS_OVERRIDES = {
         },
     },
 }
+
+# Default hardware_constraints for non-GPU scientists (added to base params)
+DEFAULT_HARDWARE_CONSTRAINTS = (
+    "- Linux x86_64 Docker container\n"
+    "- 4 CPUs (AMD Ryzen Threadripper PRO 9995WX), 8 GB RAM\n"
+    "- No GPU — do not use CUDA or GPU-dependent libraries\n"
+    "- Multiprocessing: limit to 4 workers max\n"
+    "- NumPy/SciPy use OpenBLAS — set OMP_NUM_THREADS=2 to avoid thread oversubscription with multiprocessing\n"
+    "- Memory is limited — avoid loading large datasets entirely into RAM; use chunked/streaming approaches for data > 2 GB"
+)
 
 # Per-scientist ElevenLabs voice IDs
 DEFAULT_VOICE_ID = "sJKq4p1ljb8oxmfBK2hp"

@@ -365,6 +365,10 @@ def _install_params(work_dir: str, scientist: dict):
     if overrides:
         params = _deep_merge(params, overrides)
 
+    # Inject default hardware_constraints if not already set by overrides
+    if "hardware_constraints" not in params:
+        params["hardware_constraints"] = cfg.DEFAULT_HARDWARE_CONSTRAINTS
+
     with open(out_path, "w") as f:
         yaml.dump(params, f, default_flow_style=False, sort_keys=False)
 
