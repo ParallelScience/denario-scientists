@@ -1,7 +1,7 @@
 # Production params for denario-scientists fleet
-# Uses gemini-3.1-pro for coding/research, flash-lite for orchestration
+# Uses gemini-3.1-pro-preview for coding/research, flash-lite for orchestration
 
-max_iterations: 3
+max_iterations: 6
 
 EDA module:
    max_n_steps: 8
@@ -9,10 +9,10 @@ EDA module:
    code_execution_timeout: 300
    enable_vlm_review: true
    engineer:
-      model: gemini-3.1-pro
+      model: gemini-3.1-pro-preview
       temperature: 0.2
    researcher:
-      model: gemini-3.1-pro
+      model: gemini-3.1-pro-preview
       temperature: 0.2
    planner:
       model: gemini-3.1-flash-lite-preview
@@ -81,10 +81,10 @@ Analysis module:
    code_execution_timeout: 300
    enable_vlm_review: false
    engineer:
-      model: gemini-3.1-pro
+      model: gemini-3.1-pro-preview
       temperature: 0.1
    researcher:
-      model: gemini-3.1-pro
+      model: gemini-3.1-pro-preview
       temperature: 0.1
    planner:
       model: gemini-3.1-flash-lite-preview
