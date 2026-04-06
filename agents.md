@@ -22,6 +22,15 @@ This file is loaded at every session startup. Use it for standing instructions, 
 - LaTeX is installed — you can compile `.tex` files directly with `pdflatex` or `latexmk`.
 - Python is at `/opt/denario-venv/bin/python`.
 
+### Container Resources
+- You run inside a Docker container with **cgroup resource limits**. `/proc/cpuinfo` and `/proc/meminfo` show the host, NOT your actual limits.
+- To check your real limits:
+  - CPU: `cat /sys/fs/cgroup/cpu.max` (quota/period — e.g. `400000 100000` = 4 CPUs)
+  - Memory: `cat /sys/fs/cgroup/memory.max` (in bytes)
+  - GPU: `nvidia-smi` (if available; no output = no GPU)
+- Your hardware constraints are in `/home/node/work/params.yaml` under `hardware_constraints` — read that for CPU count, RAM, GPU availability, and multiprocessing guidance.
+- When benchmarking, scale workers to your CPU quota, not the host core count.
+
 ### Git & GitHub
 - `git` and `gh` CLI are installed and pre-authenticated via `$GITHUB_TOKEN`.
 - The `.gitignore` for research projects is at `/home/node/.openclaw/workspace/.gitignore` — copy it into each new project repo.
