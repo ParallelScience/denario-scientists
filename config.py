@@ -16,7 +16,7 @@ MINIMAL_CPUS = "2"
 
 # Base port: scientist-i gets port BASE_PORT + i for gateway, BASE_PORT + 10 + i for bridge
 BASE_GATEWAY_PORT = 18796
-BASE_BRIDGE_PORT = 18806
+BASE_BRIDGE_PORT = 18820
 
 # Per-scientist overrides (optional). Key = scientist name, value = model.
 MODEL_OVERRIDES = {
