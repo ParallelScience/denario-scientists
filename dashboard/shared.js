@@ -106,7 +106,7 @@ async function openStageModal(scientist, project, stage) {
 
     const title = document.getElementById('stage-modal-title');
     const body = document.getElementById('stage-modal-body');
-    title.textContent = `${scientist} / ${project} / ${STAGE_LABELS[stage] || stage}`;
+    title.textContent = STAGE_LABELS[stage] || stage;
     body.innerHTML = '<div class="text-gray-500">Loading...</div>';
     modal.style.display = 'flex';
 
@@ -118,10 +118,10 @@ async function openStageModal(scientist, project, stage) {
         }
         const data = await resp.json();
         if (data.filename && data.filename.endsWith('.tex')) {
-            // LaTeX: show as preformatted text
             body.innerHTML = `<pre class="stage-tex-content">${escapeHtml(data.content)}</pre>`;
         } else if (typeof marked !== 'undefined') {
             body.innerHTML = `<div class="stage-md-content">${marked.parse(data.content)}</div>`;
+            renderMath(body);
         } else {
             body.innerHTML = `<pre class="stage-tex-content">${escapeHtml(data.content)}</pre>`;
         }
@@ -139,6 +139,20 @@ function escapeHtml(text) {
     const div = document.createElement('div');
     div.textContent = text;
     return div.innerHTML;
+}
+
+function renderMath(container) {
+    if (typeof renderMathInElement === 'function') {
+        renderMathInElement(container, {
+            delimiters: [
+                { left: '$$', right: '$$', display: true },
+                { left: '$', right: '$', display: false },
+                { left: '\\(', right: '\\)', display: false },
+                { left: '\\[', right: '\\]', display: true },
+            ],
+            throwOnError: false,
+        });
+    }
 }
 
 // Close modal on Escape
