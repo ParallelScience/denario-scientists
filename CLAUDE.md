@@ -110,11 +110,11 @@ Slack integration is enabled only on denario-1 (Socket Mode).
 
 `dashboard/` contains a public fleet monitoring site served at `dashboard.parallelscience.org`.
 
-- **`collect.py`** — Runs every 10s, polls Docker containers and scans `scientists/*/work/projects/` for pipeline progress. Detects busy status via MCP log recency (`/tmp/denario-mcp.log` mtime < 60s) and high CPU usage. Writes `status.json`.
+- **`collect.py`** — Runs every 10s, polls Docker containers and scans `scientists/*/work/projects/` for pipeline progress. Detects busy status via MCP log recency (`/tmp/denario-mcp.log` mtime < 60s) and high CPU usage. Parses project titles from `paper.tex` (preferred) or `idea.md` (fallback). Aggregates per-project costs from three sources: log files (`logs/{stage}_iter{N}.log`), CMBAgent JSON cost reports (`Iteration*/experiment_output/{planning,control}/cost/`), and EDA/compare_plans reports. Writes `status.json`.
 - **`serve.py`** — HTTP server (default port 3001, override with `DASHBOARD_PORT`) + collector loop. Start with `DASHBOARD_PORT=3003 python dashboard/serve.py`.
-- **`index.html`** — Fleet page: scientist cards with status, resources, pipeline progress bar (EDA → Idea → Lit → Methods → Results → Paper), expandable plan execution table (per-step cost/time/status).
-- **`papers.html`** — Latest 20 completed papers with title, scientist, date, cost. Links to `papers.parallelscience.org` for full archive.
-- **`activity.html`** — Summary stats (running/busy/projects/papers) + chronological event feed (last 50).
+- **`index.html`** — Fleet page: scientist cards with status, resources, per-project cost badge, pipeline progress bar (EDA → Idea → Lit → Methods → Results → Paper), expandable plan execution table (per-step cost/time/status).
+- **`papers.html`** — Latest 20 completed papers with title, scientist, date, total project cost. Links to `papers.parallelscience.org` for full archive.
+- **`activity.html`** — Summary stats (running/busy/projects/papers/total fleet cost) + chronological event feed (last 50).
 - **`shared.js`** / **`style.css`** — Shared utilities and dark theme (EB Garamond headings, JetBrains Mono body, #0a0a0a background).
 
 Tailscale funnel: port 10000 → localhost:3003. DNS CNAME `dashboard.parallelscience.org → orion.taila855ba.ts.net`.

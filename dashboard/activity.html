@@ -25,7 +25,7 @@
         <nav id="nav" class="flex gap-1 mb-8"></nav>
 
         <!-- Summary stats -->
-        <div id="stats" class="grid grid-cols-2 md:grid-cols-4 gap-3 mb-8"></div>
+        <div id="stats" class="grid grid-cols-2 md:grid-cols-5 gap-3 mb-8"></div>
 
         <!-- Feed -->
         <div id="activity-feed" class="space-y-1">
@@ -51,11 +51,15 @@
         const totalPapers = scientists.reduce((sum, s) =>
             sum + (s.projects || []).filter(p => p.stages_completed.includes('paper')).length, 0);
 
+        const totalCost = scientists.reduce((sum, s) =>
+            sum + (s.projects || []).reduce((ps, p) => ps + ((p.cost && p.cost.total_dollars) || 0), 0), 0);
+
         const stats = [
             { label: 'Running', value: `${running}/${scientists.length}`, color: 'text-green-400' },
             { label: 'Busy', value: busy, color: busy > 0 ? 'text-amber-400' : 'text-gray-500' },
             { label: 'Projects', value: totalProjects, color: 'text-gray-300' },
             { label: 'Papers', value: totalPapers, color: 'text-blue-400' },
+            { label: 'Total Cost', value: formatCost(totalCost), color: 'text-purple-400' },
         ];
 
         container.innerHTML = stats.map(s =>

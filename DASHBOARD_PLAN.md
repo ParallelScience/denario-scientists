@@ -89,7 +89,12 @@ status = {
                     "steps_completed": ["eda", "idea", "literature", "methods", "results", "paper"],
                     "last_modified": "2026-04-06T08:30:00Z",
                     "github_url": "https://github.com/ParallelScience/denario-1-damped-oscillators-v3",
-                    "pages_url": "https://parallelscience.github.io/denario-1-damped-oscillators-v3"
+                    "pages_url": "https://parallelscience.github.io/denario-1-damped-oscillators-v3",
+                    "cost": {
+                        "total_dollars": 7.50,
+                        "by_source": {"results": 6.16, "paper": 0.80, "evaluate": 0.33, "methods": 0.19},
+                        "by_iteration": {"0": 1.30, "1": 0.71, "2": 1.21}
+                    }
                 }
             ]
         },

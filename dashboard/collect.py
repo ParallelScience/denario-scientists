@@ -294,6 +294,104 @@ def get_plan_steps(project_dir: Path) -> list[dict] | None:
     return {"steps": steps, "planning": planning_info}
 
 
+def get_project_costs(project_dir: Path) -> dict:
+    """Aggregate all costs for a project across iterations and pipeline stages.
+
+    Returns dict with total_dollars, by_source breakdown, and by_iteration.
+    Sources: results (CMBAgent JSON reports), idea, methods, paper, evaluate,
+    classifier (log files), eda (JSON reports), compare_plans (JSON reports).
+    """
+    total = 0.0
+    by_source = {}  # e.g. {"results": 5.23, "idea": 0.10, ...}
+    by_iteration = {}  # e.g. {0: 1.23, 1: 0.98, ...}
+
+    # --- 1. Log file costs (idea, methods, paper, evaluate, classifier) ---
+    logs_dir = project_dir / "logs"
+    if logs_dir.exists():
+        cost_re = re.compile(r"Cost:\s*\$([0-9.]+)")
+        iter_re = re.compile(r"_iter(\d+)\.log$")
+        for log_file in logs_dir.glob("*.log"):
+            m_iter = iter_re.search(log_file.name)
+            if not m_iter:
+                continue
+            iter_num = int(m_iter.group(1))
+            # Determine stage from filename prefix
+            stage = log_file.name.split("_iter")[0]
+
+            try:
+                # Read last 500 bytes for the cost line
+                size = log_file.stat().st_size
+                with open(log_file, "r", errors="ignore") as f:
+                    if size > 500:
+                        f.seek(size - 500)
+                    tail = f.read()
+                m_cost = cost_re.search(tail)
+                if m_cost:
+                    cost = float(m_cost.group(1))
+                    # Skip results logs — we use JSON reports for those (more accurate)
+                    if stage == "results":
+                        continue
+                    total += cost
+                    by_source[stage] = by_source.get(stage, 0) + cost
+                    by_iteration[iter_num] = by_iteration.get(iter_num, 0) + cost
+            except OSError:
+                pass
+
+    # --- 2. JSON cost reports (CMBAgent planning + control steps) ---
+    def sum_json_costs(cost_dir: Path) -> float:
+        """Sum 'Total' costs from all cost_report JSON files in a directory."""
+        subtotal = 0.0
+        if not cost_dir.exists():
+            return subtotal
+        for cf in cost_dir.glob("cost_report_*.json"):
+            try:
+                with open(cf) as f:
+                    entries = json.load(f)
+                for entry in entries:
+                    if entry.get("Agent") == "Total":
+                        subtotal += entry.get("Cost ($)", 0)
+                        break
+            except (json.JSONDecodeError, OSError):
+                pass
+        return subtotal
+
+    # Per-iteration experiment costs
+    for iter_dir in project_dir.iterdir():
+        if not iter_dir.is_dir() or not re.match(r"Iteration\d+", iter_dir.name):
+            continue
+        iter_num = int(re.search(r"\d+", iter_dir.name).group())
+        exp_out = iter_dir / "experiment_output"
+        if not exp_out.exists():
+            continue
+        planning_cost = sum_json_costs(exp_out / "planning" / "cost")
+        control_cost = sum_json_costs(exp_out / "control" / "cost")
+        iter_results_cost = planning_cost + control_cost
+        total += iter_results_cost
+        by_source["results"] = by_source.get("results", 0) + iter_results_cost
+        by_iteration[iter_num] = by_iteration.get(iter_num, 0) + iter_results_cost
+
+    # --- 3. EDA costs (JSON reports) ---
+    eda_out = project_dir / "EDA" / "EDA_output"
+    if eda_out.exists():
+        eda_cost = sum_json_costs(eda_out / "planning" / "cost") + sum_json_costs(eda_out / "control" / "cost")
+        if eda_cost > 0:
+            total += eda_cost
+            by_source["eda"] = by_source.get("eda", 0) + eda_cost
+
+    # --- 4. compare_plans costs ---
+    compare_cost_dir = project_dir / "compare_plans" / "cost"
+    compare_cost = sum_json_costs(compare_cost_dir)
+    if compare_cost > 0:
+        total += compare_cost
+        by_source["compare_plans"] = by_source.get("compare_plans", 0) + compare_cost
+
+    return {
+        "total_dollars": round(total, 4),
+        "by_source": {k: round(v, 4) for k, v in sorted(by_source.items())},
+        "by_iteration": {str(k): round(v, 4) for k, v in sorted(by_iteration.items())},
+    }
+
+
 def scan_projects(scientist_name: str) -> list[dict]:
     """Scan a scientist's work directory for projects."""
     work_dir = SCIENTISTS_DIR / scientist_name / "work" / "projects"
@@ -336,7 +434,7 @@ def scan_projects(scientist_name: str) -> list[dict]:
         except OSError:
             last_modified = None
 
-        # Parse paper title
+        # Parse title: prefer paper.tex, fall back to idea.md from latest iteration
         title = None
         paper_tex = proj_dir / "paper.tex"
         if paper_tex.exists():
@@ -347,6 +445,20 @@ def scan_projects(scientist_name: str) -> list[dict]:
                     title = re.sub(r"\s+", " ", m.group(1)).strip()
             except OSError:
                 pass
+
+        if not title and iterations:
+            # Check latest iteration's idea.md for title
+            for it in reversed(iterations):
+                idea_file = it / "input_files" / "idea.md"
+                if idea_file.exists():
+                    try:
+                        first_lines = idea_file.read_text(errors="ignore")[:500]
+                        m = re.search(r"\*\*Title\*?\*?:?\s*(.+)", first_lines)
+                        if m:
+                            title = m.group(1).strip().rstrip("*")
+                            break
+                    except OSError:
+                        pass
 
         # GitHub URLs
         github_url = None
@@ -367,12 +479,16 @@ def scan_projects(scientist_name: str) -> list[dict]:
         # Plan execution detail
         plan_execution = get_plan_steps(proj_dir)
 
+        # Cost aggregation
+        cost = get_project_costs(proj_dir)
+
         projects.append({
             "name": proj_dir.name,
             "title": title,
             "iteration_count": iteration_count,
             "stages_completed": stages_completed,
             "plan_execution": plan_execution,
+            "cost": cost,
             "last_modified": last_modified,
             "github_url": github_url,
             "pages_url": pages_url,

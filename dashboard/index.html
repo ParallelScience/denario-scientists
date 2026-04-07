@@ -65,7 +65,10 @@
                 projectsHtml = `<div class="mt-3">
                     <div class="flex items-center justify-between">
                         <span class="text-sm text-gray-200" title="${displayName}">${displayName.length > 60 ? displayName.slice(0, 60) + '...' : displayName}</span>
-                        <span class="text-xs text-gray-600">iter ${proj.iteration_count}</span>
+                        <div class="flex items-center gap-2">
+                            ${proj.cost && proj.cost.total_dollars > 0 ? `<span class="cost-badge">${formatCost(proj.cost.total_dollars)}</span>` : ''}
+                            <span class="text-xs text-gray-600">iter ${proj.iteration_count}</span>
+                        </div>
                     </div>
                     ${proj.title ? `<div class="text-xs text-gray-600 mt-0.5">${proj.name}</div>` : ''}
                     <div class="mt-1">${renderPipelineBar(proj.stages_completed, proj.plan_execution, sci.status === 'busy')}</div>

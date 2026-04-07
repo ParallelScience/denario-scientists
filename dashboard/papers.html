@@ -60,6 +60,7 @@
                         github_url: proj.github_url,
                         stages_completed: proj.stages_completed,
                         plan_execution: proj.plan_execution,
+                        cost: proj.cost,
                     });
                 }
             }
@@ -79,11 +80,8 @@
             }) : '';
 
             let costInfo = '';
-            if (p.plan_execution) {
-                const pe = p.plan_execution;
-                let totalCost = (pe.planning.cost_dollars || 0);
-                pe.steps.forEach(s => { totalCost += (s.cost_dollars || 0); });
-                if (totalCost > 0) costInfo = `<span class="cost-badge">${formatCost(totalCost)}</span>`;
+            if (p.cost && p.cost.total_dollars > 0) {
+                costInfo = `<span class="cost-badge">${formatCost(p.cost.total_dollars)}</span>`;
             }
 
             return `<div class="card p-4">
