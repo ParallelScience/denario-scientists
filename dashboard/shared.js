@@ -45,7 +45,7 @@ function stepStatusIcon(status) {
     return '<span class="text-gray-600">&mdash;</span>';
 }
 
-function renderPipelineBar(stagesCompleted, planExecution, isBusy) {
+function renderPipelineBar(stagesCompleted, planExecution, isBusy, scientist, project) {
     let activeStage = null;
     if (isBusy) {
         for (const stage of STAGES) {
@@ -73,12 +73,78 @@ function renderPipelineBar(stagesCompleted, planExecution, isBusy) {
         let cls = 'stage-pending';
         if (stagesCompleted.includes(stage)) cls = 'stage-done';
         else if (stage === activeStage) cls = 'stage-active';
-        html += `<div class="stage-pill ${cls}">${STAGE_LABELS[stage]}</div>`;
+        const clickable = stagesCompleted.includes(stage) && scientist && project;
+        if (clickable) {
+            html += `<div class="stage-pill ${cls} stage-clickable" onclick="openStageModal('${scientist}','${project}','${stage}')">${STAGE_LABELS[stage]}</div>`;
+        } else {
+            html += `<div class="stage-pill ${cls}">${STAGE_LABELS[stage]}</div>`;
+        }
     }
     html += '</div>';
     html += experimentDetail;
     return html;
 }
+
+// --- Stage content modal ---
+
+async function openStageModal(scientist, project, stage) {
+    let modal = document.getElementById('stage-modal');
+    if (!modal) {
+        modal = document.createElement('div');
+        modal.id = 'stage-modal';
+        modal.innerHTML = `
+            <div class="stage-modal-backdrop" onclick="closeStageModal()"></div>
+            <div class="stage-modal-content">
+                <div class="stage-modal-header">
+                    <span id="stage-modal-title"></span>
+                    <span class="stage-modal-close" onclick="closeStageModal()">&times;</span>
+                </div>
+                <div id="stage-modal-body" class="stage-modal-body">Loading...</div>
+            </div>`;
+        document.body.appendChild(modal);
+    }
+
+    const title = document.getElementById('stage-modal-title');
+    const body = document.getElementById('stage-modal-body');
+    title.textContent = `${scientist} / ${project} / ${STAGE_LABELS[stage] || stage}`;
+    body.innerHTML = '<div class="text-gray-500">Loading...</div>';
+    modal.style.display = 'flex';
+
+    try {
+        const resp = await fetch(`/api/stage?scientist=${encodeURIComponent(scientist)}&project=${encodeURIComponent(project)}&stage=${encodeURIComponent(stage)}`);
+        if (!resp.ok) {
+            body.innerHTML = '<div class="text-red-400">Content not available.</div>';
+            return;
+        }
+        const data = await resp.json();
+        if (data.filename && data.filename.endsWith('.tex')) {
+            // LaTeX: show as preformatted text
+            body.innerHTML = `<pre class="stage-tex-content">${escapeHtml(data.content)}</pre>`;
+        } else if (typeof marked !== 'undefined') {
+            body.innerHTML = `<div class="stage-md-content">${marked.parse(data.content)}</div>`;
+        } else {
+            body.innerHTML = `<pre class="stage-tex-content">${escapeHtml(data.content)}</pre>`;
+        }
+    } catch (e) {
+        body.innerHTML = '<div class="text-red-400">Failed to load content.</div>';
+    }
+}
+
+function closeStageModal() {
+    const modal = document.getElementById('stage-modal');
+    if (modal) modal.style.display = 'none';
+}
+
+function escapeHtml(text) {
+    const div = document.createElement('div');
+    div.textContent = text;
+    return div.innerHTML;
+}
+
+// Close modal on Escape
+document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape') closeStageModal();
+});
 
 function renderPlanTable(planExecution, projectKey) {
     if (!planExecution || !planExecution.steps) return '';

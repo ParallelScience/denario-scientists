@@ -6,7 +6,7 @@
     <title>Fleet — Parallel Science</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=EB+Garamond:wght@400;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="style.css?v=2">
+    <link rel="stylesheet" href="style.css?v=3">
     <script>tailwind.config={theme:{extend:{fontFamily:{serif:['EB Garamond','serif'],mono:['JetBrains Mono','monospace']}}}}</script>
 </head>
 <body class="min-h-screen">
@@ -35,7 +35,8 @@
         </div>
     </div>
 
-    <script src="shared.js?v=2"></script>
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+    <script src="shared.js?v=3"></script>
     <script>
     renderNav('fleet');
 
@@ -71,7 +72,7 @@
                         </div>
                     </div>
                     ${proj.title ? `<div class="text-xs text-gray-600 mt-0.5">${proj.name}</div>` : ''}
-                    <div class="mt-1">${renderPipelineBar(proj.stages_completed, proj.plan_execution, sci.status === 'busy')}</div>
+                    <div class="mt-1">${renderPipelineBar(proj.stages_completed, proj.plan_execution, sci.status === 'busy', sci.name, proj.name)}</div>
                     ${proj.plan_execution ? renderPlanTable(proj.plan_execution, key) : ''}
                     ${otherCount > 0 ? `<div class="text-xs text-gray-600 mt-2">+ ${otherCount} other project${otherCount > 1 ? 's' : ''}</div>` : ''}
                 </div>`;
