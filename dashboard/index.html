@@ -97,7 +97,6 @@
                     <span>${(c.memory_limit_mb / 1024).toFixed(0)} GB</span>
                     ${c.gpu ? `<span>&middot;</span><span class="text-purple-400">${c.gpu}</span>` : ''}
                 </div>
-                <div class="text-xs text-gray-600 mb-2">${sci.model}</div>
 
                 ${projectsHtml || '<div class="text-xs text-gray-600 mt-2">No projects</div>'}
             </div>`;
