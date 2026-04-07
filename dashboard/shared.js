@@ -320,12 +320,20 @@ function renderNav(activePage) {
         { id: 'papers', label: 'Papers', href: 'papers.html' },
         { id: 'activity', label: 'Activity', href: 'activity.html' },
     ];
+    const external = [
+        { label: 'Parallel ArXiv', href: 'https://papers.parallelscience.org' },
+        { label: 'Portal', href: 'https://parallelscience.org' },
+    ];
     const nav = document.getElementById('nav');
     if (!nav) return;
-    nav.innerHTML = pages.map(p => {
+    const internal = pages.map(p => {
         const active = p.id === activePage;
         return `<a href="${p.href}" class="px-3 py-1 text-sm rounded ${active ? 'bg-white/10 text-white' : 'text-gray-500 hover:text-gray-300'}">${p.label}</a>`;
     }).join('');
+    const ext = external.map(p =>
+        `<a href="${p.href}" target="_blank" rel="noopener" class="px-3 py-1 text-sm text-gray-600 hover:text-gray-300">${p.label}</a>`
+    ).join('');
+    nav.innerHTML = internal + `<span class="flex-1"></span>` + ext;
 }
 
 let _fleetStartedAt = null;

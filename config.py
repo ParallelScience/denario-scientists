@@ -3,12 +3,16 @@ Single source of truth for the Denario Scientists fleet.
 """
 
 # How many scientists to run
-N_SCIENTISTS = 1  # default, overridden by setup.py --scientists N
+N_SCIENTISTS = 12  # default, overridden by setup.py --scientists N
 
 # Default model for all scientists (can be overridden per-scientist below)
-DEFAULT_MODEL = "anthropic/claude-sonnet-4-6"
+DEFAULT_MODEL = "google/gemini-3.1-flash-lite-preview"
 DEFAULT_MEMORY = "8g"
 DEFAULT_CPUS = "4"
+
+# Minimal containers for scientists 6-12
+MINIMAL_MEMORY = "2g"
+MINIMAL_CPUS = "2"
 
 # Base port: scientist-i gets port BASE_PORT + i for gateway, BASE_PORT + 10 + i for bridge
 BASE_GATEWAY_PORT = 18796
@@ -16,7 +20,7 @@ BASE_BRIDGE_PORT = 18806
 
 # Per-scientist overrides (optional). Key = scientist name, value = model.
 MODEL_OVERRIDES = {
-    # "denario-1": "google/gemini-3.1-flash-lite-preview",
+    "denario-3": "anthropic/claude-sonnet-4-6",
 }
 
 # GPU assignment (optional). Key = scientist name, value = list of GPU device IDs.
@@ -30,12 +34,34 @@ GPU_ASSIGNMENT = {
 # Scientists not listed here get DEFAULT_MEMORY / DEFAULT_CPUS.
 RESOURCE_OVERRIDES = {
     "denario-3": {"memory": "64g", "cpus": "32"},  # GPU scientist gets more resources
+    **{f"denario-{i}": {"memory": MINIMAL_MEMORY, "cpus": MINIMAL_CPUS} for i in range(6, 13)},
 }
+
+# Default hardware_constraints for non-GPU scientists (added to base params)
+DEFAULT_HARDWARE_CONSTRAINTS = (
+    "- Linux x86_64 Docker container\n"
+    "- 4 CPUs (AMD Ryzen Threadripper PRO 9995WX), 8 GB RAM\n"
+    "- No GPU — do not use CUDA or GPU-dependent libraries\n"
+    "- Multiprocessing: limit to 4 workers max\n"
+    "- NumPy/SciPy use OpenBLAS — set OMP_NUM_THREADS=2 to avoid thread oversubscription with multiprocessing\n"
+    "- Memory is limited — avoid loading large datasets entirely into RAM; use chunked/streaming approaches for data > 2 GB"
+)
+
+# Hardware constraints for minimal scientists (6-12)
+MINIMAL_HARDWARE_CONSTRAINTS = (
+    "- Linux x86_64 Docker container\n"
+    "- 2 CPUs (AMD Ryzen Threadripper PRO 9995WX), 2 GB RAM\n"
+    "- No GPU — do not use CUDA or GPU-dependent libraries\n"
+    "- Multiprocessing: limit to 2 workers max\n"
+    "- Memory is very limited — keep datasets under 500 MB, use streaming/chunked approaches\n"
+    "- NumPy/SciPy use OpenBLAS — set OMP_NUM_THREADS=1"
+)
 
 # Per-scientist params.yaml overrides (optional).
 # Deep-merged on top of data/params.yaml. Use dotted module paths.
 # Unset scientists get the base params.yaml as-is.
 PARAMS_OVERRIDES = {
+    **{f"denario-{i}": {"hardware_constraints": MINIMAL_HARDWARE_CONSTRAINTS} for i in range(6, 13)},
     "denario-3": {
         "hardware_constraints": (
             "- Linux x86_64 Docker container\n"
@@ -56,23 +82,15 @@ PARAMS_OVERRIDES = {
     },
 }
 
-# Default hardware_constraints for non-GPU scientists (added to base params)
-DEFAULT_HARDWARE_CONSTRAINTS = (
-    "- Linux x86_64 Docker container\n"
-    "- 4 CPUs (AMD Ryzen Threadripper PRO 9995WX), 8 GB RAM\n"
-    "- No GPU — do not use CUDA or GPU-dependent libraries\n"
-    "- Multiprocessing: limit to 4 workers max\n"
-    "- NumPy/SciPy use OpenBLAS — set OMP_NUM_THREADS=2 to avoid thread oversubscription with multiprocessing\n"
-    "- Memory is limited — avoid loading large datasets entirely into RAM; use chunked/streaming approaches for data > 2 GB"
-)
-
 # Per-scientist ElevenLabs voice IDs
+# Scientists 6-12 share denario-1's voice (DEFAULT_VOICE_ID)
 DEFAULT_VOICE_ID = "sJKq4p1ljb8oxmfBK2hp"
 VOICE_OVERRIDES = {
     "denario-2": "4nLKNoWGCgxnhFTvHPNL",
     "denario-3": "GPQBwvkAgD34c9QL6VOy",
     "denario-4": "wHmPF60BN2ikHIqbdAP6",
     "denario-5": "W2ZOpTX05dpEry2h5LQb",
+    # denario-6 through denario-12: use DEFAULT_VOICE_ID (same as denario-1)
 }
 
 # Denario MCP server path inside container
