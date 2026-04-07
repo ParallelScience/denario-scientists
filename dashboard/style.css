@@ -1,0 +1,46 @@
+body { background: #0a0a0a; color: #e5e5e5; font-family: 'JetBrains Mono', monospace; }
+h1, h2, h3 { font-family: 'EB Garamond', serif; }
+
+.status-dot { width: 10px; height: 10px; border-radius: 50%; display: inline-block; }
+.status-idle { background: #22c55e; }
+.status-busy { background: #f59e0b; animation: pulse-amber 2s infinite; }
+.status-error { background: #ef4444; animation: pulse-red 1.5s infinite; }
+.status-offline { background: #6b7280; }
+
+@keyframes pulse-amber { 0%, 100% { opacity: 1; } 50% { opacity: 0.5; } }
+@keyframes pulse-red { 0%, 100% { opacity: 1; } 50% { opacity: 0.4; } }
+
+.card { background: #111; border: 1px solid #222; border-radius: 8px; }
+.card:hover { border-color: #333; }
+
+.stage-pill { padding: 2px 8px; border-radius: 4px; font-size: 11px; text-transform: uppercase; letter-spacing: 0.05em; }
+.stage-done { background: #166534; color: #86efac; }
+.stage-active { background: #92400e; color: #fcd34d; animation: pulse-amber 2s infinite; }
+.stage-pending { background: #1a1a1a; color: #555; }
+
+.step-row { border-bottom: 1px solid #1a1a1a; }
+.step-row:last-child { border-bottom: none; }
+
+.expand-btn { cursor: pointer; user-select: none; }
+.expand-btn:hover { color: #aaa; }
+
+.cost-badge { font-size: 11px; padding: 1px 6px; border-radius: 3px; background: #1a1a2e; color: #8b8bcd; }
+.time-badge { font-size: 11px; padding: 1px 6px; border-radius: 3px; background: #1a2e1a; color: #8bcd8b; }
+
+.repo-chip { display: inline-block; padding: 4px 10px; border: 1px solid #333; border-radius: 4px; font-size: 12px; margin: 3px; }
+.repo-chip:hover { border-color: #555; background: #1a1a1a; }
+
+a { color: #93c5fd; text-decoration: none; }
+a:hover { text-decoration: underline; }
+
+.progress-bar { display: flex; gap: 2px; }
+.progress-segment { height: 6px; flex: 1; border-radius: 2px; }
+
+.usage-bar { height: 4px; border-radius: 2px; background: #1a1a1a; overflow: hidden; }
+.usage-fill { height: 100%; border-radius: 2px; transition: width 0.5s ease; }
+
+.feed-item { border-left: 2px solid #222; padding-left: 12px; }
+
+.hidden { display: none; }
+.fade-in { animation: fadeIn 0.3s ease; }
+@keyframes fadeIn { from { opacity: 0; transform: translateY(-4px); } to { opacity: 1; transform: translateY(0); } }

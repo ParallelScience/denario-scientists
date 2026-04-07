@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Papers — Parallel Science</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=EB+Garamond:wght@400;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="style.css?v=2">
+    <script>tailwind.config={theme:{extend:{fontFamily:{serif:['EB Garamond','serif'],mono:['JetBrains Mono','monospace']}}}}</script>
+</head>
+<body class="min-h-screen">
+    <div class="max-w-6xl mx-auto px-4 py-8">
+        <div class="flex items-center justify-between mb-6">
+            <div>
+                <h1 class="text-3xl font-semibold text-white">Recent Papers</h1>
+                <p class="text-sm text-gray-500 mt-1">Latest 20 completed papers</p>
+            </div>
+            <div class="text-right text-xs text-gray-600">
+                <div id="update-time">Loading...</div>
+                <div class="mt-1">Auto-refresh: 10s</div>
+            </div>
+        </div>
+
+        <nav id="nav" class="flex gap-1 mb-8"></nav>
+
+        <div id="papers-list" class="space-y-3">
+            <div class="text-gray-600 text-sm">Loading...</div>
+        </div>
+
+        <div class="mt-6 text-center">
+            <a href="https://papers.parallelscience.org" class="text-sm text-gray-400 hover:text-gray-200">View all papers on papers.parallelscience.org &rarr;</a>
+        </div>
+
+        <div class="border-t border-gray-800 mt-10 pt-4 text-center text-xs text-gray-600 space-x-4">
+            <a href="https://papers.parallelscience.org">Papers</a>
+            <span>&middot;</span>
+            <a href="https://parallelscience.org">Parallel Science</a>
+        </div>
+    </div>
+
+    <script src="shared.js?v=2"></script>
+    <script>
+    renderNav('papers');
+
+    function renderPapers(scientists) {
+        const container = document.getElementById('papers-list');
+        const papers = [];
+
+        for (const sci of (scientists || [])) {
+            for (const proj of (sci.projects || [])) {
+                if (proj.title && proj.stages_completed.includes('paper')) {
+                    papers.push({
+                        title: proj.title,
+                        scientist: sci.name,
+                        project: proj.name,
+                        iteration_count: proj.iteration_count,
+                        last_modified: proj.last_modified,
+                        pages_url: proj.pages_url,
+                        github_url: proj.github_url,
+                        stages_completed: proj.stages_completed,
+                        plan_execution: proj.plan_execution,
+                    });
+                }
+            }
+        }
+
+        papers.sort((a, b) => (b.last_modified || '').localeCompare(a.last_modified || ''));
+        const shown = papers.slice(0, 20);
+
+        if (shown.length === 0) {
+            container.innerHTML = '<div class="text-gray-600 text-sm">No completed papers yet.</div>';
+            return;
+        }
+
+        container.innerHTML = shown.map(p => {
+            const date = p.last_modified ? new Date(p.last_modified).toLocaleDateString('en-US', {
+                year: 'numeric', month: 'short', day: 'numeric'
+            }) : '';
+
+            let costInfo = '';
+            if (p.plan_execution) {
+                const pe = p.plan_execution;
+                let totalCost = (pe.planning.cost_dollars || 0);
+                pe.steps.forEach(s => { totalCost += (s.cost_dollars || 0); });
+                if (totalCost > 0) costInfo = `<span class="cost-badge">${formatCost(totalCost)}</span>`;
+            }
+
+            return `<div class="card p-4">
+                <div class="flex items-start justify-between gap-4">
+                    <div class="flex-1 min-w-0">
+                        <div class="text-base text-gray-100">${p.title}</div>
+                        <div class="text-xs text-gray-500 mt-1">
+                            ${p.scientist} &middot; ${p.project} &middot; ${p.iteration_count} iteration${p.iteration_count !== 1 ? 's' : ''} &middot; ${date}
+                            ${costInfo}
+                        </div>
+                    </div>
+                    <div class="flex gap-3 flex-shrink-0 pt-1">
+                        ${p.pages_url ? `<a href="${p.pages_url}" class="text-xs">View</a>` : ''}
+                        ${p.github_url ? `<a href="${p.github_url}" class="text-xs">Repo</a>` : ''}
+                    </div>
+                </div>
+            </div>`;
+        }).join('');
+
+        if (papers.length > 20) {
+            container.innerHTML += `<div class="text-center text-xs text-gray-600 mt-4">Showing 20 of ${papers.length} papers</div>`;
+        }
+    }
+
+    async function loadData() {
+        try {
+            const data = await fetchStatus();
+            renderPapers(data.scientists);
+            renderUpdateTime(data.timestamp);
+        } catch (e) {
+            console.error('Failed to load status:', e);
+        }
+    }
+
+    loadData();
+    setInterval(loadData, 10000);
+    </script>
+</body>
+</html>

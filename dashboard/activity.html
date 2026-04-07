@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Activity — Parallel Science</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=EB+Garamond:wght@400;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="style.css?v=2">
+    <script>tailwind.config={theme:{extend:{fontFamily:{serif:['EB Garamond','serif'],mono:['JetBrains Mono','monospace']}}}}</script>
+</head>
+<body class="min-h-screen">
+    <div class="max-w-6xl mx-auto px-4 py-8">
+        <div class="flex items-center justify-between mb-6">
+            <div>
+                <h1 class="text-3xl font-semibold text-white">Activity</h1>
+                <p class="text-sm text-gray-500 mt-1">Recent fleet events</p>
+            </div>
+            <div class="text-right text-xs text-gray-600">
+                <div id="update-time">Loading...</div>
+                <div class="mt-1">Auto-refresh: 10s</div>
+            </div>
+        </div>
+
+        <nav id="nav" class="flex gap-1 mb-8"></nav>
+
+        <!-- Summary stats -->
+        <div id="stats" class="grid grid-cols-2 md:grid-cols-4 gap-3 mb-8"></div>
+
+        <!-- Feed -->
+        <div id="activity-feed" class="space-y-1">
+            <div class="text-gray-600 text-sm">Loading...</div>
+        </div>
+
+        <div class="border-t border-gray-800 mt-10 pt-4 text-center text-xs text-gray-600 space-x-4">
+            <a href="https://papers.parallelscience.org">Papers</a>
+            <span>&middot;</span>
+            <a href="https://parallelscience.org">Parallel Science</a>
+        </div>
+    </div>
+
+    <script src="shared.js?v=2"></script>
+    <script>
+    renderNav('activity');
+
+    function renderStats(scientists) {
+        const container = document.getElementById('stats');
+        const running = scientists.filter(s => s.container.running).length;
+        const busy = scientists.filter(s => s.status === 'busy').length;
+        const totalProjects = scientists.reduce((sum, s) => sum + (s.projects || []).length, 0);
+        const totalPapers = scientists.reduce((sum, s) =>
+            sum + (s.projects || []).filter(p => p.stages_completed.includes('paper')).length, 0);
+
+        const stats = [
+            { label: 'Running', value: `${running}/${scientists.length}`, color: 'text-green-400' },
+            { label: 'Busy', value: busy, color: busy > 0 ? 'text-amber-400' : 'text-gray-500' },
+            { label: 'Projects', value: totalProjects, color: 'text-gray-300' },
+            { label: 'Papers', value: totalPapers, color: 'text-blue-400' },
+        ];
+
+        container.innerHTML = stats.map(s =>
+            `<div class="card p-3 text-center">
+                <div class="text-2xl font-semibold ${s.color}">${s.value}</div>
+                <div class="text-xs text-gray-500 mt-1">${s.label}</div>
+            </div>`
+        ).join('');
+    }
+
+    function renderActivityFeed(feed) {
+        const container = document.getElementById('activity-feed');
+        if (!feed || feed.length === 0) {
+            container.innerHTML = '<div class="text-gray-600 text-sm">No recent activity.</div>';
+            return;
+        }
+
+        // Deduplicate
+        const seen = new Set();
+        const filtered = feed.filter(e => {
+            if (e.type === 'activity') return false;
+            const key = `${e.scientist}-${e.event}`;
+            if (seen.has(key)) return false;
+            seen.add(key);
+            return true;
+        }).slice(0, 50);
+
+        if (filtered.length === 0) {
+            container.innerHTML = '<div class="text-gray-600 text-sm">No recent activity.</div>';
+            return;
+        }
+
+        container.innerHTML = filtered.map(e => {
+            const time = e.timestamp ? new Date(e.timestamp).toLocaleString('en-US', {
+                month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit'
+            }) : '';
+
+            let icon = '<span class="text-gray-600">&#9679;</span>';
+            let borderColor = 'border-gray-800';
+            if (e.type === 'paper') {
+                icon = '<span class="text-green-500">&#9679;</span>';
+                borderColor = 'border-green-900';
+            } else if (e.type === 'stage_complete') {
+                icon = '<span class="text-blue-400">&#9679;</span>';
+                borderColor = 'border-blue-900';
+            }
+
+            return `<div class="feed-item ${borderColor} py-2 flex items-start gap-2">
+                <span class="mt-0.5">${icon}</span>
+                <div class="flex-1">
+                    <div class="text-sm text-gray-300">${e.event}</div>
+                    <div class="text-xs text-gray-600 mt-0.5">${e.scientist} &middot; ${time}</div>
+                </div>
+            </div>`;
+        }).join('');
+    }
+
+    async function loadData() {
+        try {
+            const data = await fetchStatus();
+            renderStats(data.scientists);
+            renderActivityFeed(data.activity_feed);
+            renderUpdateTime(data.timestamp);
+        } catch (e) {
+            console.error('Failed to load status:', e);
+        }
+    }
+
+    loadData();
+    setInterval(loadData, 10000);
+    </script>
+</body>
+</html>
