@@ -5,6 +5,49 @@ const STAGE_LABELS = { eda: 'EDA', idea: 'Idea', literature: 'Lit', methods: 'Me
 
 let expandedProjects = new Set();
 
+// --- Card iteration navigation ---
+const _cardProjects = {};  // key -> { scientist, proj, currentIter }
+
+function registerCardProject(key, scientist, proj) {
+    const maxIter = proj.iteration_count > 0 ? proj.iteration_count - 1 : 0;
+    // Preserve current iteration if user navigated away from latest
+    const prev = _cardProjects[key];
+    const currentIter = prev != null ? Math.min(prev.currentIter, maxIter) : maxIter;
+    _cardProjects[key] = { scientist, proj, currentIter };
+}
+
+function cardIterPrev(key) {
+    const cp = _cardProjects[key];
+    if (!cp || cp.currentIter <= 0) return;
+    cp.currentIter--;
+    updateCardIteration(key);
+}
+
+function cardIterNext(key) {
+    const cp = _cardProjects[key];
+    if (!cp || cp.currentIter >= cp.proj.iteration_count - 1) return;
+    cp.currentIter++;
+    updateCardIteration(key);
+}
+
+function updateCardIteration(key) {
+    const cp = _cardProjects[key];
+    if (!cp) return;
+    const { proj, currentIter, scientist } = cp;
+    const maxIter = proj.iteration_count - 1;
+
+    // Update label
+    const label = document.getElementById('iter-label-' + key);
+    if (label) label.textContent = `${currentIter}/${maxIter}`;
+
+    // Update pipeline bar
+    const pipeline = document.getElementById('pipeline-' + key);
+    if (pipeline) {
+        const stages = proj.stages_by_iteration ? proj.stages_by_iteration[currentIter] || [] : proj.stages_completed;
+        pipeline.innerHTML = renderPipelineBar(stages, null, false, scientist, proj.name, proj.iteration_count, currentIter);
+    }
+}
+
 function toggleProject(key) {
     const el = document.getElementById('plan-' + key);
     if (!el) return;
@@ -45,7 +88,7 @@ function stepStatusIcon(status) {
     return '<span class="text-gray-600">&mdash;</span>';
 }
 
-function renderPipelineBar(stagesCompleted, planExecution, isBusy, scientist, project) {
+function renderPipelineBar(stagesCompleted, planExecution, isBusy, scientist, project, iterCount, currentIter) {
     let activeStage = null;
     if (isBusy) {
         for (const stage of STAGES) {
@@ -75,7 +118,8 @@ function renderPipelineBar(stagesCompleted, planExecution, isBusy, scientist, pr
         else if (stage === activeStage) cls = 'stage-active';
         const clickable = stagesCompleted.includes(stage) && scientist && project;
         if (clickable) {
-            html += `<div class="stage-pill ${cls} stage-clickable" onclick="openStageModal('${scientist}','${project}','${stage}')">${STAGE_LABELS[stage]}</div>`;
+            const startIter = currentIter != null ? currentIter : (iterCount || 1) - 1;
+            html += `<div class="stage-pill ${cls} stage-clickable" onclick="openStageModal('${scientist}','${project}','${stage}',${iterCount || 0},${startIter})">${STAGE_LABELS[stage]}</div>`;
         } else {
             html += `<div class="stage-pill ${cls}">${STAGE_LABELS[stage]}</div>`;
         }
@@ -87,7 +131,13 @@ function renderPipelineBar(stagesCompleted, planExecution, isBusy, scientist, pr
 
 // --- Stage content modal ---
 
-async function openStageModal(scientist, project, stage) {
+// Current modal state
+let _modal = { scientist: '', project: '', stage: '', iteration: 0, iterCount: 0 };
+
+// Per-iteration stages (EDA and paper are not per-iteration)
+const PER_ITERATION_STAGES = new Set(['idea', 'literature', 'methods', 'results']);
+
+async function openStageModal(scientist, project, stage, iterCount, startIter) {
     let modal = document.getElementById('stage-modal');
     if (!modal) {
         modal = document.createElement('div');
@@ -96,7 +146,11 @@ async function openStageModal(scientist, project, stage) {
             <div class="stage-modal-backdrop" onclick="closeStageModal()"></div>
             <div class="stage-modal-content">
                 <div class="stage-modal-header">
-                    <span id="stage-modal-title"></span>
+                    <div class="stage-modal-nav">
+                        <span id="stage-modal-prev" class="stage-modal-arrow" onclick="modalPrev()">&larr;</span>
+                        <span id="stage-modal-title"></span>
+                        <span id="stage-modal-next" class="stage-modal-arrow" onclick="modalNext()">&rarr;</span>
+                    </div>
                     <span class="stage-modal-close" onclick="closeStageModal()">&times;</span>
                 </div>
                 <div id="stage-modal-body" class="stage-modal-body">Loading...</div>
@@ -104,16 +158,34 @@ async function openStageModal(scientist, project, stage) {
         document.body.appendChild(modal);
     }
 
+    const initIter = startIter != null ? startIter : Math.max(0, (iterCount || 1) - 1);
+    _modal = { scientist, project, stage, iteration: initIter, iterCount: iterCount || 1 };
+    modal.style.display = 'flex';
+    await loadStageContent();
+}
+
+async function loadStageContent() {
+    const { scientist, project, stage, iteration, iterCount } = _modal;
     const title = document.getElementById('stage-modal-title');
     const body = document.getElementById('stage-modal-body');
-    title.textContent = STAGE_LABELS[stage] || stage;
-    body.innerHTML = '<div class="text-gray-500">Loading...</div>';
-    modal.style.display = 'flex';
+    const prev = document.getElementById('stage-modal-prev');
+    const next = document.getElementById('stage-modal-next');
+
+    const hasNav = PER_ITERATION_STAGES.has(stage) && iterCount > 1;
+    prev.style.visibility = hasNav && iteration > 0 ? 'visible' : 'hidden';
+    next.style.visibility = hasNav && iteration < iterCount - 1 ? 'visible' : 'hidden';
+
+    const label = STAGE_LABELS[stage] || stage;
+    title.textContent = hasNav ? `${label}  ${iteration}/${iterCount - 1}` : label;
+
+    body.innerHTML = '<div style="color:#999">Loading...</div>';
 
     try {
-        const resp = await fetch(`/api/stage?scientist=${encodeURIComponent(scientist)}&project=${encodeURIComponent(project)}&stage=${encodeURIComponent(stage)}`);
+        let url = `/api/stage?scientist=${encodeURIComponent(scientist)}&project=${encodeURIComponent(project)}&stage=${encodeURIComponent(stage)}`;
+        if (PER_ITERATION_STAGES.has(stage)) url += `&iteration=${iteration}`;
+        const resp = await fetch(url);
         if (!resp.ok) {
-            body.innerHTML = '<div class="text-red-400">Content not available.</div>';
+            body.innerHTML = '<div style="color:#c44">Content not available.</div>';
             return;
         }
         const data = await resp.json();
@@ -126,7 +198,21 @@ async function openStageModal(scientist, project, stage) {
             body.innerHTML = `<pre class="stage-tex-content">${escapeHtml(data.content)}</pre>`;
         }
     } catch (e) {
-        body.innerHTML = '<div class="text-red-400">Failed to load content.</div>';
+        body.innerHTML = '<div style="color:#c44">Failed to load content.</div>';
+    }
+}
+
+function modalPrev() {
+    if (_modal.iteration > 0) {
+        _modal.iteration--;
+        loadStageContent();
+    }
+}
+
+function modalNext() {
+    if (_modal.iteration < _modal.iterCount - 1) {
+        _modal.iteration++;
+        loadStageContent();
     }
 }
 
@@ -155,9 +241,11 @@ function renderMath(container) {
     }
 }
 
-// Close modal on Escape
+// Keyboard navigation for modal
 document.addEventListener('keydown', (e) => {
     if (e.key === 'Escape') closeStageModal();
+    if (e.key === 'ArrowLeft') modalPrev();
+    if (e.key === 'ArrowRight') modalNext();
 });
 
 function renderPlanTable(planExecution, projectKey) {
@@ -240,11 +328,59 @@ function renderNav(activePage) {
     }).join('');
 }
 
+let _fleetStartedAt = null;
+let _uptimeInterval = null;
+
 function renderUpdateTime(timestamp) {
     const el = document.getElementById('update-time');
     if (!el || !timestamp) return;
     const ts = new Date(timestamp);
     el.textContent = 'Updated: ' + ts.toLocaleTimeString(undefined, { timeZoneName: 'short' });
+}
+
+function updateMissionCost(scientists) {
+    const el = document.getElementById('mission-cost');
+    if (!el) return;
+    const total = (scientists || []).reduce((sum, s) =>
+        sum + (s.projects || []).reduce((ps, p) => ps + ((p.cost && p.cost.total_dollars) || 0), 0), 0);
+    if (total > 0) {
+        el.textContent = 'Mission Cost: ' + formatCost(total);
+        el.className = 'mt-1 cost-badge';
+    }
+}
+
+function updateFleetUptime(scientists) {
+    // Find the earliest container started_at (longest running = fleet uptime)
+    let earliest = null;
+    for (const sci of (scientists || [])) {
+        const c = sci.container;
+        if (!c || !c.running || !c.started_at) continue;
+        const t = new Date(c.started_at).getTime();
+        if (!isNaN(t) && (earliest === null || t < earliest)) earliest = t;
+    }
+    if (earliest) {
+        _fleetStartedAt = earliest;
+        if (!_uptimeInterval) {
+            _uptimeInterval = setInterval(tickUptime, 1000);
+            tickUptime();
+        }
+    }
+}
+
+function tickUptime() {
+    const el = document.getElementById('uptime');
+    if (!el || !_fleetStartedAt) return;
+    const secs = Math.floor((Date.now() - _fleetStartedAt) / 1000);
+    const d = Math.floor(secs / 86400);
+    const h = Math.floor((secs % 86400) / 3600);
+    const m = Math.floor((secs % 3600) / 60);
+    const s = secs % 60;
+    const parts = [];
+    if (d > 0) parts.push(`${d}d`);
+    if (d > 0 || h > 0) parts.push(`${String(h).padStart(d > 0 ? 2 : 1, '0')}h`);
+    parts.push(`${String(m).padStart(2, '0')}m`);
+    parts.push(`${String(s).padStart(2, '0')}s`);
+    el.textContent = 'Uptime: ' + parts.join(' ');
 }
 
 async function fetchStatus() {

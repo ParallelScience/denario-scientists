@@ -68,11 +68,13 @@ def get_container_info(container_name: str) -> dict:
     healthy = health_status == "healthy" if health_status else running
     restarting = state.get("Restarting", False)
 
-    # Uptime
+    # Start time
+    started_at = None
     uptime = None
     if running and state.get("StartedAt"):
         try:
             started = datetime.fromisoformat(state["StartedAt"].replace("Z", "+00:00"))
+            started_at = started.isoformat()
             delta = datetime.now(timezone.utc) - started
             days = delta.days
             hours = delta.seconds // 3600
@@ -89,6 +91,7 @@ def get_container_info(container_name: str) -> dict:
         "running": running,
         "healthy": healthy and not restarting,
         "restarting": restarting,
+        "started_at": started_at,
         "uptime": uptime,
         "cpu_percent": 0,
         "memory_used_mb": 0,
@@ -122,41 +125,67 @@ def get_container_stats(container_name: str) -> dict:
         return {"cpu_percent": 0, "memory_used_mb": 0}
 
 
-def detect_pipeline_stage(project_dir: Path) -> list[str]:
-    """Detect which pipeline stages are complete for a project."""
+def detect_iteration_stages(iter_dir: Path) -> list[str]:
+    """Detect which pipeline stages are complete for a single iteration."""
     completed = []
+    input_files = iter_dir / "input_files"
+    if (input_files / "idea.md").exists():
+        completed.append("idea")
+    lit_out = iter_dir / "literature_output"
+    if lit_out.exists() or (input_files / "literature.md").exists():
+        completed.append("literature")
+    if (input_files / "methods.md").exists():
+        completed.append("methods")
+    if (input_files / "results.md").exists():
+        completed.append("results")
+    return completed
 
-    # EDA
-    eda_dir = project_dir / "EDA"
-    if eda_dir.exists() and (eda_dir / "eda.md").exists():
-        completed.append("eda")
 
-    # Find latest iteration
+def detect_pipeline_stages_all(project_dir: Path) -> dict:
+    """Detect pipeline stages per iteration and overall.
+
+    Returns dict with:
+      - stages_completed: list of all completed stages (union across iterations + EDA/paper)
+      - stages_by_iteration: list of per-iteration stage lists, indexed by iteration number
+    """
+    has_eda = (project_dir / "EDA" / "eda.md").exists()
+    has_paper = (project_dir / "paper.tex").exists()
+
     iterations = sorted(
         [d for d in project_dir.iterdir() if d.is_dir() and re.match(r"Iteration\d+", d.name)],
         key=lambda d: int(re.search(r"\d+", d.name).group()),
     )
 
-    if iterations:
-        latest = iterations[-1]
-        input_files = latest / "input_files"
+    stages_by_iteration = []
+    all_stages = set()
+    if has_eda:
+        all_stages.add("eda")
 
-        if (input_files / "idea.md").exists():
-            completed.append("idea")
-        # Literature: check for literature output or references
-        lit_out = latest / "literature_output"
-        if lit_out.exists() or (input_files / "literature.md").exists():
-            completed.append("literature")
-        if (input_files / "methods.md").exists():
-            completed.append("methods")
-        if (input_files / "results.md").exists():
-            completed.append("results")
+    for iter_dir in iterations:
+        iter_stages = []
+        if has_eda:
+            iter_stages.append("eda")
+        iter_stages.extend(detect_iteration_stages(iter_dir))
+        if has_paper:
+            iter_stages.append("paper")
+        stages_by_iteration.append(iter_stages)
+        all_stages.update(iter_stages)
 
-    # Paper at project root
-    if (project_dir / "paper.tex").exists():
-        completed.append("paper")
+    if has_paper:
+        all_stages.add("paper")
 
-    return completed
+    # If no iterations but EDA exists
+    if not iterations and has_eda:
+        stages_by_iteration = [["eda"]]
+
+    # Maintain canonical order
+    stage_order = ["eda", "idea", "literature", "methods", "results", "paper"]
+    stages_completed = [s for s in stage_order if s in all_stages]
+
+    return {
+        "stages_completed": stages_completed,
+        "stages_by_iteration": stages_by_iteration,
+    }
 
 
 def get_plan_steps(project_dir: Path) -> list[dict] | None:
@@ -473,8 +502,22 @@ def scan_projects(scientist_name: str) -> list[dict]:
                 if m:
                     pages_url = f"https://{m.group(1).lower()}.github.io/{m.group(2)}"
 
-        # Pipeline stages
-        stages_completed = detect_pipeline_stage(proj_dir)
+        # Best iteration (from latest iteration's best_iteration.md)
+        best_iteration = None
+        if iterations:
+            for it in reversed(iterations):
+                bi_file = it / "input_files" / "best_iteration.md"
+                if bi_file.exists():
+                    try:
+                        m = re.search(r"Best iteration:\s*(\d+)", bi_file.read_text(errors="ignore"))
+                        if m:
+                            best_iteration = int(m.group(1))
+                    except OSError:
+                        pass
+                    break
+
+        # Pipeline stages (per-iteration)
+        pipeline = detect_pipeline_stages_all(proj_dir)
 
         # Plan execution detail
         plan_execution = get_plan_steps(proj_dir)
@@ -486,7 +529,9 @@ def scan_projects(scientist_name: str) -> list[dict]:
             "name": proj_dir.name,
             "title": title,
             "iteration_count": iteration_count,
-            "stages_completed": stages_completed,
+            "best_iteration": best_iteration,
+            "stages_completed": pipeline["stages_completed"],
+            "stages_by_iteration": pipeline["stages_by_iteration"],
             "plan_execution": plan_execution,
             "cost": cost,
             "last_modified": last_modified,
@@ -656,6 +701,7 @@ def collect():
             "container": {
                 "running": container_info["running"],
                 "healthy": container_info["healthy"],
+                "started_at": container_info.get("started_at"),
                 "uptime": container_info["uptime"],
                 "cpu_percent": container_info["cpu_percent"],
                 "memory_used_mb": container_info["memory_used_mb"],

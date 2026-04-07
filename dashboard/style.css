@@ -27,6 +27,8 @@ h1, h2, h3 { font-family: 'EB Garamond', serif; }
 .cost-badge { font-size: 11px; padding: 1px 6px; border-radius: 3px; background: #1a1a2e; color: #8b8bcd; }
 .time-badge { font-size: 11px; padding: 1px 6px; border-radius: 3px; background: #1a2e1a; color: #8bcd8b; }
 
+.best-iter-badge { font-size: 11px; padding: 1px 6px; border-radius: 3px; background: #1a2e1a; color: #8bcd8b; }
+
 .repo-chip { display: inline-block; padding: 4px 10px; border: 1px solid #333; border-radius: 4px; font-size: 12px; margin: 3px; }
 .repo-chip:hover { border-color: #555; background: #1a1a1a; }
 
@@ -45,6 +47,11 @@ a:hover { text-decoration: underline; }
 .fade-in { animation: fadeIn 0.3s ease; }
 @keyframes fadeIn { from { opacity: 0; transform: translateY(-4px); } to { opacity: 1; transform: translateY(0); } }
 
+/* Card iteration navigation */
+.iter-nav { display: inline-flex; align-items: center; gap: 6px; }
+.iter-arrow { cursor: pointer; padding: 2px 6px; color: #aaa; user-select: none; font-size: 14px; border-radius: 3px; }
+.iter-arrow:hover { color: #fff; background: #333; }
+
 /* Clickable stage pills */
 .stage-clickable { cursor: pointer; }
 .stage-clickable:hover { filter: brightness(1.3); }
@@ -61,46 +68,54 @@ a:hover { text-decoration: underline; }
 }
 .stage-modal-content {
     position: relative; z-index: 1;
-    background: #111; border: 1px solid #333; border-radius: 10px;
+    background: #fff; border-radius: 10px;
     width: 90vw; max-width: 800px; max-height: 85vh;
     display: flex; flex-direction: column;
 }
 .stage-modal-header {
     display: flex; justify-content: space-between; align-items: center;
     padding: 14px 20px;
-    border-bottom: 1px solid #222;
-    font-size: 18px; color: #ccc;
+    border-bottom: 1px solid #e0e0e0;
+    font-size: 18px; color: #222;
     font-family: 'EB Garamond', serif; font-weight: 600;
 }
+.stage-modal-nav {
+    display: flex; align-items: center; gap: 12px;
+}
+.stage-modal-arrow {
+    cursor: pointer; font-size: 18px; color: #999;
+    user-select: none; padding: 2px 6px; border-radius: 4px;
+}
+.stage-modal-arrow:hover { color: #333; background: #f0f0f0; }
 .stage-modal-close {
-    cursor: pointer; font-size: 20px; color: #666;
+    cursor: pointer; font-size: 20px; color: #999;
     line-height: 1; padding: 0 4px;
 }
-.stage-modal-close:hover { color: #ccc; }
+.stage-modal-close:hover { color: #333; }
 .stage-modal-body {
     padding: 20px 24px; overflow-y: auto; flex: 1;
 }
 
-/* Markdown rendered content */
-.stage-md-content { font-family: 'EB Garamond', serif; font-size: 18px; line-height: 1.8; color: #e0e0e0; }
-.stage-md-content h1, .stage-md-content h2, .stage-md-content h3 { color: #fff; margin-top: 1.4em; margin-bottom: 0.5em; font-weight: 600; }
+/* Markdown rendered content (light theme for modal) */
+.stage-md-content { font-family: 'EB Garamond', serif; font-size: 18px; line-height: 1.8; color: #1a1a1a; }
+.stage-md-content h1, .stage-md-content h2, .stage-md-content h3 { color: #111; margin-top: 1.4em; margin-bottom: 0.5em; font-weight: 600; }
 .stage-md-content h1 { font-size: 1.6em; }
 .stage-md-content h2 { font-size: 1.35em; }
 .stage-md-content h3 { font-size: 1.15em; }
 .stage-md-content p { margin: 0.7em 0; }
 .stage-md-content ul, .stage-md-content ol { margin: 0.7em 0; padding-left: 1.5em; }
 .stage-md-content li { margin: 0.35em 0; }
-.stage-md-content code { font-family: 'JetBrains Mono', monospace; font-size: 0.8em; background: #1a1a1a; padding: 2px 6px; border-radius: 3px; color: #ccc; }
-.stage-md-content pre { background: #0a0a0a; border: 1px solid #222; border-radius: 6px; padding: 14px; overflow-x: auto; margin: 1em 0; }
+.stage-md-content code { font-family: 'JetBrains Mono', monospace; font-size: 0.8em; background: #f3f3f3; padding: 2px 6px; border-radius: 3px; color: #333; }
+.stage-md-content pre { background: #f7f7f7; border: 1px solid #e0e0e0; border-radius: 6px; padding: 14px; overflow-x: auto; margin: 1em 0; }
 .stage-md-content pre code { background: none; padding: 0; font-size: 0.85em; }
-.stage-md-content strong { color: #fff; font-weight: 600; }
-.stage-md-content em { color: #ccc; }
-.stage-md-content blockquote { border-left: 3px solid #444; padding-left: 14px; color: #aaa; margin: 1em 0; font-style: italic; }
-.stage-md-content a { color: #93c5fd; }
+.stage-md-content strong { color: #000; font-weight: 600; }
+.stage-md-content em { color: #444; }
+.stage-md-content blockquote { border-left: 3px solid #ccc; padding-left: 14px; color: #555; margin: 1em 0; font-style: italic; }
+.stage-md-content a { color: #2563eb; }
 .stage-md-content table { border-collapse: collapse; margin: 1em 0; width: 100%; }
-.stage-md-content th, .stage-md-content td { border: 1px solid #333; padding: 8px 12px; font-size: 0.9em; }
-.stage-md-content th { background: #1a1a1a; color: #ccc; }
+.stage-md-content th, .stage-md-content td { border: 1px solid #ddd; padding: 8px 12px; font-size: 0.9em; }
+.stage-md-content th { background: #f3f3f3; color: #333; }
 .stage-md-content .katex { font-size: 1.05em; }
 
 /* LaTeX preformatted */
-.stage-tex-content { font-family: 'JetBrains Mono', monospace; font-size: 12px; color: #bbb; white-space: pre-wrap; word-break: break-word; }
+.stage-tex-content { font-family: 'JetBrains Mono', monospace; font-size: 12px; color: #333; white-space: pre-wrap; word-break: break-word; }
