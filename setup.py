@@ -255,6 +255,7 @@ def generate_dirs_and_configs(fleet):
                     "defaults": {
                         "model": s["model"],
                         "timeoutSeconds": 3600,
+                        "bootstrapMaxChars": 50000,
                     },
                     "list": [
                         {
