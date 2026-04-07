@@ -269,7 +269,7 @@ def generate_dirs_and_configs(fleet):
                     "slack": {
                         "mode": "socket",
                         "enabled": True,
-                        "allowBots": False,
+                        "allowBots": True,
                         "groupPolicy": "open",
                         "dmPolicy": "open",
                         "allowFrom": ["*"],
