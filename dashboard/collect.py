@@ -442,10 +442,11 @@ def scan_projects(scientist_name: str) -> list[dict]:
             continue
 
         # Count iterations
-        iterations = [
-            d for d in proj_dir.iterdir()
-            if d.is_dir() and re.match(r"Iteration\d+", d.name)
-        ]
+        iterations = sorted(
+            [d for d in proj_dir.iterdir()
+             if d.is_dir() and re.match(r"Iteration\d+", d.name)],
+            key=lambda d: int(re.search(r"\d+", d.name).group()),
+        )
         iteration_count = len(iterations)
 
         # Last modified
