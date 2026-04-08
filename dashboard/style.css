@@ -10,7 +10,7 @@ h1, h2, h3 { font-family: 'EB Garamond', serif; }
 @keyframes pulse-amber { 0%, 100% { opacity: 1; } 50% { opacity: 0.5; } }
 @keyframes pulse-red { 0%, 100% { opacity: 1; } 50% { opacity: 0.4; } }
 
-.card { background: #111; border: 1px solid #222; border-radius: 8px; }
+.card { background: #111; border: 1px solid #222; border-radius: 8px; position: relative; z-index: 1; }
 .card:hover { border-color: #333; }
 
 .stage-pill { padding: 2px 8px; border-radius: 4px; font-size: 11px; text-transform: uppercase; letter-spacing: 0.05em; }
