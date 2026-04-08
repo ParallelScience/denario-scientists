@@ -276,14 +276,10 @@ def generate_dirs_and_configs(fleet):
                         "groupPolicy": "open",
                         "dmPolicy": "open",
                         "allowFrom": ["*"],
-                        "streaming": "partial",
-                        "nativeStreaming": True,
-                        "mediaLocalRoots": [
-                            "/tmp",
-                            "/home/node/work",
-                            "/home/node/.openclaw/workspace",
-                            "/home/node/.openclaw/media",
-                        ],
+                        "streaming": {
+                            "mode": "partial",
+                            "nativeTransport": True,
+                        },
                     }
                 },
                 "mcp": {

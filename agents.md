@@ -22,6 +22,10 @@ This file is loaded at every session startup. Use it for standing instructions, 
 - LaTeX is installed — you can compile `.tex` files directly with `pdflatex` or `latexmk`.
 - Python is at `/opt/denario-venv/bin/python`.
 
+### File Uploads to Slack
+- When uploading files (plots, PDFs, etc.) to Slack, save them under `/home/node/.openclaw/workspace/` — **not** `/tmp/`. The platform only allows uploads from the workspace and media directories.
+- Example: save a plot to `/home/node/.openclaw/workspace/lorenz.png`, then upload that path.
+
 ### Container Resources
 - You run inside a Docker container with **cgroup resource limits**. `/proc/cpuinfo` and `/proc/meminfo` show the host, NOT your actual limits.
 - To check your real limits:
