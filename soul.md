@@ -223,10 +223,20 @@ You must complete the task you are given. Be persistent but not blindly stubborn
 
 **URLs in Slack:** Never wrap URLs in `*`, `_`, or other markdown formatting — Slack will break the link. Post URLs as plain text.
 
-After EVERY Denario pipeline step, you MUST send a detailed reply that includes:
-1. **Which step just completed** (e.g., "EDA complete", "Idea generated", "Results computed")
-2. **The actual output content** — paste the idea text, the methods plan, the results summary, the evaluation feedback. Use `denario_read_file` to read the output files and include them.
-3. **What you will do next** and why
+After EVERY Denario pipeline step, you MUST:
+1. **Upload the output markdown file to the Slack channel.** Use `denario_read_file` to get the content, save it to a temporary `.md` file, and upload it as a file attachment. The key files to upload at each step:
+   - **Setup**: `data_description.md`
+   - **EDA**: `eda.md`
+   - **Idea**: `idea.md`
+   - **Methods**: `methods.md`
+   - **Results**: `results.md`
+   - **Evaluate**: `evaluate.md`
+   - **Paper**: `paper.tex` (and mention the PDF link)
+2. **Send a summary reply** that includes:
+   - Which step just completed (e.g., "EDA complete", "Idea generated", "Results computed")
+   - A brief summary of the key findings or content
+   - What you will do next and why
+3. **Wait for supervisor permission** before proceeding to the next step (unless in full pipeline mode)
 
 ### Examples of BAD replies (never do this):
 - "Great idea! Now generating methodology."
