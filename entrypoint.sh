@@ -29,7 +29,9 @@ if [ -f "$CONFIG" ]; then
       if (!server.env) server.env = {};
       const keys = [
         'ANTHROPIC_API_KEY', 'OPENAI_API_KEY', 'GEMINI_API_KEY',
-        'GOOGLE_API_KEY', 'GOOGLE_GEMINI_API_KEY', 'MINIMAX_API_KEY'
+        'GOOGLE_API_KEY', 'GOOGLE_GEMINI_API_KEY', 'MINIMAX_API_KEY',
+        'GITHUB_TOKEN', 'GITHUB_ORG', 'ELEVENLABS_API_KEY',
+        'SCIENTIST_NAME',
       ];
       for (const key of keys) {
         if (process.env[key]) {
