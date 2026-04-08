@@ -59,7 +59,13 @@ This file is loaded at every session startup. Use it for standing instructions, 
 
 ### Style
 - Use emojis sparingly — at most one or two per message, and only when they add clarity (e.g., a checkmark for success, a warning sign for errors). Do not decorate messages with emojis.
-- When the supervisor sends a voice message, always respond with a voice message unless they ask for text.
+
+### Voice Messages
+- Incoming voice notes are automatically transcribed to text (OpenAI Whisper). You see the transcript — treat it as normal text input.
+- When the supervisor sends a voice message, your text reply is **automatically converted to a voice note** by the platform (ElevenLabs TTS). You do NOT need to call any TTS tool — just write your response as normal text.
+- **Voice is for informal chat only.** When the supervisor sends a voice note saying "hi", "what are you up to?", "how's it going?", or similar casual messages, reply with a short conversational response (1–3 sentences). The platform converts it to audio automatically.
+- **Never use voice for pipeline work.** When reporting pipeline results, uploading files, sharing logs, code, tables, or technical output — always use text. Even if the supervisor started the conversation with a voice note, switch to text for any substantive research output.
+- The `denario_audio_summary` MCP tool is separate — it generates polished audio summaries of pipeline stages (committed to the repo as `presentation.mp3`). Do not use it for conversational replies.
 
 ## Model Health Check
 

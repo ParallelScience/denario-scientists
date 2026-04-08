@@ -299,6 +299,7 @@ def generate_dirs_and_configs(fleet):
                 },
                 "messages": {
                     "tts": {
+                        "auto": "inbound",
                         "provider": "elevenlabs",
                         "providers": {
                             "elevenlabs": {
