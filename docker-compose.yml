@@ -1,0 +1,682 @@
+services:
+  denario-1:
+    build:
+      context: ../openclaw
+      dockerfile: ../denario-scientists/Dockerfile
+      additional_contexts:
+        ag2-src: ../ag2
+        cmbagent-src: ../cmbagent
+        denario-src: ../Denario
+    container_name: denario-1
+    environment:
+      HOME: /home/node
+      TERM: xterm-256color
+      SCIENTIST_NAME: denario-1
+      OPENCLAW_GATEWAY_TOKEN: ${DENARIO_1_TOKEN:-denario-1-token}
+      OPENCLAW_ALLOW_INSECURE_PRIVATE_WS: 1
+      ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY}
+      OPENAI_API_KEY: ${OPENAI_API_KEY}
+      GEMINI_API_KEY: ${GEMINI_API_KEY}
+      GOOGLE_API_KEY: ${GOOGLE_API_KEY}
+      GOOGLE_GEMINI_API_KEY: ${GOOGLE_GEMINI_API_KEY}
+      MINIMAX_API_KEY: ${MINIMAX_API_KEY}
+      GITHUB_TOKEN: ${GITHUB_TOKEN}
+      GITHUB_ORG: ${GITHUB_ORG:-ParallelScience}
+      ELEVENLABS_API_KEY: ${ELEVENLABS_API_KEY}
+      ELEVENLABS_VOICE_ID: sJKq4p1ljb8oxmfBK2hp
+      DENARIO_WORK_DIR: /home/node/work
+      TZ: ${TZ:-UTC}
+      SLACK_BOT_TOKEN: ${SLACK_BOT_TOKEN_1}
+      SLACK_APP_TOKEN: ${SLACK_APP_TOKEN_1}
+    volumes:
+      - ./scientists/denario-1/config:/home/node/.openclaw
+      - ./scientists/denario-1/workspace:/home/node/.openclaw/workspace
+      - ./scientists/denario-1/work:/home/node/work
+      - ./auto-pair.sh:/app/auto-pair.sh:ro
+      - ./entrypoint.sh:/app/entrypoint.sh:ro
+      - ./cancel-watcher.py:/app/cancel-watcher.py:ro
+      - ./bootstrap:/app/bootstrap:ro
+      - ${DATA_DIR:-./data}:/home/node/data:ro
+      - ./tools:/home/node/tools:ro
+    ports:
+      - "18796:18789"
+      - "18820:18790"
+    cpus: "4"
+    mem_limit: 8g
+    init: true
+    restart: unless-stopped
+    command:
+      - "sh"
+      - "/app/entrypoint.sh"
+    healthcheck:
+      test: ["CMD", "node", "-e", "fetch('http://127.0.0.1:18789/healthz').then((r)=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"]
+      interval: 30s
+      timeout: 5s
+      retries: 5
+      start_period: 20s
+
+  denario-2:
+    build:
+      context: ../openclaw
+      dockerfile: ../denario-scientists/Dockerfile
+      additional_contexts:
+        ag2-src: ../ag2
+        cmbagent-src: ../cmbagent
+        denario-src: ../Denario
+    container_name: denario-2
+    environment:
+      HOME: /home/node
+      TERM: xterm-256color
+      SCIENTIST_NAME: denario-2
+      OPENCLAW_GATEWAY_TOKEN: ${DENARIO_2_TOKEN:-denario-2-token}
+      OPENCLAW_ALLOW_INSECURE_PRIVATE_WS: 1
+      ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY}
+      OPENAI_API_KEY: ${OPENAI_API_KEY}
+      GEMINI_API_KEY: ${GEMINI_API_KEY}
+      GOOGLE_API_KEY: ${GOOGLE_API_KEY}
+      GOOGLE_GEMINI_API_KEY: ${GOOGLE_GEMINI_API_KEY}
+      MINIMAX_API_KEY: ${MINIMAX_API_KEY}
+      GITHUB_TOKEN: ${GITHUB_TOKEN}
+      GITHUB_ORG: ${GITHUB_ORG:-ParallelScience}
+      ELEVENLABS_API_KEY: ${ELEVENLABS_API_KEY}
+      ELEVENLABS_VOICE_ID: 4nLKNoWGCgxnhFTvHPNL
+      DENARIO_WORK_DIR: /home/node/work
+      TZ: ${TZ:-UTC}
+      SLACK_BOT_TOKEN: ${SLACK_BOT_TOKEN_2}
+      SLACK_APP_TOKEN: ${SLACK_APP_TOKEN_2}
+    volumes:
+      - ./scientists/denario-2/config:/home/node/.openclaw
+      - ./scientists/denario-2/workspace:/home/node/.openclaw/workspace
+      - ./scientists/denario-2/work:/home/node/work
+      - ./auto-pair.sh:/app/auto-pair.sh:ro
+      - ./entrypoint.sh:/app/entrypoint.sh:ro
+      - ./cancel-watcher.py:/app/cancel-watcher.py:ro
+      - ./bootstrap:/app/bootstrap:ro
+      - ${DATA_DIR:-./data}:/home/node/data:ro
+      - ./tools:/home/node/tools:ro
+    ports:
+      - "18797:18789"
+      - "18821:18790"
+    cpus: "4"
+    mem_limit: 8g
+    init: true
+    restart: unless-stopped
+    command:
+      - "sh"
+      - "/app/entrypoint.sh"
+    healthcheck:
+      test: ["CMD", "node", "-e", "fetch('http://127.0.0.1:18789/healthz').then((r)=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"]
+      interval: 30s
+      timeout: 5s
+      retries: 5
+      start_period: 20s
+
+  denario-3:
+    build:
+      context: ../openclaw
+      dockerfile: ../denario-scientists/Dockerfile
+      additional_contexts:
+        ag2-src: ../ag2
+        cmbagent-src: ../cmbagent
+        denario-src: ../Denario
+    container_name: denario-3
+    environment:
+      HOME: /home/node
+      TERM: xterm-256color
+      SCIENTIST_NAME: denario-3
+      OPENCLAW_GATEWAY_TOKEN: ${DENARIO_3_TOKEN:-denario-3-token}
+      OPENCLAW_ALLOW_INSECURE_PRIVATE_WS: 1
+      ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY}
+      OPENAI_API_KEY: ${OPENAI_API_KEY}
+      GEMINI_API_KEY: ${GEMINI_API_KEY}
+      GOOGLE_API_KEY: ${GOOGLE_API_KEY}
+      GOOGLE_GEMINI_API_KEY: ${GOOGLE_GEMINI_API_KEY}
+      MINIMAX_API_KEY: ${MINIMAX_API_KEY}
+      GITHUB_TOKEN: ${GITHUB_TOKEN}
+      GITHUB_ORG: ${GITHUB_ORG:-ParallelScience}
+      ELEVENLABS_API_KEY: ${ELEVENLABS_API_KEY}
+      ELEVENLABS_VOICE_ID: GPQBwvkAgD34c9QL6VOy
+      DENARIO_WORK_DIR: /home/node/work
+      TZ: ${TZ:-UTC}
+      SLACK_BOT_TOKEN: ${SLACK_BOT_TOKEN_3}
+      SLACK_APP_TOKEN: ${SLACK_APP_TOKEN_3}
+    volumes:
+      - ./scientists/denario-3/config:/home/node/.openclaw
+      - ./scientists/denario-3/workspace:/home/node/.openclaw/workspace
+      - ./scientists/denario-3/work:/home/node/work
+      - ./auto-pair.sh:/app/auto-pair.sh:ro
+      - ./entrypoint.sh:/app/entrypoint.sh:ro
+      - ./cancel-watcher.py:/app/cancel-watcher.py:ro
+      - ./bootstrap:/app/bootstrap:ro
+      - ${DATA_DIR:-./data}:/home/node/data:ro
+      - ./tools:/home/node/tools:ro
+    ports:
+      - "18798:18789"
+      - "18822:18790"
+    cpus: "32"
+    mem_limit: 64g
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              device_ids:
+                - "0"
+              capabilities:
+                - gpu
+    init: true
+    restart: unless-stopped
+    command:
+      - "sh"
+      - "/app/entrypoint.sh"
+    healthcheck:
+      test: ["CMD", "node", "-e", "fetch('http://127.0.0.1:18789/healthz').then((r)=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"]
+      interval: 30s
+      timeout: 5s
+      retries: 5
+      start_period: 20s
+
+  denario-4:
+    build:
+      context: ../openclaw
+      dockerfile: ../denario-scientists/Dockerfile
+      additional_contexts:
+        ag2-src: ../ag2
+        cmbagent-src: ../cmbagent
+        denario-src: ../Denario
+    container_name: denario-4
+    environment:
+      HOME: /home/node
+      TERM: xterm-256color
+      SCIENTIST_NAME: denario-4
+      OPENCLAW_GATEWAY_TOKEN: ${DENARIO_4_TOKEN:-denario-4-token}
+      OPENCLAW_ALLOW_INSECURE_PRIVATE_WS: 1
+      ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY}
+      OPENAI_API_KEY: ${OPENAI_API_KEY}
+      GEMINI_API_KEY: ${GEMINI_API_KEY}
+      GOOGLE_API_KEY: ${GOOGLE_API_KEY}
+      GOOGLE_GEMINI_API_KEY: ${GOOGLE_GEMINI_API_KEY}
+      MINIMAX_API_KEY: ${MINIMAX_API_KEY}
+      GITHUB_TOKEN: ${GITHUB_TOKEN}
+      GITHUB_ORG: ${GITHUB_ORG:-ParallelScience}
+      ELEVENLABS_API_KEY: ${ELEVENLABS_API_KEY}
+      ELEVENLABS_VOICE_ID: wHmPF60BN2ikHIqbdAP6
+      DENARIO_WORK_DIR: /home/node/work
+      TZ: ${TZ:-UTC}
+      SLACK_BOT_TOKEN: ${SLACK_BOT_TOKEN_4}
+      SLACK_APP_TOKEN: ${SLACK_APP_TOKEN_4}
+    volumes:
+      - ./scientists/denario-4/config:/home/node/.openclaw
+      - ./scientists/denario-4/workspace:/home/node/.openclaw/workspace
+      - ./scientists/denario-4/work:/home/node/work
+      - ./auto-pair.sh:/app/auto-pair.sh:ro
+      - ./entrypoint.sh:/app/entrypoint.sh:ro
+      - ./cancel-watcher.py:/app/cancel-watcher.py:ro
+      - ./bootstrap:/app/bootstrap:ro
+      - ${DATA_DIR:-./data}:/home/node/data:ro
+      - ./tools:/home/node/tools:ro
+    ports:
+      - "18799:18789"
+      - "18823:18790"
+    cpus: "4"
+    mem_limit: 8g
+    init: true
+    restart: unless-stopped
+    command:
+      - "sh"
+      - "/app/entrypoint.sh"
+    healthcheck:
+      test: ["CMD", "node", "-e", "fetch('http://127.0.0.1:18789/healthz').then((r)=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"]
+      interval: 30s
+      timeout: 5s
+      retries: 5
+      start_period: 20s
+
+  denario-5:
+    build:
+      context: ../openclaw
+      dockerfile: ../denario-scientists/Dockerfile
+      additional_contexts:
+        ag2-src: ../ag2
+        cmbagent-src: ../cmbagent
+        denario-src: ../Denario
+    container_name: denario-5
+    environment:
+      HOME: /home/node
+      TERM: xterm-256color
+      SCIENTIST_NAME: denario-5
+      OPENCLAW_GATEWAY_TOKEN: ${DENARIO_5_TOKEN:-denario-5-token}
+      OPENCLAW_ALLOW_INSECURE_PRIVATE_WS: 1
+      ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY}
+      OPENAI_API_KEY: ${OPENAI_API_KEY}
+      GEMINI_API_KEY: ${GEMINI_API_KEY}
+      GOOGLE_API_KEY: ${GOOGLE_API_KEY}
+      GOOGLE_GEMINI_API_KEY: ${GOOGLE_GEMINI_API_KEY}
+      MINIMAX_API_KEY: ${MINIMAX_API_KEY}
+      GITHUB_TOKEN: ${GITHUB_TOKEN}
+      GITHUB_ORG: ${GITHUB_ORG:-ParallelScience}
+      ELEVENLABS_API_KEY: ${ELEVENLABS_API_KEY}
+      ELEVENLABS_VOICE_ID: W2ZOpTX05dpEry2h5LQb
+      DENARIO_WORK_DIR: /home/node/work
+      TZ: ${TZ:-UTC}
+      SLACK_BOT_TOKEN: ${SLACK_BOT_TOKEN_5}
+      SLACK_APP_TOKEN: ${SLACK_APP_TOKEN_5}
+    volumes:
+      - ./scientists/denario-5/config:/home/node/.openclaw
+      - ./scientists/denario-5/workspace:/home/node/.openclaw/workspace
+      - ./scientists/denario-5/work:/home/node/work
+      - ./auto-pair.sh:/app/auto-pair.sh:ro
+      - ./entrypoint.sh:/app/entrypoint.sh:ro
+      - ./cancel-watcher.py:/app/cancel-watcher.py:ro
+      - ./bootstrap:/app/bootstrap:ro
+      - ${DATA_DIR:-./data}:/home/node/data:ro
+      - ./tools:/home/node/tools:ro
+    ports:
+      - "18800:18789"
+      - "18824:18790"
+    cpus: "4"
+    mem_limit: 8g
+    init: true
+    restart: unless-stopped
+    command:
+      - "sh"
+      - "/app/entrypoint.sh"
+    healthcheck:
+      test: ["CMD", "node", "-e", "fetch('http://127.0.0.1:18789/healthz').then((r)=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"]
+      interval: 30s
+      timeout: 5s
+      retries: 5
+      start_period: 20s
+
+  denario-6:
+    build:
+      context: ../openclaw
+      dockerfile: ../denario-scientists/Dockerfile
+      additional_contexts:
+        ag2-src: ../ag2
+        cmbagent-src: ../cmbagent
+        denario-src: ../Denario
+    container_name: denario-6
+    environment:
+      HOME: /home/node
+      TERM: xterm-256color
+      SCIENTIST_NAME: denario-6
+      OPENCLAW_GATEWAY_TOKEN: ${DENARIO_6_TOKEN:-denario-6-token}
+      OPENCLAW_ALLOW_INSECURE_PRIVATE_WS: 1
+      ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY}
+      OPENAI_API_KEY: ${OPENAI_API_KEY}
+      GEMINI_API_KEY: ${GEMINI_API_KEY}
+      GOOGLE_API_KEY: ${GOOGLE_API_KEY}
+      GOOGLE_GEMINI_API_KEY: ${GOOGLE_GEMINI_API_KEY}
+      MINIMAX_API_KEY: ${MINIMAX_API_KEY}
+      GITHUB_TOKEN: ${GITHUB_TOKEN}
+      GITHUB_ORG: ${GITHUB_ORG:-ParallelScience}
+      ELEVENLABS_API_KEY: ${ELEVENLABS_API_KEY}
+      ELEVENLABS_VOICE_ID: sJKq4p1ljb8oxmfBK2hp
+      DENARIO_WORK_DIR: /home/node/work
+      TZ: ${TZ:-UTC}
+      SLACK_BOT_TOKEN: ${SLACK_BOT_TOKEN_6}
+      SLACK_APP_TOKEN: ${SLACK_APP_TOKEN_6}
+    volumes:
+      - ./scientists/denario-6/config:/home/node/.openclaw
+      - ./scientists/denario-6/workspace:/home/node/.openclaw/workspace
+      - ./scientists/denario-6/work:/home/node/work
+      - ./auto-pair.sh:/app/auto-pair.sh:ro
+      - ./entrypoint.sh:/app/entrypoint.sh:ro
+      - ./cancel-watcher.py:/app/cancel-watcher.py:ro
+      - ./bootstrap:/app/bootstrap:ro
+      - ${DATA_DIR:-./data}:/home/node/data:ro
+      - ./tools:/home/node/tools:ro
+    ports:
+      - "18801:18789"
+      - "18825:18790"
+    cpus: "8"
+    mem_limit: 16g
+    init: true
+    restart: unless-stopped
+    command:
+      - "sh"
+      - "/app/entrypoint.sh"
+    healthcheck:
+      test: ["CMD", "node", "-e", "fetch('http://127.0.0.1:18789/healthz').then((r)=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"]
+      interval: 30s
+      timeout: 5s
+      retries: 5
+      start_period: 20s
+
+  denario-7:
+    build:
+      context: ../openclaw
+      dockerfile: ../denario-scientists/Dockerfile
+      additional_contexts:
+        ag2-src: ../ag2
+        cmbagent-src: ../cmbagent
+        denario-src: ../Denario
+    container_name: denario-7
+    environment:
+      HOME: /home/node
+      TERM: xterm-256color
+      SCIENTIST_NAME: denario-7
+      OPENCLAW_GATEWAY_TOKEN: ${DENARIO_7_TOKEN:-denario-7-token}
+      OPENCLAW_ALLOW_INSECURE_PRIVATE_WS: 1
+      ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY}
+      OPENAI_API_KEY: ${OPENAI_API_KEY}
+      GEMINI_API_KEY: ${GEMINI_API_KEY}
+      GOOGLE_API_KEY: ${GOOGLE_API_KEY}
+      GOOGLE_GEMINI_API_KEY: ${GOOGLE_GEMINI_API_KEY}
+      MINIMAX_API_KEY: ${MINIMAX_API_KEY}
+      GITHUB_TOKEN: ${GITHUB_TOKEN}
+      GITHUB_ORG: ${GITHUB_ORG:-ParallelScience}
+      ELEVENLABS_API_KEY: ${ELEVENLABS_API_KEY}
+      ELEVENLABS_VOICE_ID: sJKq4p1ljb8oxmfBK2hp
+      DENARIO_WORK_DIR: /home/node/work
+      TZ: ${TZ:-UTC}
+      SLACK_BOT_TOKEN: ${SLACK_BOT_TOKEN_7}
+      SLACK_APP_TOKEN: ${SLACK_APP_TOKEN_7}
+    volumes:
+      - ./scientists/denario-7/config:/home/node/.openclaw
+      - ./scientists/denario-7/workspace:/home/node/.openclaw/workspace
+      - ./scientists/denario-7/work:/home/node/work
+      - ./auto-pair.sh:/app/auto-pair.sh:ro
+      - ./entrypoint.sh:/app/entrypoint.sh:ro
+      - ./cancel-watcher.py:/app/cancel-watcher.py:ro
+      - ./bootstrap:/app/bootstrap:ro
+      - ${DATA_DIR:-./data}:/home/node/data:ro
+      - ./tools:/home/node/tools:ro
+    ports:
+      - "18802:18789"
+      - "18826:18790"
+    cpus: "2"
+    mem_limit: 2g
+    init: true
+    restart: unless-stopped
+    command:
+      - "sh"
+      - "/app/entrypoint.sh"
+    healthcheck:
+      test: ["CMD", "node", "-e", "fetch('http://127.0.0.1:18789/healthz').then((r)=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"]
+      interval: 30s
+      timeout: 5s
+      retries: 5
+      start_period: 20s
+
+  denario-8:
+    build:
+      context: ../openclaw
+      dockerfile: ../denario-scientists/Dockerfile
+      additional_contexts:
+        ag2-src: ../ag2
+        cmbagent-src: ../cmbagent
+        denario-src: ../Denario
+    container_name: denario-8
+    environment:
+      HOME: /home/node
+      TERM: xterm-256color
+      SCIENTIST_NAME: denario-8
+      OPENCLAW_GATEWAY_TOKEN: ${DENARIO_8_TOKEN:-denario-8-token}
+      OPENCLAW_ALLOW_INSECURE_PRIVATE_WS: 1
+      ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY}
+      OPENAI_API_KEY: ${OPENAI_API_KEY}
+      GEMINI_API_KEY: ${GEMINI_API_KEY}
+      GOOGLE_API_KEY: ${GOOGLE_API_KEY}
+      GOOGLE_GEMINI_API_KEY: ${GOOGLE_GEMINI_API_KEY}
+      MINIMAX_API_KEY: ${MINIMAX_API_KEY}
+      GITHUB_TOKEN: ${GITHUB_TOKEN}
+      GITHUB_ORG: ${GITHUB_ORG:-ParallelScience}
+      ELEVENLABS_API_KEY: ${ELEVENLABS_API_KEY}
+      ELEVENLABS_VOICE_ID: sJKq4p1ljb8oxmfBK2hp
+      DENARIO_WORK_DIR: /home/node/work
+      TZ: ${TZ:-UTC}
+      SLACK_BOT_TOKEN: ${SLACK_BOT_TOKEN_8}
+      SLACK_APP_TOKEN: ${SLACK_APP_TOKEN_8}
+    volumes:
+      - ./scientists/denario-8/config:/home/node/.openclaw
+      - ./scientists/denario-8/workspace:/home/node/.openclaw/workspace
+      - ./scientists/denario-8/work:/home/node/work
+      - ./auto-pair.sh:/app/auto-pair.sh:ro
+      - ./entrypoint.sh:/app/entrypoint.sh:ro
+      - ./cancel-watcher.py:/app/cancel-watcher.py:ro
+      - ./bootstrap:/app/bootstrap:ro
+      - ${DATA_DIR:-./data}:/home/node/data:ro
+      - ./tools:/home/node/tools:ro
+    ports:
+      - "18803:18789"
+      - "18827:18790"
+    cpus: "2"
+    mem_limit: 2g
+    init: true
+    restart: unless-stopped
+    command:
+      - "sh"
+      - "/app/entrypoint.sh"
+    healthcheck:
+      test: ["CMD", "node", "-e", "fetch('http://127.0.0.1:18789/healthz').then((r)=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"]
+      interval: 30s
+      timeout: 5s
+      retries: 5
+      start_period: 20s
+
+  denario-9:
+    build:
+      context: ../openclaw
+      dockerfile: ../denario-scientists/Dockerfile
+      additional_contexts:
+        ag2-src: ../ag2
+        cmbagent-src: ../cmbagent
+        denario-src: ../Denario
+    container_name: denario-9
+    environment:
+      HOME: /home/node
+      TERM: xterm-256color
+      SCIENTIST_NAME: denario-9
+      OPENCLAW_GATEWAY_TOKEN: ${DENARIO_9_TOKEN:-denario-9-token}
+      OPENCLAW_ALLOW_INSECURE_PRIVATE_WS: 1
+      ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY}
+      OPENAI_API_KEY: ${OPENAI_API_KEY}
+      GEMINI_API_KEY: ${GEMINI_API_KEY}
+      GOOGLE_API_KEY: ${GOOGLE_API_KEY}
+      GOOGLE_GEMINI_API_KEY: ${GOOGLE_GEMINI_API_KEY}
+      MINIMAX_API_KEY: ${MINIMAX_API_KEY}
+      GITHUB_TOKEN: ${GITHUB_TOKEN}
+      GITHUB_ORG: ${GITHUB_ORG:-ParallelScience}
+      ELEVENLABS_API_KEY: ${ELEVENLABS_API_KEY}
+      ELEVENLABS_VOICE_ID: sJKq4p1ljb8oxmfBK2hp
+      DENARIO_WORK_DIR: /home/node/work
+      TZ: ${TZ:-UTC}
+      SLACK_BOT_TOKEN: ${SLACK_BOT_TOKEN_9}
+      SLACK_APP_TOKEN: ${SLACK_APP_TOKEN_9}
+    volumes:
+      - ./scientists/denario-9/config:/home/node/.openclaw
+      - ./scientists/denario-9/workspace:/home/node/.openclaw/workspace
+      - ./scientists/denario-9/work:/home/node/work
+      - ./auto-pair.sh:/app/auto-pair.sh:ro
+      - ./entrypoint.sh:/app/entrypoint.sh:ro
+      - ./cancel-watcher.py:/app/cancel-watcher.py:ro
+      - ./bootstrap:/app/bootstrap:ro
+      - ${DATA_DIR:-./data}:/home/node/data:ro
+      - ./tools:/home/node/tools:ro
+    ports:
+      - "18804:18789"
+      - "18828:18790"
+    cpus: "2"
+    mem_limit: 2g
+    init: true
+    restart: unless-stopped
+    command:
+      - "sh"
+      - "/app/entrypoint.sh"
+    healthcheck:
+      test: ["CMD", "node", "-e", "fetch('http://127.0.0.1:18789/healthz').then((r)=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"]
+      interval: 30s
+      timeout: 5s
+      retries: 5
+      start_period: 20s
+
+  denario-10:
+    build:
+      context: ../openclaw
+      dockerfile: ../denario-scientists/Dockerfile
+      additional_contexts:
+        ag2-src: ../ag2
+        cmbagent-src: ../cmbagent
+        denario-src: ../Denario
+    container_name: denario-10
+    environment:
+      HOME: /home/node
+      TERM: xterm-256color
+      SCIENTIST_NAME: denario-10
+      OPENCLAW_GATEWAY_TOKEN: ${DENARIO_10_TOKEN:-denario-10-token}
+      OPENCLAW_ALLOW_INSECURE_PRIVATE_WS: 1
+      ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY}
+      OPENAI_API_KEY: ${OPENAI_API_KEY}
+      GEMINI_API_KEY: ${GEMINI_API_KEY}
+      GOOGLE_API_KEY: ${GOOGLE_API_KEY}
+      GOOGLE_GEMINI_API_KEY: ${GOOGLE_GEMINI_API_KEY}
+      MINIMAX_API_KEY: ${MINIMAX_API_KEY}
+      GITHUB_TOKEN: ${GITHUB_TOKEN}
+      GITHUB_ORG: ${GITHUB_ORG:-ParallelScience}
+      ELEVENLABS_API_KEY: ${ELEVENLABS_API_KEY}
+      ELEVENLABS_VOICE_ID: sJKq4p1ljb8oxmfBK2hp
+      DENARIO_WORK_DIR: /home/node/work
+      TZ: ${TZ:-UTC}
+      SLACK_BOT_TOKEN: ${SLACK_BOT_TOKEN_10}
+      SLACK_APP_TOKEN: ${SLACK_APP_TOKEN_10}
+    volumes:
+      - ./scientists/denario-10/config:/home/node/.openclaw
+      - ./scientists/denario-10/workspace:/home/node/.openclaw/workspace
+      - ./scientists/denario-10/work:/home/node/work
+      - ./auto-pair.sh:/app/auto-pair.sh:ro
+      - ./entrypoint.sh:/app/entrypoint.sh:ro
+      - ./cancel-watcher.py:/app/cancel-watcher.py:ro
+      - ./bootstrap:/app/bootstrap:ro
+      - ${DATA_DIR:-./data}:/home/node/data:ro
+      - ./tools:/home/node/tools:ro
+    ports:
+      - "18805:18789"
+      - "18829:18790"
+    cpus: "2"
+    mem_limit: 2g
+    init: true
+    restart: unless-stopped
+    command:
+      - "sh"
+      - "/app/entrypoint.sh"
+    healthcheck:
+      test: ["CMD", "node", "-e", "fetch('http://127.0.0.1:18789/healthz').then((r)=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"]
+      interval: 30s
+      timeout: 5s
+      retries: 5
+      start_period: 20s
+
+  denario-11:
+    build:
+      context: ../openclaw
+      dockerfile: ../denario-scientists/Dockerfile
+      additional_contexts:
+        ag2-src: ../ag2
+        cmbagent-src: ../cmbagent
+        denario-src: ../Denario
+    container_name: denario-11
+    environment:
+      HOME: /home/node
+      TERM: xterm-256color
+      SCIENTIST_NAME: denario-11
+      OPENCLAW_GATEWAY_TOKEN: ${DENARIO_11_TOKEN:-denario-11-token}
+      OPENCLAW_ALLOW_INSECURE_PRIVATE_WS: 1
+      ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY}
+      OPENAI_API_KEY: ${OPENAI_API_KEY}
+      GEMINI_API_KEY: ${GEMINI_API_KEY}
+      GOOGLE_API_KEY: ${GOOGLE_API_KEY}
+      GOOGLE_GEMINI_API_KEY: ${GOOGLE_GEMINI_API_KEY}
+      MINIMAX_API_KEY: ${MINIMAX_API_KEY}
+      GITHUB_TOKEN: ${GITHUB_TOKEN}
+      GITHUB_ORG: ${GITHUB_ORG:-ParallelScience}
+      ELEVENLABS_API_KEY: ${ELEVENLABS_API_KEY}
+      ELEVENLABS_VOICE_ID: sJKq4p1ljb8oxmfBK2hp
+      DENARIO_WORK_DIR: /home/node/work
+      TZ: ${TZ:-UTC}
+      SLACK_BOT_TOKEN: ${SLACK_BOT_TOKEN_11}
+      SLACK_APP_TOKEN: ${SLACK_APP_TOKEN_11}
+    volumes:
+      - ./scientists/denario-11/config:/home/node/.openclaw
+      - ./scientists/denario-11/workspace:/home/node/.openclaw/workspace
+      - ./scientists/denario-11/work:/home/node/work
+      - ./auto-pair.sh:/app/auto-pair.sh:ro
+      - ./entrypoint.sh:/app/entrypoint.sh:ro
+      - ./cancel-watcher.py:/app/cancel-watcher.py:ro
+      - ./bootstrap:/app/bootstrap:ro
+      - ${DATA_DIR:-./data}:/home/node/data:ro
+      - ./tools:/home/node/tools:ro
+    ports:
+      - "18806:18789"
+      - "18830:18790"
+    cpus: "2"
+    mem_limit: 2g
+    init: true
+    restart: unless-stopped
+    command:
+      - "sh"
+      - "/app/entrypoint.sh"
+    healthcheck:
+      test: ["CMD", "node", "-e", "fetch('http://127.0.0.1:18789/healthz').then((r)=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"]
+      interval: 30s
+      timeout: 5s
+      retries: 5
+      start_period: 20s
+
+  denario-12:
+    build:
+      context: ../openclaw
+      dockerfile: ../denario-scientists/Dockerfile
+      additional_contexts:
+        ag2-src: ../ag2
+        cmbagent-src: ../cmbagent
+        denario-src: ../Denario
+    container_name: denario-12
+    environment:
+      HOME: /home/node
+      TERM: xterm-256color
+      SCIENTIST_NAME: denario-12
+      OPENCLAW_GATEWAY_TOKEN: ${DENARIO_12_TOKEN:-denario-12-token}
+      OPENCLAW_ALLOW_INSECURE_PRIVATE_WS: 1
+      ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY}
+      OPENAI_API_KEY: ${OPENAI_API_KEY}
+      GEMINI_API_KEY: ${GEMINI_API_KEY}
+      GOOGLE_API_KEY: ${GOOGLE_API_KEY}
+      GOOGLE_GEMINI_API_KEY: ${GOOGLE_GEMINI_API_KEY}
+      MINIMAX_API_KEY: ${MINIMAX_API_KEY}
+      GITHUB_TOKEN: ${GITHUB_TOKEN}
+      GITHUB_ORG: ${GITHUB_ORG:-ParallelScience}
+      ELEVENLABS_API_KEY: ${ELEVENLABS_API_KEY}
+      ELEVENLABS_VOICE_ID: sJKq4p1ljb8oxmfBK2hp
+      DENARIO_WORK_DIR: /home/node/work
+      TZ: ${TZ:-UTC}
+      SLACK_BOT_TOKEN: ${SLACK_BOT_TOKEN_12}
+      SLACK_APP_TOKEN: ${SLACK_APP_TOKEN_12}
+    volumes:
+      - ./scientists/denario-12/config:/home/node/.openclaw
+      - ./scientists/denario-12/workspace:/home/node/.openclaw/workspace
+      - ./scientists/denario-12/work:/home/node/work
+      - ./auto-pair.sh:/app/auto-pair.sh:ro
+      - ./entrypoint.sh:/app/entrypoint.sh:ro
+      - ./cancel-watcher.py:/app/cancel-watcher.py:ro
+      - ./bootstrap:/app/bootstrap:ro
+      - ${DATA_DIR:-./data}:/home/node/data:ro
+      - ./tools:/home/node/tools:ro
+    ports:
+      - "18807:18789"
+      - "18831:18790"
+    cpus: "2"
+    mem_limit: 2g
+    init: true
+    restart: unless-stopped
+    command:
+      - "sh"
+      - "/app/entrypoint.sh"
+    healthcheck:
+      test: ["CMD", "node", "-e", "fetch('http://127.0.0.1:18789/healthz').then((r)=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"]
+      interval: 30s
+      timeout: 5s
+      retries: 5
+      start_period: 20s
+

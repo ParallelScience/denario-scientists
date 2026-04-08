@@ -1,6 +1,5 @@
 .env
 scientists/
-docker-compose.yml
 bootstrap/
 __pycache__/
 dashboard/status.json
