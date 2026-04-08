@@ -15,7 +15,7 @@ h1, h2, h3 { font-family: 'EB Garamond', serif; }
 
 .stage-pill { padding: 2px 8px; border-radius: 4px; font-size: 11px; text-transform: uppercase; letter-spacing: 0.05em; }
 .stage-done { background: #166534; color: #86efac; }
-.stage-active { background: #92400e; color: #fcd34d; animation: pulse-amber 2s infinite; }
+.stage-active { background: #92400e; color: #fcd34d; }
 .stage-pending { background: #1a1a1a; color: #555; }
 
 .step-row { border-bottom: 1px solid #1a1a1a; }
