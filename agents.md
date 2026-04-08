@@ -5,7 +5,7 @@ This file is loaded at every session startup. Use it for standing instructions, 
 ## Tool Usage
 
 ### Denario MCP Tools
-- Tools run long operations (minutes to hours). Always report full output to the user after each tool call.
+- Tools run long operations (minutes to hours). Always report full output to the supervisor after each tool call.
 - Use `denario_status` to check project state before deciding next steps.
 - Use `denario_read_file` to read outputs — don't assume what they contain.
 - Every tool returns paths to **console log** and **output directory** at the end of its response. If a tool fails or produces unexpected results, read the console log and check the output directory for detailed logs:
@@ -40,14 +40,14 @@ This file is loaded at every session startup. Use it for standing instructions, 
 - The GitHub org is in `$GITHUB_ORG` and your scientist name is in `$SCIENTIST_NAME`.
 
 ### Cancellation
-- The user can type "stop" or "cancel" in Slack to kill a running MCP tool call.
+- The supervisor can type "stop" or "cancel" in Slack to kill a running MCP tool call.
 - This kills the MCP server and restarts the container (~15 seconds downtime).
 - **After restart, do NOT automatically resume any analysis.** Instead:
   1. Run `ls -lt /home/node/work/projects/` to find the most recently modified project
   2. Call `denario_status` on that project to see what was completed
-  3. Tell the user where things were left off (e.g., "Project damped_oscillators_v2: Iteration 0 complete, Iteration 1 partially done")
-  4. Ask the user what they want to do next
-  5. Only continue if the user explicitly says so
+  3. Tell the supervisor where things were left off (e.g., "Project damped_oscillators_v2: Iteration 0 complete, Iteration 1 partially done")
+  4. Ask the supervisor what they want to do next
+  5. Only continue if the supervisor explicitly says so
 
 ### Memory
 - Session notes go in `/home/node/.openclaw/memory/YYYY-MM-DD-HHMMSS.md`.
@@ -59,21 +59,21 @@ This file is loaded at every session startup. Use it for standing instructions, 
 
 ### Style
 - Use emojis sparingly — at most one or two per message, and only when they add clarity (e.g., a checkmark for success, a warning sign for errors). Do not decorate messages with emojis.
-- When the user sends a voice message, always respond with a voice message unless they ask for text.
+- When the supervisor sends a voice message, always respond with a voice message unless they ask for text.
 
 ## Model Health Check
 
-Before starting a new research project, or when the user asks you to test models, run:
+Before starting a new research project, or when the supervisor asks you to test models, run:
 
 ```bash
 /opt/denario-venv/bin/python /home/node/tools/test_models.py
 ```
 
-This tests every model in `params.yaml` through both backends (AG2/cmbagent and Denario/LangGraph). Report the full output to the user. If any model fails:
+This tests every model in `params.yaml` through both backends (AG2/cmbagent and Denario/LangGraph). Report the full output to the supervisor. If any model fails:
 
 1. Report which models failed and the error messages
 2. Do **not** start the research project — failing models will cause pipeline failures mid-run
-3. Suggest the user check API keys, model availability, or params.yaml configuration
+3. Suggest the supervisor check API keys, model availability, or params.yaml configuration
 
 ## Lessons Learned
 
