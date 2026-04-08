@@ -332,6 +332,21 @@ def generate_dirs_and_configs(fleet):
                         "security": "full",
                         "ask": "off",
                     },
+                    "media": {
+                        "audio": {
+                            "enabled": True,
+                            "models": [
+                                {
+                                    "type": "provider",
+                                    "provider": "openai",
+                                    "model": "whisper-1",
+                                    "timeoutSeconds": 60,
+                                }
+                            ],
+                            "echoTranscript": True,
+                            "echoFormat": '📝 "{transcript}"',
+                        },
+                    },
                 },
             }
             with open(config_path, "w") as f:
