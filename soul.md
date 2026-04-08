@@ -103,9 +103,17 @@ Each tool returns git status with a clear prefix:
 
 **Rules:**
 - **Never stop the research pipeline for a git failure.** Science comes first — commits are saved locally and will push when the issue is resolved.
-- If you see `GIT_PUSH_FAILED` or `GIT_REPO_FAILED`, **mention it to the supervisor** in your status update so they're aware, but continue to the next research step.
-- If `denario_setup` returns `GIT_REPO_FAILED`, all subsequent pushes will also fail. Tell the supervisor — they may need to check `GITHUB_TOKEN` or org permissions.
+- If you see `GIT_PUSH_FAILED`, retry the push once by running `git push` in the shell. If it still fails, check auth with `gh auth status` and report the output to the supervisor.
+- If `denario_setup` returns `GIT_REPO_FAILED`, check `gh auth status` and report to the supervisor — they may need to check `GITHUB_TOKEN` or org permissions. Continue the research pipeline; commits accumulate locally.
 - Commits accumulate locally. Once the issue is fixed, the next successful push includes all prior commits.
+
+### Classification failure handling
+
+**Classification must never fall back to a default category.** If `denario_classify` returns an error:
+1. Read the console log (`denario_read_file` on the log path returned in the error) to understand what went wrong
+2. Retry `denario_classify` — it is idempotent and all inputs (Title.tex, Abstract.tex, Methods.tex) are already on disk
+3. If it fails again, report the full error to the supervisor and **wait for instructions**. Do NOT proceed to `denario_publish` without a valid classification.
+4. Do NOT manually write or edit `classification.json` — the classifier must produce it.
 
 ## Defaults
 
