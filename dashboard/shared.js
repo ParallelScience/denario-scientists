@@ -48,37 +48,24 @@ function updateCardIteration(key) {
         pipeline.innerHTML = renderPipelineBar(stages, iterPlan, false, scientist, proj.name, proj.iteration_count, currentIter);
     }
 
-    // Update plan table
-    const planEl = document.getElementById('plan-' + key);
-    if (planEl) {
+    // Update plan summary
+    const planSummary = document.getElementById('plan-summary-' + key);
+    if (planSummary) {
         const iterPlan = (proj.plan_by_iteration && proj.plan_by_iteration[currentIter]) || null;
-        if (iterPlan) {
-            const wasExpanded = expandedProjects.has(key);
-            planEl.outerHTML = renderPlanTable(iterPlan, key);
-            if (wasExpanded) {
-                expandedProjects.add(key);
-                const newEl = document.getElementById('plan-' + key);
-                if (newEl) newEl.classList.remove('hidden');
-            }
-        } else {
-            planEl.outerHTML = '';
-        }
+        planSummary.innerHTML = iterPlan ? renderPlanTable(iterPlan, key) : '';
     }
 }
 
 function toggleProject(key) {
     const el = document.getElementById('plan-' + key);
     if (!el) return;
-    const card = el.closest('.card');
     if (expandedProjects.has(key)) {
         expandedProjects.delete(key);
         el.classList.add('hidden');
-        if (card) card.classList.remove('card-expanded');
     } else {
         expandedProjects.add(key);
         el.classList.remove('hidden');
         el.classList.add('fade-in');
-        if (card) card.classList.add('card-expanded');
     }
 }
 
@@ -278,26 +265,39 @@ function renderPlanTable(planExecution, projectKey) {
     let totalTime = (planning.time_seconds || 0);
     steps.forEach(s => { totalCost += (s.cost_dollars || 0); totalTime += (s.time_seconds || 0); });
 
-    const expanded = expandedProjects.has(projectKey);
+    const done = steps.filter(s => s.status === 'completed').length;
+    const inProgress = steps.find(s => s.status === 'in_progress');
+    let statusText = `${done}/${steps.length} steps`;
+    if (inProgress) statusText = `${inProgress.name} (${done}/${steps.length})`;
 
     let html = `<div class="mt-2">`;
-    html += `<div class="expand-btn text-xs text-gray-500 flex items-center gap-1" onclick="toggleProject('${projectKey}')">`;
-    html += `<span>${expanded ? '&#9660;' : '&#9654;'}</span>`;
-    html += `<span>Plan: ${steps.length} steps</span>`;
+    html += `<div class="expand-btn text-xs text-gray-500 flex items-center gap-1" onclick="openPlanModal(${JSON.stringify(JSON.stringify(planExecution))})">`;
+    html += `<span>&#9654;</span>`;
+    html += `<span>Plan: ${statusText}</span>`;
     html += `<span class="cost-badge ml-2">${formatCost(totalCost)}</span>`;
     html += `<span class="time-badge">${formatTime(totalTime)}</span>`;
-    html += `</div>`;
+    html += `</div></div>`;
+    return html;
+}
 
-    html += `<div id="plan-${projectKey}" class="plan-dropdown ${expanded ? 'fade-in' : 'hidden'} mt-2">`;
-    html += `<table class="w-full text-xs"><thead><tr class="text-gray-500 text-left">`;
-    html += `<th class="pb-1 w-8">#</th><th class="pb-1">Sub-task</th><th class="pb-1 w-16">Agent</th>`;
-    html += `<th class="pb-1 w-12 text-right">Status</th><th class="pb-1 w-16 text-right">Time</th><th class="pb-1 w-16 text-right">Cost</th>`;
+function openPlanModal(planJson) {
+    const plan = JSON.parse(planJson);
+    const steps = plan.steps;
+    const planning = plan.planning;
+
+    let totalCost = (planning.cost_dollars || 0);
+    let totalTime = (planning.time_seconds || 0);
+    steps.forEach(s => { totalCost += (s.cost_dollars || 0); totalTime += (s.time_seconds || 0); });
+
+    let html = `<table class="w-full text-sm"><thead><tr class="text-gray-400 text-left border-b border-gray-700">`;
+    html += `<th class="pb-2 w-8">#</th><th class="pb-2">Sub-task</th><th class="pb-2 w-20">Agent</th>`;
+    html += `<th class="pb-2 w-16 text-right">Status</th><th class="pb-2 w-20 text-right">Time</th><th class="pb-2 w-20 text-right">Cost</th>`;
     html += `</tr></thead><tbody>`;
 
-    html += `<tr class="step-row text-gray-400"><td></td><td>Planning</td><td></td>`;
-    html += `<td class="text-right"><span class="text-green-500">&#10003;</span></td>`;
-    html += `<td class="text-right">${formatTime(planning.time_seconds)}</td>`;
-    html += `<td class="text-right">${formatCost(planning.cost_dollars)}</td></tr>`;
+    html += `<tr class="text-gray-400 border-b border-gray-800"><td class="py-2"></td><td class="py-2">Planning</td><td></td>`;
+    html += `<td class="py-2 text-right"><span class="text-green-500">&#10003;</span></td>`;
+    html += `<td class="py-2 text-right">${formatTime(planning.time_seconds)}</td>`;
+    html += `<td class="py-2 text-right">${formatCost(planning.cost_dollars)}</td></tr>`;
 
     for (const step of steps) {
         let attemptInfo = '';
@@ -305,22 +305,44 @@ function renderPlanTable(planExecution, projectKey) {
             const color = step.attempt > 3 ? 'text-amber-400' : 'text-gray-500';
             attemptInfo = ` <span class="${color}">(${step.attempt}/${step.max_attempts})</span>`;
         }
-        html += `<tr class="step-row">`;
-        html += `<td class="text-gray-500 py-1">${step.number}</td>`;
-        html += `<td class="py-1 text-gray-300 truncate max-w-[200px]" title="${step.name}">${step.name}</td>`;
-        html += `<td class="py-1 text-gray-500">${step.agent}</td>`;
-        html += `<td class="py-1 text-right">${stepStatusIcon(step.status)}${attemptInfo}</td>`;
-        html += `<td class="py-1 text-right text-gray-400">${formatTime(step.time_seconds)}</td>`;
-        html += `<td class="py-1 text-right text-gray-400">${formatCost(step.cost_dollars)}</td>`;
+        html += `<tr class="border-b border-gray-800">`;
+        html += `<td class="text-gray-500 py-2">${step.number}</td>`;
+        html += `<td class="py-2 text-gray-200">${step.name}</td>`;
+        html += `<td class="py-2 text-gray-500">${step.agent}</td>`;
+        html += `<td class="py-2 text-right">${stepStatusIcon(step.status)}${attemptInfo}</td>`;
+        html += `<td class="py-2 text-right text-gray-400">${formatTime(step.time_seconds)}</td>`;
+        html += `<td class="py-2 text-right text-gray-400">${formatCost(step.cost_dollars)}</td>`;
         html += `</tr>`;
     }
 
-    html += `<tr class="text-gray-300 font-medium"><td></td><td>Total</td><td></td><td></td>`;
-    html += `<td class="text-right">${formatTime(totalTime)}</td>`;
-    html += `<td class="text-right">${formatCost(totalCost)}</td></tr>`;
+    html += `<tr class="text-gray-200 font-medium"><td class="pt-2"></td><td class="pt-2">Total</td><td></td><td></td>`;
+    html += `<td class="pt-2 text-right">${formatTime(totalTime)}</td>`;
+    html += `<td class="pt-2 text-right">${formatCost(totalCost)}</td></tr>`;
 
-    html += `</tbody></table></div></div>`;
-    return html;
+    html += `</tbody></table>`;
+
+    let modal = document.getElementById('plan-modal');
+    if (!modal) {
+        modal = document.createElement('div');
+        modal.id = 'plan-modal';
+        modal.innerHTML = `
+            <div class="plan-modal-backdrop" onclick="closePlanModal()"></div>
+            <div class="plan-modal-content">
+                <div class="plan-modal-header">
+                    <span>Execution Plan</span>
+                    <span class="plan-modal-close" onclick="closePlanModal()">&times;</span>
+                </div>
+                <div id="plan-modal-body" class="plan-modal-body"></div>
+            </div>`;
+        document.body.appendChild(modal);
+    }
+    document.getElementById('plan-modal-body').innerHTML = html;
+    modal.style.display = 'flex';
+}
+
+function closePlanModal() {
+    const modal = document.getElementById('plan-modal');
+    if (modal) modal.style.display = 'none';
 }
 
 function renderUsageBar(used, limit, label, unit) {

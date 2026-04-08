@@ -10,11 +10,16 @@ h1, h2, h3 { font-family: 'EB Garamond', serif; }
 @keyframes pulse-amber { 0%, 100% { opacity: 1; } 50% { opacity: 0.5; } }
 @keyframes pulse-red { 0%, 100% { opacity: 1; } 50% { opacity: 0.4; } }
 
-.card { background: #111; border: 1px solid #222; border-radius: 8px; position: relative; z-index: 1; }
+.card { background: #111; border: 1px solid #222; border-radius: 8px; }
 .card:hover { border-color: #333; }
-.card-expanded { z-index: 20; }
 
-.plan-dropdown { background: #0d0d0d; border: 1px solid #333; border-radius: 6px; padding: 8px; }
+#plan-modal { display: none; position: fixed; inset: 0; z-index: 1000; align-items: center; justify-content: center; }
+.plan-modal-backdrop { position: fixed; inset: 0; background: rgba(0, 0, 0, 0.75); }
+.plan-modal-content { position: relative; z-index: 1; background: #111; border: 1px solid #333; border-radius: 10px; width: 90vw; max-width: 900px; max-height: 85vh; display: flex; flex-direction: column; }
+.plan-modal-header { display: flex; justify-content: space-between; align-items: center; padding: 14px 20px; border-bottom: 1px solid #333; font-size: 16px; color: #e5e5e5; font-family: 'EB Garamond', serif; font-weight: 600; }
+.plan-modal-close { cursor: pointer; font-size: 20px; color: #666; line-height: 1; padding: 0 4px; }
+.plan-modal-close:hover { color: #ccc; }
+.plan-modal-body { padding: 16px 20px; overflow-y: auto; flex: 1; }
 
 .stage-pill { padding: 2px 8px; border-radius: 4px; font-size: 11px; text-transform: uppercase; letter-spacing: 0.05em; }
 .stage-done { background: #166534; color: #86efac; }
