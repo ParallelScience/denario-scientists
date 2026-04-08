@@ -285,7 +285,7 @@ function renderPlanTable(planExecution, projectKey) {
     html += `<span class="time-badge">${formatTime(totalTime)}</span>`;
     html += `</div>`;
 
-    html += `<div id="plan-${projectKey}" class="${expanded ? 'fade-in' : 'hidden'} mt-2">`;
+    html += `<div id="plan-${projectKey}" class="plan-dropdown ${expanded ? 'fade-in' : 'hidden'} mt-2">`;
     html += `<table class="w-full text-xs"><thead><tr class="text-gray-500 text-left">`;
     html += `<th class="pb-1 w-8">#</th><th class="pb-1">Sub-task</th><th class="pb-1 w-16">Agent</th>`;
     html += `<th class="pb-1 w-12 text-right">Status</th><th class="pb-1 w-16 text-right">Time</th><th class="pb-1 w-16 text-right">Cost</th>`;
