@@ -120,6 +120,9 @@ Evaluator module:
       temperature: 0.2
 
 Paper module:
+   keywords_writer:
+      model: gemini-3.1-flash-lite-preview
+      temperature: 0.1
    section_writer:
       model: gemini-2.5-pro
       temperature: 0.1

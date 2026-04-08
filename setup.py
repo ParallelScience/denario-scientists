@@ -63,9 +63,11 @@ def generate_compose(fleet):
                 "GEMINI_API_KEY": "${GEMINI_API_KEY}",
                 "GOOGLE_API_KEY": "${GOOGLE_API_KEY}",
                 "GOOGLE_GEMINI_API_KEY": "${GOOGLE_GEMINI_API_KEY}",
+                "MINIMAX_API_KEY": "${MINIMAX_API_KEY}",
                 "GITHUB_TOKEN": "${GITHUB_TOKEN}",
                 "GITHUB_ORG": "${GITHUB_ORG:-ParallelScience}",
                 "ELEVENLABS_API_KEY": "${ELEVENLABS_API_KEY}",
+                "ELEVENLABS_VOICE_ID": s["voice_id"],
                 "DENARIO_WORK_DIR": "/home/node/work",
                 "TZ": "${TZ:-UTC}",
                 # Per-scientist Slack app tokens (e.g. SLACK_BOT_TOKEN_1, SLACK_APP_TOKEN_1)

@@ -21,6 +21,7 @@ BASE_BRIDGE_PORT = 18820
 # Per-scientist overrides (optional). Key = scientist name, value = model.
 MODEL_OVERRIDES = {
     "denario-3": "anthropic/claude-sonnet-4-6",
+    "denario-4": "minimax/minimax-m2.7",
 }
 
 # GPU assignment (optional). Key = scientist name, value = list of GPU device IDs.
