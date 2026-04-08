@@ -6,7 +6,7 @@ Single source of truth for the Denario Scientists fleet.
 N_SCIENTISTS = 12  # default, overridden by setup.py --scientists N
 
 # Default model for all scientists (can be overridden per-scientist below)
-DEFAULT_MODEL = "google/gemini-3.1-flash-lite-preview"
+DEFAULT_MODEL = "minimax/MiniMax-M2.7"
 DEFAULT_MEMORY = "8g"
 DEFAULT_CPUS = "4"
 
@@ -21,7 +21,7 @@ BASE_BRIDGE_PORT = 18820
 # Per-scientist overrides (optional). Key = scientist name, value = model.
 MODEL_OVERRIDES = {
     "denario-3": "anthropic/claude-sonnet-4-6",
-    "denario-4": "minimax/minimax-m2.7",
+    "denario-6": "anthropic/claude-sonnet-4-6",
 }
 
 # GPU assignment (optional). Key = scientist name, value = list of GPU device IDs.
@@ -35,7 +35,8 @@ GPU_ASSIGNMENT = {
 # Scientists not listed here get DEFAULT_MEMORY / DEFAULT_CPUS.
 RESOURCE_OVERRIDES = {
     "denario-3": {"memory": "64g", "cpus": "32"},  # GPU scientist gets more resources
-    **{f"denario-{i}": {"memory": MINIMAL_MEMORY, "cpus": MINIMAL_CPUS} for i in range(6, 13)},
+    "denario-6": {"memory": "16g", "cpus": "8"},
+    **{f"denario-{i}": {"memory": MINIMAL_MEMORY, "cpus": MINIMAL_CPUS} for i in range(7, 13)},
 }
 
 # Default hardware_constraints for non-GPU scientists (added to base params)
@@ -62,7 +63,17 @@ MINIMAL_HARDWARE_CONSTRAINTS = (
 # Deep-merged on top of data/params.yaml. Use dotted module paths.
 # Unset scientists get the base params.yaml as-is.
 PARAMS_OVERRIDES = {
-    **{f"denario-{i}": {"hardware_constraints": MINIMAL_HARDWARE_CONSTRAINTS} for i in range(6, 13)},
+    **{f"denario-{i}": {"hardware_constraints": MINIMAL_HARDWARE_CONSTRAINTS} for i in range(7, 13)},
+    "denario-6": {
+        "hardware_constraints": (
+            "- Linux x86_64 Docker container\n"
+            "- 8 CPUs (AMD Ryzen Threadripper PRO 9995WX), 16 GB RAM\n"
+            "- No GPU — do not use CUDA or GPU-dependent libraries\n"
+            "- Multiprocessing: limit to 8 workers max\n"
+            "- NumPy/SciPy use OpenBLAS — set OMP_NUM_THREADS=2 to avoid thread oversubscription with multiprocessing\n"
+            "- Memory is limited — avoid loading large datasets entirely into RAM; use chunked/streaming approaches for data > 4 GB"
+        ),
+    },
     "denario-3": {
         "hardware_constraints": (
             "- Linux x86_64 Docker container\n"

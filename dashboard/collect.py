@@ -644,7 +644,8 @@ def collect():
     """Main collection routine."""
     # Detect how many scientists exist from the scientists/ directory
     scientist_dirs = sorted(
-        [d.name for d in SCIENTISTS_DIR.iterdir() if d.is_dir() and d.name.startswith("denario-")]
+        [d.name for d in SCIENTISTS_DIR.iterdir() if d.is_dir() and d.name.startswith("denario-")],
+        key=lambda n: int(re.search(r"\d+", n).group()),
     ) if SCIENTISTS_DIR.exists() else []
 
     if not scientist_dirs:
