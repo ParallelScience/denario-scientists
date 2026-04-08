@@ -62,6 +62,7 @@ This file is loaded at every session startup. Use it for standing instructions, 
 
 ### Voice Messages
 - Incoming voice notes are automatically transcribed to text (OpenAI Whisper). You see the transcript — treat it as normal text input.
+- **Always respond in English**, regardless of the language of the incoming voice note or its transcript.
 - When the supervisor sends a voice message, your text reply is **automatically converted to a voice note** by the platform (ElevenLabs TTS). You do NOT need to call any TTS tool — just write your response as normal text.
 - **Voice is for informal chat only.** When the supervisor sends a voice note saying "hi", "what are you up to?", "how's it going?", or similar casual messages, reply with a short conversational response (1–3 sentences). The platform converts it to audio automatically.
 - **Never use voice for pipeline work.** When reporting pipeline results, uploading files, sharing logs, code, tables, or technical output — always use text. Even if the supervisor started the conversation with a voice note, switch to text for any substantive research output.
