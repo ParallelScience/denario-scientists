@@ -278,6 +278,12 @@ def generate_dirs_and_configs(fleet):
                         "allowFrom": ["*"],
                         "streaming": "partial",
                         "nativeStreaming": True,
+                        "mediaLocalRoots": [
+                            "/tmp",
+                            "/home/node/work",
+                            "/home/node/.openclaw/workspace",
+                            "/home/node/.openclaw/media",
+                        ],
                     }
                 },
                 "mcp": {
@@ -319,6 +325,7 @@ def generate_dirs_and_configs(fleet):
                         "phone-control": {"enabled": False},
                         "talk-voice": {"enabled": True},
                         "elevenlabs": {"enabled": True},
+                        "openai": {"enabled": True},
                     }
                 },
                 "skills": {"entries": {}},
