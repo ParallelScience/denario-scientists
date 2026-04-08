@@ -44,7 +44,25 @@ function updateCardIteration(key) {
     const pipeline = document.getElementById('pipeline-' + key);
     if (pipeline) {
         const stages = proj.stages_by_iteration ? proj.stages_by_iteration[currentIter] || [] : proj.stages_completed;
-        pipeline.innerHTML = renderPipelineBar(stages, null, false, scientist, proj.name, proj.iteration_count, currentIter);
+        const iterPlan = (proj.plan_by_iteration && proj.plan_by_iteration[currentIter]) || null;
+        pipeline.innerHTML = renderPipelineBar(stages, iterPlan, false, scientist, proj.name, proj.iteration_count, currentIter);
+    }
+
+    // Update plan table
+    const planEl = document.getElementById('plan-' + key);
+    if (planEl) {
+        const iterPlan = (proj.plan_by_iteration && proj.plan_by_iteration[currentIter]) || null;
+        if (iterPlan) {
+            const wasExpanded = expandedProjects.has(key);
+            planEl.outerHTML = renderPlanTable(iterPlan, key);
+            if (wasExpanded) {
+                expandedProjects.add(key);
+                const newEl = document.getElementById('plan-' + key);
+                if (newEl) newEl.classList.remove('hidden');
+            }
+        } else {
+            planEl.outerHTML = '';
+        }
     }
 }
 

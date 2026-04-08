@@ -188,17 +188,22 @@ def detect_pipeline_stages_all(project_dir: Path) -> dict:
     }
 
 
-def get_plan_steps(project_dir: Path) -> list[dict] | None:
-    """Extract plan steps and their execution status from experiment_output."""
-    iterations = sorted(
-        [d for d in project_dir.iterdir() if d.is_dir() and re.match(r"Iteration\d+", d.name)],
-        key=lambda d: int(re.search(r"\d+", d.name).group()),
-    )
-    if not iterations:
-        return None
+def get_plan_steps(project_dir: Path, iteration_dir: Path | None = None) -> list[dict] | None:
+    """Extract plan steps and their execution status from experiment_output.
 
-    latest = iterations[-1]
-    exp_out = latest / "experiment_output"
+    If iteration_dir is given, reads from that iteration. Otherwise falls back
+    to the latest iteration in the project.
+    """
+    if iteration_dir is not None:
+        exp_out = iteration_dir / "experiment_output"
+    else:
+        iterations = sorted(
+            [d for d in project_dir.iterdir() if d.is_dir() and re.match(r"Iteration\d+", d.name)],
+            key=lambda d: int(re.search(r"\d+", d.name).group()),
+        )
+        if not iterations:
+            return None
+        exp_out = iterations[-1] / "experiment_output"
     if not exp_out.exists():
         return None
 
@@ -520,8 +525,14 @@ def scan_projects(scientist_name: str) -> list[dict]:
         # Pipeline stages (per-iteration)
         pipeline = detect_pipeline_stages_all(proj_dir)
 
-        # Plan execution detail
-        plan_execution = get_plan_steps(proj_dir)
+        # Plan execution detail (per-iteration)
+        plan_by_iteration = {}
+        for it in iterations:
+            idx = int(re.search(r"\d+", it.name).group())
+            plan = get_plan_steps(proj_dir, iteration_dir=it)
+            if plan:
+                plan_by_iteration[idx] = plan
+        plan_execution = plan_by_iteration.get(iteration_count - 1) if iterations else None
 
         # Cost aggregation
         cost = get_project_costs(proj_dir)
@@ -534,6 +545,7 @@ def scan_projects(scientist_name: str) -> list[dict]:
             "stages_completed": pipeline["stages_completed"],
             "stages_by_iteration": pipeline["stages_by_iteration"],
             "plan_execution": plan_execution,
+            "plan_by_iteration": plan_by_iteration,
             "cost": cost,
             "last_modified": last_modified,
             "github_url": github_url,
