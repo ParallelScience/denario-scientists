@@ -69,13 +69,16 @@ function updateCardIteration(key) {
 function toggleProject(key) {
     const el = document.getElementById('plan-' + key);
     if (!el) return;
+    const card = el.closest('.card');
     if (expandedProjects.has(key)) {
         expandedProjects.delete(key);
         el.classList.add('hidden');
+        if (card) card.classList.remove('card-expanded');
     } else {
         expandedProjects.add(key);
         el.classList.remove('hidden');
         el.classList.add('fade-in');
+        if (card) card.classList.add('card-expanded');
     }
 }
 
