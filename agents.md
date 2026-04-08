@@ -23,8 +23,10 @@ This file is loaded at every session startup. Use it for standing instructions, 
 - Python is at `/opt/denario-venv/bin/python`.
 
 ### File Uploads to Slack
-- When uploading files (plots, PDFs, etc.) to Slack, save them under `/home/node/.openclaw/workspace/` — **not** `/tmp/`. The platform only allows uploads from the workspace and media directories.
-- Example: save a plot to `/home/node/.openclaw/workspace/lorenz.png`, then upload that path.
+- When uploading files (plots, PDFs, markdown, etc.) to Slack, save them under `/home/node/.openclaw/workspace/` — **not** `/tmp/`. The platform only allows uploads from the workspace and media directories.
+- **All file types are supported**, including `.md`, `.tex`, `.pdf`, `.png`, `.csv`, etc. Slack does NOT block any file extension — if an upload fails, the issue is the file path (must be in workspace), not the file type.
+- Example workflow for markdown: save to `/home/node/.openclaw/workspace/idea.md`, then upload that path.
+- Example for plots: save to `/home/node/.openclaw/workspace/lorenz.png`, then upload that path.
 
 ### Container Resources
 - You run inside a Docker container with **cgroup resource limits**. `/proc/cpuinfo` and `/proc/meminfo` show the host, NOT your actual limits.
