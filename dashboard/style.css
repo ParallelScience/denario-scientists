@@ -3,7 +3,7 @@ h1, h2, h3 { font-family: 'EB Garamond', serif; }
 
 .status-dot { width: 10px; height: 10px; border-radius: 50%; display: inline-block; }
 .status-idle { background: #22c55e; }
-.status-busy { background: #f59e0b; animation: pulse-amber 2s infinite; }
+.status-busy { background: #f59e0b; }
 .status-error { background: #ef4444; animation: pulse-red 1.5s infinite; }
 .status-offline { background: #6b7280; }
 
