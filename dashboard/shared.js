@@ -5,6 +5,15 @@ const STAGE_LABELS = { eda: 'EDA', idea: 'Idea', literature: 'Lit', methods: 'Me
 
 let expandedProjects = new Set();
 
+// --- Plan data store (avoids inlining JSON in onclick attributes) ---
+const _planStore = {};
+let _planStoreId = 0;
+function storePlan(plan) {
+    const id = '_p' + (++_planStoreId);
+    _planStore[id] = plan;
+    return id;
+}
+
 // --- Card iteration navigation ---
 const _cardProjects = {};  // key -> { scientist, proj, currentIter }
 
@@ -97,16 +106,6 @@ function stepStatusIcon(status) {
 }
 
 function renderPipelineBar(stagesCompleted, planExecution, isBusy, scientist, project, iterCount, currentIter) {
-    let activeStage = null;
-    if (isBusy) {
-        for (const stage of STAGES) {
-            if (!stagesCompleted.includes(stage)) {
-                activeStage = stage;
-                break;
-            }
-        }
-    }
-
     let experimentDetail = '';
     if (planExecution && planExecution.steps) {
         const done = planExecution.steps.filter(s => s.status === 'completed').length;
@@ -122,8 +121,7 @@ function renderPipelineBar(stagesCompleted, planExecution, isBusy, scientist, pr
     let html = '<div class="progress-bar">';
     for (const stage of STAGES) {
         let cls = 'stage-pending';
-        if (stagesCompleted.includes(stage)) cls = 'stage-done';
-        else if (stage === activeStage) cls = 'stage-active';
+        if (stagesCompleted.includes(stage)) cls = stage === 'paper' ? 'stage-paper' : 'stage-done';
         const clickable = stagesCompleted.includes(stage) && scientist && project;
         if (clickable) {
             const startIter = currentIter != null ? currentIter : (iterCount || 1) - 1;
@@ -270,8 +268,9 @@ function renderPlanTable(planExecution, projectKey) {
     let statusText = `${done}/${steps.length} steps`;
     if (inProgress) statusText = `${inProgress.name} (${done}/${steps.length})`;
 
+    const planId = storePlan(planExecution);
     let html = `<div class="mt-2">`;
-    html += `<div class="expand-btn text-xs text-gray-500 flex items-center gap-1" onclick="openPlanModal(${JSON.stringify(JSON.stringify(planExecution))})">`;
+    html += `<div class="expand-btn text-xs text-gray-500 flex items-center gap-1" onclick="openPlanModal('${planId}')">`;
     html += `<span>&#9654;</span>`;
     html += `<span>Plan: ${statusText}</span>`;
     html += `<span class="cost-badge ml-2">${formatCost(totalCost)}</span>`;
@@ -280,8 +279,9 @@ function renderPlanTable(planExecution, projectKey) {
     return html;
 }
 
-function openPlanModal(planJson) {
-    const plan = JSON.parse(planJson);
+function openPlanModal(planId) {
+    const plan = _planStore[planId];
+    if (!plan) return;
     const steps = plan.steps;
     const planning = plan.planning;
 
