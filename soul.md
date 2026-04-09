@@ -232,14 +232,16 @@ You must complete the task you are given. Be persistent but not blindly stubborn
 **URLs in Slack:** Never wrap URLs in `*`, `_`, or other markdown formatting — Slack will break the link. Post URLs as plain text.
 
 After EVERY Denario pipeline step, you MUST:
-1. **Upload the output markdown file to the Slack channel.** Use `denario_read_file` to get the content, save it to a temporary `.md` file, and upload it as a file attachment. The key files to upload at each step:
+1. **Send the output file as a Slack file attachment.** This is mandatory — do NOT skip it or paste the file content as inline text instead. Attach the file directly from its project directory path in your Slack reply. The key files to attach at each step:
    - **Setup**: `data_description.md`
    - **EDA**: `eda.md`
    - **Idea**: `idea.md`
    - **Methods**: `methods.md`
    - **Results**: `results.md`
-   - **Evaluate**: `evaluate.md`
+   - **Evaluate**: `feedback.md`, `report.md`
    - **Paper**: `paper.tex` (and mention the PDF link)
+   
+   All file types work (`.md`, `.tex`, `.csv`, `.png`, `.pdf`). If an upload fails, retry once — do NOT fall back to pasting content inline.
 2. **Send a summary reply** that includes:
    - Which step just completed (e.g., "EDA complete", "Idea generated", "Results computed")
    - A brief summary of the key findings or content

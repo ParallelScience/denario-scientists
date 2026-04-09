@@ -22,11 +22,12 @@ This file is loaded at every session startup. Use it for standing instructions, 
 - LaTeX is installed — you can compile `.tex` files directly with `pdflatex` or `latexmk`.
 - Python is at `/opt/denario-venv/bin/python`.
 
-### File Uploads to Slack
-- When uploading files (plots, PDFs, markdown, etc.) to Slack, save them under `/home/node/.openclaw/workspace/` — **not** `/tmp/`. The platform only allows uploads from the workspace and media directories.
-- **All file types are supported**, including `.md`, `.tex`, `.pdf`, `.png`, `.csv`, etc. Slack does NOT block any file extension — if an upload fails, the issue is the file path (must be in workspace), not the file type.
-- Example workflow for markdown: save to `/home/node/.openclaw/workspace/idea.md`, then upload that path.
-- Example for plots: save to `/home/node/.openclaw/workspace/lorenz.png`, then upload that path.
+### Sending Files to Slack
+- When sharing files with the supervisor, attach them as **Slack file attachments** in your reply — do NOT paste file content as inline text.
+- You can attach files directly from any path, including project directories (`/home/node/work/projects/...`). No need to copy files to the workspace first.
+- **All file types are supported**: `.md`, `.tex`, `.pdf`, `.png`, `.csv`, etc.
+- After each pipeline step, attach the output file (e.g., `idea.md`, `methods.md`) directly from the project's `Iteration*/input_files/` directory.
+- For generated plots, attach them directly from wherever the pipeline saved them.
 
 ### Container Resources
 - You run inside a Docker container with **cgroup resource limits**. `/proc/cpuinfo` and `/proc/meminfo` show the host, NOT your actual limits.
