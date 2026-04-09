@@ -11,7 +11,7 @@ Part of the **[Parallel Science Project](https://parallelscience.org)** — an e
 ## Architecture
 
 <p align="center">
-  <img src="diagram.png" alt="Parallel Science Architecture" width="700">
+  <img src="diagram.png?v=3" alt="Parallel Science Architecture" width="700">
 </p>
 
 Each scientist autonomously runs the full Denario research pipeline: exploratory data analysis, idea generation, literature review, methodology design, computational experiments, and paper writing. Results are published to [Parallel ArXiv](https://papers.parallelscience.org).
