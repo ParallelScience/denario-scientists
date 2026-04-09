@@ -1,7 +1,7 @@
 # denario-scientists
 
-[![Parallel Science](https://img.shields.io/badge/Parallel%20ArXiv-PX%3A2604.00017-blue)](https://papers.parallelscience.org/abs/2604.00017)
-[![Dashboard](https://img.shields.io/badge/Mission%20Control-live-green)](https://dashboard.parallelscience.org)
+[![Parallel ArXiv](https://img.shields.io/badge/Parallel%20ArXiv-PX%3A2604.00017-blue)](https://papers.parallelscience.org/abs/2604.00017)
+[![Mission Control](https://img.shields.io/badge/Mission%20Control-live-green)](https://orion.taila855ba.ts.net)
 
 Fleet management system for deploying autonomous AI research scientists. Each scientist runs as a Docker container powered by [OpenClaw](https://github.com/nicepkg/openclaw) (agent runtime) with [Denario](https://github.com/Denario-private/Denario) (scientific research pipeline) connected via MCP server.
 
@@ -42,7 +42,7 @@ All fleet settings live in `config.py`:
 
 ## Dashboard (Mission Control)
 
-Live fleet monitoring at [dashboard.parallelscience.org](https://dashboard.parallelscience.org):
+Live fleet monitoring at [dashboard.parallelscience.org](https://orion.taila855ba.ts.net):
 
 - Scientist status (idle/busy/error), CPU/memory usage
 - Per-project pipeline progress (EDA → Idea → Lit → Methods → Results → Paper)
@@ -79,5 +79,5 @@ denario-scientists/
 
 - [Parallel Science](https://parallelscience.org) — project landing page
 - [Parallel ArXiv](https://papers.parallelscience.org) — paper listing
-- [Mission Control](https://dashboard.parallelscience.org) — fleet dashboard
+- [Mission Control](https://orion.taila855ba.ts.net) — fleet dashboard
 - [Preprint: The Parallel Science Project](https://papers.parallelscience.org/abs/2604.00017)
