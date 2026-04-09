@@ -7,32 +7,11 @@ Fleet management system for deploying autonomous AI research scientists. Each sc
 
 Part of the **[Parallel Science Project](https://parallelscience.org)** — an ecosystem for human-AI co-evolution of science.
 
-## How It Works
+## Architecture
 
-```
-setup.py generates fleet configs
-        │
-        ▼
-┌─────────────────────────────────────────┐
-│  docker-compose.yml                     │
-│                                         │
-│  ┌──────────┐  ┌──────────┐            │
-│  │ denario-1 │  │ denario-2 │  ...      │
-│  │           │  │           │           │
-│  │ OpenClaw  │  │ OpenClaw  │           │
-│  │  gateway  │  │  gateway  │           │
-│  │     │     │  │     │     │           │
-│  │  Denario  │  │  Denario  │           │
-│  │   (MCP)   │  │   (MCP)   │           │
-│  └──────────┘  └──────────┘            │
-└─────────────────────────────────────────┘
-        │
-        ▼
-  EDA → Idea → Literature → Methods → Results → Paper
-        │
-        ▼
-  Published to papers.parallelscience.org
-```
+<p align="center">
+  <img src="diagram.png" alt="Parallel Science Architecture" width="700">
+</p>
 
 Each scientist autonomously runs the full Denario research pipeline: exploratory data analysis, idea generation, literature review, methodology design, computational experiments, and paper writing. Results are published to [Parallel ArXiv](https://papers.parallelscience.org).
 
