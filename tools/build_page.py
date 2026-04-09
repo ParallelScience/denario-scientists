@@ -94,6 +94,11 @@ def build(project_dir: str, repo_url: str, author: str):
     if os.path.exists(presentation_path):
         shutil.copy2(presentation_path, docs_dir)
 
+    # Copy bibliography for citation tracking
+    bib_path = os.path.join(project_dir, "bibliography.bib")
+    if os.path.exists(bib_path):
+        shutil.copy2(bib_path, docs_dir)
+
     # Read template and replace placeholders
     with open(template_path) as f:
         html = f.read()
