@@ -5,12 +5,20 @@ const STAGE_LABELS = { eda: 'EDA', idea: 'Idea', literature: 'Lit', methods: 'Me
 
 let expandedProjects = new Set();
 
-// --- Plan data store (avoids inlining JSON in onclick attributes) ---
+// --- Data store (avoids inlining JSON in onclick attributes) ---
 const _planStore = {};
 let _planStoreId = 0;
 function storePlan(plan) {
     const id = '_p' + (++_planStoreId);
     _planStore[id] = plan;
+    return id;
+}
+
+const _configStore = {};
+let _configStoreId = 0;
+function storeConfig(config) {
+    const id = '_c' + (++_configStoreId);
+    _configStore[id] = config;
     return id;
 }
 
@@ -342,6 +350,132 @@ function openPlanModal(planId) {
 
 function closePlanModal() {
     const modal = document.getElementById('plan-modal');
+    if (modal) modal.style.display = 'none';
+}
+
+function shortModel(model) {
+    if (!model) return '?';
+    // Strip provider prefix (e.g. "anthropic/claude-sonnet-4-6" -> "claude-sonnet-4-6")
+    const parts = model.split('/');
+    return parts[parts.length - 1];
+}
+
+function renderConfig(config, scientistName) {
+    if (!config) return '';
+    const configId = storeConfig({ ...config, _name: scientistName });
+    let html = '<div class="config-section mt-2 pt-2 border-t border-gray-800">';
+
+    // Models row
+    const gateway = config.gateway_model ? shortModel(config.gateway_model) : null;
+    const research = config.research_model ? shortModel(config.research_model) : null;
+    const paper = config.paper_model ? shortModel(config.paper_model) : null;
+
+    if (gateway) html += `<div class="text-xs text-gray-500 flex items-center gap-1 mt-0.5"><span class="text-gray-600">Gateway:</span> <span class="config-badge">${gateway}</span></div>`;
+    if (research) html += `<div class="text-xs text-gray-500 flex items-center gap-1 mt-0.5"><span class="text-gray-600">Research:</span> <span class="config-badge">${research}</span></div>`;
+    if (paper && paper !== research) html += `<div class="text-xs text-gray-500 flex items-center gap-1 mt-0.5"><span class="text-gray-600">Paper:</span> <span class="config-badge">${paper}</span></div>`;
+
+    // Params row: max_iterations, timeout, vlm, temperature
+    const badges = [];
+    if (config.max_iterations) badges.push(`${config.max_iterations} iters`);
+    if (config.analysis_timeout) badges.push(`timeout ${config.analysis_timeout}s`);
+    if (config.research_temperature != null) badges.push(`t=${config.research_temperature}`);
+    if (config.analysis_vlm_review) badges.push('VLM');
+    if (config.channels && config.channels.length) badges.push(config.channels.join(', '));
+    if (badges.length) html += `<div class="text-xs text-gray-600 mt-1 flex flex-wrap gap-1">${badges.map(b => `<span class="param-badge">${b}</span>`).join('')}</div>`;
+
+    html += `<div class="mt-1"><span class="expand-btn text-xs text-gray-600 hover:text-gray-400" onclick="openConfigModal('${configId}')">Full Config &#9654;</span></div>`;
+    html += '</div>';
+    return html;
+}
+
+function openConfigModal(configId) {
+    const config = _configStore[configId];
+    if (!config) return;
+
+    let modal = document.getElementById('config-modal');
+    if (!modal) {
+        modal = document.createElement('div');
+        modal.id = 'config-modal';
+        modal.innerHTML = `
+            <div class="plan-modal-backdrop" onclick="closeConfigModal()"></div>
+            <div class="plan-modal-content" style="max-width:700px">
+                <div class="plan-modal-header">
+                    <span id="config-modal-title">Configuration</span>
+                    <span class="plan-modal-close" onclick="closeConfigModal()">&times;</span>
+                </div>
+                <div id="config-modal-body" class="plan-modal-body"></div>
+            </div>`;
+        document.body.appendChild(modal);
+    }
+
+    document.getElementById('config-modal-title').textContent = `${config._name} — Configuration`;
+
+    const params = config.params || {};
+    let html = '';
+
+    // --- Gateway section ---
+    html += `<div class="mb-4">`;
+    html += `<h3 class="text-sm font-semibold text-gray-300 mb-2 border-b border-gray-700 pb-1">Gateway (OpenClaw)</h3>`;
+    html += `<table class="w-full text-xs"><tbody>`;
+    html += configRow('Model', config.gateway_model);
+    html += configRow('Timeout', config.timeout_seconds ? `${config.timeout_seconds}s` : null);
+    html += configRow('Channels', config.channels ? config.channels.join(', ') : null);
+    html += configRow('Plugins', config.plugins ? config.plugins.join(', ') : null);
+    html += configRow('MCP Servers', config.mcp_servers ? config.mcp_servers.join(', ') : null);
+    html += `</tbody></table></div>`;
+
+    // --- Pipeline section ---
+    html += `<div class="mb-4">`;
+    html += `<h3 class="text-sm font-semibold text-gray-300 mb-2 border-b border-gray-700 pb-1">Pipeline</h3>`;
+    html += `<table class="w-full text-xs"><tbody>`;
+    html += configRow('Max Iterations', params.max_iterations);
+    html += `</tbody></table></div>`;
+
+    // --- Per-module agent tables ---
+    const moduleOrder = ['EDA module', 'Idea module', 'Literature module', 'Methods module', 'Analysis module', 'Evaluator module', 'Paper module', 'Classifier module', 'Reviewer module'];
+    for (const modName of moduleOrder) {
+        const mod = params[modName];
+        if (!mod) continue;
+
+        html += `<div class="mb-4">`;
+        html += `<h3 class="text-sm font-semibold text-gray-300 mb-2 border-b border-gray-700 pb-1">${modName.replace(' module', '')}</h3>`;
+
+        // Module-level settings
+        const moduleSettings = [];
+        if (mod.max_n_steps != null) moduleSettings.push(['Max Steps', mod.max_n_steps]);
+        if (mod.max_n_attempts != null) moduleSettings.push(['Max Attempts', mod.max_n_attempts]);
+        if (mod.code_execution_timeout != null) moduleSettings.push(['Code Timeout', `${mod.code_execution_timeout}s`]);
+        if (mod.enable_vlm_review != null) moduleSettings.push(['VLM Review', mod.enable_vlm_review ? 'Yes' : 'No']);
+
+        if (moduleSettings.length) {
+            html += `<table class="w-full text-xs mb-2"><tbody>`;
+            for (const [k, v] of moduleSettings) html += configRow(k, v);
+            html += `</tbody></table>`;
+        }
+
+        // Agent table
+        const agents = Object.entries(mod).filter(([k, v]) => typeof v === 'object' && v && v.model);
+        if (agents.length) {
+            html += `<table class="w-full text-xs"><thead><tr class="text-gray-500 border-b border-gray-800"><th class="text-left pb-1 font-normal">Agent</th><th class="text-left pb-1 font-normal">Model</th><th class="text-right pb-1 font-normal">Temp</th></tr></thead><tbody>`;
+            for (const [agent, agentCfg] of agents) {
+                html += `<tr class="border-b border-gray-800/50"><td class="py-1 text-gray-400">${agent}</td><td class="py-1"><span class="config-badge">${shortModel(agentCfg.model)}</span></td><td class="py-1 text-right text-gray-500">${agentCfg.temperature ?? ''}</td></tr>`;
+            }
+            html += `</tbody></table>`;
+        }
+        html += `</div>`;
+    }
+
+    document.getElementById('config-modal-body').innerHTML = html;
+    modal.style.display = 'flex';
+}
+
+function configRow(label, value) {
+    if (value == null) return '';
+    return `<tr class="border-b border-gray-800/50"><td class="py-1 text-gray-500 w-32">${label}</td><td class="py-1 text-gray-300">${value}</td></tr>`;
+}
+
+function closeConfigModal() {
+    const modal = document.getElementById('config-modal');
     if (modal) modal.style.display = 'none';
 }
 

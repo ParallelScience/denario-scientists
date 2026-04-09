@@ -13,7 +13,7 @@ h1, h2, h3 { font-family: 'EB Garamond', serif; }
 .card { background: #111; border: 1px solid #222; border-radius: 8px; }
 .card:hover { border-color: #333; }
 
-#plan-modal { display: none; position: fixed; inset: 0; z-index: 1000; align-items: center; justify-content: center; }
+#plan-modal, #config-modal { display: none; position: fixed; inset: 0; z-index: 1000; align-items: center; justify-content: center; }
 .plan-modal-backdrop { position: fixed; inset: 0; background: rgba(0, 0, 0, 0.75); }
 .plan-modal-content { position: relative; z-index: 1; background: #111; border: 1px solid #333; border-radius: 10px; width: 90vw; max-width: 900px; max-height: 85vh; display: flex; flex-direction: column; }
 .plan-modal-header { display: flex; justify-content: space-between; align-items: center; padding: 14px 20px; border-bottom: 1px solid #333; font-size: 16px; color: #e5e5e5; font-family: 'EB Garamond', serif; font-weight: 600; }
@@ -34,6 +34,8 @@ h1, h2, h3 { font-family: 'EB Garamond', serif; }
 
 .cost-badge { font-size: 11px; padding: 1px 6px; border-radius: 3px; background: #1a1a2e; color: #8b8bcd; }
 .time-badge { font-size: 11px; padding: 1px 6px; border-radius: 3px; background: #1a2e1a; color: #8bcd8b; }
+.config-badge { font-size: 10px; padding: 1px 5px; border-radius: 3px; background: #1a1a2e; color: #9b9bdd; font-family: 'JetBrains Mono', monospace; }
+.param-badge { font-size: 10px; padding: 1px 5px; border-radius: 3px; background: #1a1a1a; color: #777; border: 1px solid #2a2a2a; }
 
 .best-iter-badge { font-size: 11px; padding: 1px 6px; border-radius: 3px; background: #1a2e1a; color: #8bcd8b; }
 

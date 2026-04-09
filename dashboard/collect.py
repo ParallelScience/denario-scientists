@@ -18,10 +18,12 @@ sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 from config import (
     GPU_ASSIGNMENT,
     RESOURCE_OVERRIDES,
+    PARAMS_OVERRIDES,
     DEFAULT_MEMORY,
     DEFAULT_CPUS,
     scientists,
 )
+import yaml
 
 SCIENTISTS_DIR = Path(__file__).resolve().parent.parent / "scientists"
 OUTPUT_FILE = Path(__file__).resolve().parent / "status.json"
@@ -653,6 +655,89 @@ def build_activity_feed(all_scientists: list[dict]) -> list[dict]:
     return events[:50]  # Keep last 50
 
 
+def get_scientist_config(sci_name: str) -> dict:
+    """Extract safe (no secrets) config info for a scientist.
+
+    Reads openclaw.json for agent/channel settings and merges
+    params.yaml with per-scientist overrides from config.py.
+    """
+    config = {}
+
+    # --- OpenClaw config (safe fields only) ---
+    oc_path = SCIENTISTS_DIR / sci_name / "config" / "openclaw.json"
+    if oc_path.exists():
+        try:
+            with open(oc_path) as f:
+                oc = json.load(f)
+            defaults = oc.get("agents", {}).get("defaults", {})
+            config["gateway_model"] = defaults.get("model")
+            config["timeout_seconds"] = defaults.get("timeoutSeconds")
+
+            # Enabled channels
+            channels = oc.get("channels", {})
+            config["channels"] = [ch for ch, v in channels.items() if v.get("enabled")]
+
+            # Enabled plugins
+            plugins = oc.get("plugins", {}).get("entries", {})
+            config["plugins"] = [p for p, v in plugins.items() if v.get("enabled")]
+
+            # MCP servers (names only)
+            mcp = oc.get("mcp", {}).get("servers", {})
+            config["mcp_servers"] = list(mcp.keys())
+        except (json.JSONDecodeError, OSError):
+            pass
+
+    # --- Denario params (base + per-scientist overrides) ---
+    params_path = Path(__file__).resolve().parent.parent / "data" / "params.yaml"
+    if params_path.exists():
+        try:
+            with open(params_path) as f:
+                params = yaml.safe_load(f) or {}
+
+            # Apply per-scientist overrides
+            overrides = PARAMS_OVERRIDES.get(sci_name, {})
+            for key, val in overrides.items():
+                if isinstance(val, dict) and key in params and isinstance(params[key], dict):
+                    params[key].update(val)
+                else:
+                    params[key] = val
+
+            config["max_iterations"] = params.get("max_iterations")
+
+            # EDA module config
+            eda = params.get("EDA module", {})
+            config["eda_timeout"] = eda.get("code_execution_timeout")
+            config["eda_vlm_review"] = eda.get("enable_vlm_review")
+            config["eda_max_steps"] = eda.get("max_n_steps")
+
+            # Analysis module config
+            analysis = params.get("Analysis module", {})
+            config["analysis_timeout"] = analysis.get("code_execution_timeout")
+            config["analysis_vlm_review"] = analysis.get("enable_vlm_review")
+            config["analysis_max_steps"] = analysis.get("max_n_steps")
+
+            # Key models (engineer = primary research model)
+            engineer = analysis.get("engineer", eda.get("engineer", {}))
+            config["research_model"] = engineer.get("model")
+            config["research_temperature"] = engineer.get("temperature")
+
+            # Paper model
+            paper = params.get("Paper module", {})
+            section_writer = paper.get("section_writer", {})
+            config["paper_model"] = section_writer.get("model")
+
+            # Plan reviewer model
+            plan_reviewer = analysis.get("plan_reviewer", eda.get("plan_reviewer", {}))
+            config["plan_review_model"] = plan_reviewer.get("model")
+
+            # Full merged params for the config modal (all modules with agents)
+            config["params"] = params
+        except (yaml.YAMLError, OSError):
+            pass
+
+    return config
+
+
 def collect():
     """Main collection routine."""
     # Detect how many scientists exist from the scientists/ directory
@@ -726,6 +811,7 @@ def collect():
                 "gpu": gpu_label,
             },
             "model": cfg.get("model", "unknown"),
+            "config": get_scientist_config(sci_name),
             "current_project": current_project,
             "projects": projects,
         })

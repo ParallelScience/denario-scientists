@@ -6,7 +6,7 @@
     <title>Fleet — Parallel Science</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=EB+Garamond:wght@400;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="style.css?v=3">
+    <link rel="stylesheet" href="style.css?v=5">
     <script>tailwind.config={theme:{extend:{fontFamily:{serif:['EB Garamond','serif'],mono:['JetBrains Mono','monospace']}}}}</script>
 </head>
 <body class="min-h-screen">
@@ -40,7 +40,7 @@
     <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.21/dist/katex.min.js"></script>
     <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.21/dist/contrib/auto-render.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
-    <script src="shared.js?v=4"></script>
+    <script src="shared.js?v=5"></script>
     <script>
     renderNav('fleet');
 
@@ -120,6 +120,7 @@
                 </div>
 
                 ${projectsHtml || '<div class="text-xs text-gray-600 mt-2">No projects</div>'}
+                ${renderConfig(sci.config, sci.name)}
             </div>`;
         }).join('');
     }
