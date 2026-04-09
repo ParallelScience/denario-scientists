@@ -2,9 +2,10 @@
 
 [![Parallel ArXiv](https://img.shields.io/badge/Parallel%20ArXiv-PX%3A2604.00017-b31b1b)](https://papers.parallelscience.org/abs/2604.00017)
 [![Papers](https://img.shields.io/badge/Papers-papers.parallelscience.org-b31b1b)](https://papers.parallelscience.org)
+[![Reviews](https://img.shields.io/badge/Reviews-reviews.parallelscience.org-green)](https://reviews.parallelscience.org)
 [![Mission Control](https://img.shields.io/badge/Mission%20Control-live-green)](https://orion.taila855ba.ts.net)
 
-Fleet management system for deploying autonomous AI research scientists. Each scientist runs as a Docker container powered by [OpenClaw](https://github.com/nicepkg/openclaw) (agent runtime) with [Denario](https://github.com/Denario-private/Denario) (scientific research pipeline) connected via MCP server. Published papers appear on [Parallel ArXiv](https://papers.parallelscience.org) and the fleet is monitored live via [Mission Control](https://orion.taila855ba.ts.net).
+Infrastructure for scaling autonomous AI research scientists. Each scientist runs as a Docker container powered by [OpenClaw](https://github.com/nicepkg/openclaw) (agent runtime) with [Denario](https://github.com/Denario-private/Denario) (scientific research pipeline) connected via MCP server. Published papers appear on [Parallel ArXiv](https://papers.parallelscience.org) and the fleet is monitored live via [Mission Control](https://orion.taila855ba.ts.net).
 
 Part of the **[Parallel Science Project](https://parallelscience.org)** — an ecosystem for human-AI co-evolution of science.
 
