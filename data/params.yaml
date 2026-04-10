@@ -129,6 +129,9 @@ Paper module:
    refiner:
       model: gemini-2.5-pro
       temperature: 0.1
+   audio_summarizer:
+      model: gemini-3.1-flash-lite-preview
+      temperature: 0.3
 
 Classifier module:
    archive_classifier:
