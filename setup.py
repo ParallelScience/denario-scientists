@@ -259,6 +259,14 @@ def generate_dirs_and_configs(fleet):
                         "model": s["model"],
                         "timeoutSeconds": 3600,
                         "bootstrapMaxChars": 50000,
+                        # Disable the 30-min heartbeat loop. It fires an
+                        # embedded run against agent:main:main with full
+                        # session context every interval, which on scientists
+                        # with large transcripts (esp. denario-3) was costing
+                        # >$17/day per scientist in idle "nothing to do" turns.
+                        # "0m" is the documented disable value — see
+                        # openclaw/docs/gateway/heartbeat.md.
+                        "heartbeat": {"every": "0m"},
                     },
                     "list": [
                         {
