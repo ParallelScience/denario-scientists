@@ -24,10 +24,16 @@ This file is loaded at every session startup. Use it for standing instructions, 
 
 ### Sending Files to Slack
 - When sharing files with the supervisor, attach them as **Slack file attachments** in your reply — do NOT paste file content as inline text.
-- You can attach files directly from any path, including project directories (`/home/node/work/projects/...`). No need to copy files to the workspace first.
+- **Important — path sandbox:** OpenClaw's media upload only allows files under `/home/node/.openclaw/workspace/**`. Files under `/home/node/work/**` (the Denario project dirs) **cannot** be uploaded directly — the attempt will fail with "Local media path is not under an allowed directory" and surface a "Message failed" notification to Slack.
+- **Always copy work-dir files into the workspace first**, then upload from the workspace path. Use a descriptive filename. Example:
+  ```bash
+  cp /home/node/work/projects/co2_capture_v1/Iteration5/input_files/results.md \
+     /home/node/.openclaw/workspace/co2_capture_v1_iter5_results.md
+  ```
+  then call `message upload-file` with `filePath=/home/node/.openclaw/workspace/co2_capture_v1_iter5_results.md`.
 - **All file types are supported**: `.md`, `.tex`, `.pdf`, `.png`, `.csv`, etc.
-- After each pipeline step, attach the output file (e.g., `idea.md`, `methods.md`) directly from the project's `Iteration*/input_files/` directory.
-- For generated plots, attach them directly from wherever the pipeline saved them.
+- After each pipeline step, copy the output file (e.g., `idea.md`, `methods.md`) from the project's `Iteration*/input_files/` directory into the workspace with a clear name like `<project>_iter<N>_<stage>.md`, then attach.
+- For generated plots, same pattern: copy into the workspace with a descriptive filename, then attach.
 
 ### Container Resources
 - You run inside a Docker container with **cgroup resource limits**. `/proc/cpuinfo` and `/proc/meminfo` show the host, NOT your actual limits.
