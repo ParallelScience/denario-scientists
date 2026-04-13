@@ -42,6 +42,95 @@ def extract_abstract(tex: str) -> str:
     return abstract
 
 
+def _cited_keys_from_aux(aux_path: str) -> set[str]:
+    """Extract keys actually cited in the compiled paper from its .aux file."""
+    if not os.path.exists(aux_path):
+        return set()
+    with open(aux_path, encoding="utf-8", errors="replace") as f:
+        aux = f.read()
+    keys: set[str] = set()
+    # bibtex writes \citation{key1,key2,...} for each \cite{...} in the source
+    for match in re.finditer(r"\\citation\{([^}]+)\}", aux):
+        for key in match.group(1).split(","):
+            key = key.strip()
+            if key and key != "*":
+                keys.add(key)
+    return keys
+
+
+def _split_bib_entries(bib_text: str) -> list[tuple[str, str, str]]:
+    """Split a .bib file into (entry_type, citation_key, raw_block) tuples.
+
+    Walks the file tracking brace depth to reliably capture each @type{…} block
+    (nested braces in titles etc. break naive regexes).
+    """
+    entries: list[tuple[str, str, str]] = []
+    i, n = 0, len(bib_text)
+    while i < n:
+        at = bib_text.find("@", i)
+        if at < 0:
+            break
+        open_brace = bib_text.find("{", at)
+        if open_brace < 0:
+            break
+        entry_type = bib_text[at + 1 : open_brace].strip().lower()
+        # Find the matching closing brace for this entry
+        depth = 1
+        j = open_brace + 1
+        while j < n and depth > 0:
+            c = bib_text[j]
+            if c == "{":
+                depth += 1
+            elif c == "}":
+                depth -= 1
+            j += 1
+        if depth != 0:
+            break  # unbalanced — give up
+        block = bib_text[at:j]
+        # For @string/@preamble/@comment, key is empty — we keep the whole block as-is
+        if entry_type in ("string", "preamble", "comment"):
+            entries.append((entry_type, "", block))
+        else:
+            body = bib_text[open_brace + 1 : j - 1]
+            comma = body.find(",")
+            key = body[:comma].strip() if comma >= 0 else body.strip()
+            entries.append((entry_type, key, block))
+        i = j
+    return entries
+
+
+def prune_bibliography(aux_path: str, src_bib: str, dst_bib: str) -> tuple[int, int]:
+    """Copy only the .bib entries actually cited in the compiled paper.
+
+    Returns (kept, total). If the .aux file is missing or has no \\citation
+    markers (e.g. the paper wasn't compiled yet, or cites nothing), falls back
+    to copying the full bib so nothing is silently dropped.
+    """
+    with open(src_bib, encoding="utf-8", errors="replace") as f:
+        bib_text = f.read()
+    entries = _split_bib_entries(bib_text)
+    total = sum(1 for e in entries if e[0] not in ("string", "preamble", "comment"))
+
+    cited = _cited_keys_from_aux(aux_path)
+    if not cited:
+        # Safe fallback: keep everything rather than publish an empty bib
+        shutil.copy2(src_bib, dst_bib)
+        return (total, total)
+
+    kept_blocks: list[str] = []
+    kept = 0
+    for entry_type, key, block in entries:
+        if entry_type in ("string", "preamble", "comment"):
+            kept_blocks.append(block)
+        elif key in cited:
+            kept_blocks.append(block)
+            kept += 1
+
+    with open(dst_bib, "w", encoding="utf-8") as f:
+        f.write("\n\n".join(kept_blocks) + "\n")
+    return (kept, total)
+
+
 def find_classification(project_dir: str) -> str:
     """Find and read the primary category from classification.json."""
     # Search all iterations for classification.json, take the latest
@@ -94,10 +183,14 @@ def build(project_dir: str, repo_url: str, author: str):
     if os.path.exists(presentation_path):
         shutil.copy2(presentation_path, docs_dir)
 
-    # Copy bibliography for citation tracking
+    # Copy bibliography for citation tracking, pruned to entries actually
+    # cited in the compiled paper (so arxiv-browse doesn't ingest unused refs).
     bib_path = os.path.join(project_dir, "bibliography.bib")
+    aux_path = os.path.join(project_dir, "paper.aux")
     if os.path.exists(bib_path):
-        shutil.copy2(bib_path, docs_dir)
+        dst_bib = os.path.join(docs_dir, "bibliography.bib")
+        kept, total = prune_bibliography(aux_path, bib_path, dst_bib)
+        print(f"  Bibliography: kept {kept}/{total} entries actually cited")
 
     # Read template and replace placeholders
     with open(template_path) as f:
