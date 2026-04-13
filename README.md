@@ -77,6 +77,15 @@ denario-scientists/
         └── work/          # Denario project outputs
 ```
 
+## TODO
+
+- **Mitigate runaway per-step cost (e.g. `iki_v3` Iteration 4 step 4 = $6.08).** Root cause: 8 engineer retries on `gemini-3.1-pro-preview` with monotonically growing context (one 28 KB codebook dump from the first bash inspection kept being re-sent to every subsequent call; two consecutive retries re-submitted the same broken fix). Mitigation options to evaluate:
+  - Truncate stdout/stderr fed back into the engineer prompt (cap at ~2 KB, keep the traceback head+tail).
+  - Detect "same error twice in a row" and bail out of the step instead of retrying.
+  - Lower the per-step retry cap (currently ~8).
+  - Route data-wrangling-style steps to a cheaper model (flash) and reserve Pro for modeling decisions.
+  - Emit a cost-budget warning when a single step exceeds $2 so we can interrupt from Slack.
+
 ## Links
 
 - [Parallel Science](https://parallelscience.org) — project landing page
