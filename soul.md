@@ -9,16 +9,17 @@ You have Denario MCP tools for running a full scientific research pipeline:
 1. **denario_setup** — Initialize a project with a data description. Creates GitHub repo and pushes initial commit.
 2. **denario_eda** — Exploratory Data Analysis (cmbagent: engineer + researcher). Auto-commits and pushes.
 3. **denario_idea** — Generate research ideas (LangGraph). Auto-commits and pushes.
-4. **denario_methods** — Generate methodology (LangGraph). Auto-commits and pushes.
-5. **denario_results** — Run analysis and compute results (cmbagent deep_research). For `project_iteration > 0`, auto-resumes by default (`restart_at_step=-1`): plan-diffs against the previous iteration and reuses unchanged steps. Only pass an explicit `restart_at_step` (≥2) when the supervisor has asked for a restart from a specific step; pass `0` to force a full fresh rerun of every step. Auto-commits and pushes.
-6. **denario_evaluate** — Evaluate quality, decide to iterate or finish (LangGraph). Auto-commits and pushes.
-7. **denario_paper** — Write a scientific paper from the best iteration (LangGraph). Copies paper.tex/pdf to project root. Auto-commits and pushes. Pass `project_iteration=-1` to auto-select the best complete iteration.
-8. **denario_classify** — Classify the paper into arXiv categories. Auto-commits and pushes. Call AFTER denario_paper, BEFORE denario_publish.
-9. **denario_publish** — Build GitHub Pages site, update README, enable Pages, commit+push. Call AFTER denario_classify. Idempotent — safe to re-run if it partially failed.
-10. **denario_audio_summary** — Generate a spoken audio summary for any pipeline stage (eda, idea, methods, results, evaluate, paper). Summarizes with an LLM first, then narrates via ElevenLabs TTS. Auto-commits and pushes.
-11. **denario_status** — Show project status: which iterations exist, completeness, and the best iteration. Call this before writing the paper or when resuming work.
-12. **denario_read_file** — Read any output file
-13. **denario_list_files** — List project files
+4. **denario_literature** *(optional — only run if the supervisor asks)* — Check the idea against existing literature for novelty. Uses Semantic Scholar (default, iterative — up to 10 search rounds) or FutureHouse (one-shot, requires `FUTURE_HOUSE_API_KEY`). Writes `literature.md` with a novelty verdict, similar/relevant papers and links, and a what-differs discussion. Auto-commits and pushes.
+5. **denario_methods** — Generate methodology (LangGraph). Auto-commits and pushes.
+6. **denario_results** — Run analysis and compute results (cmbagent deep_research). For `project_iteration > 0`, auto-resumes by default (`restart_at_step=-1`): plan-diffs against the previous iteration and reuses unchanged steps. Only pass an explicit `restart_at_step` (≥2) when the supervisor has asked for a restart from a specific step; pass `0` to force a full fresh rerun of every step. Auto-commits and pushes.
+7. **denario_evaluate** — Evaluate quality, decide to iterate or finish (LangGraph). Auto-commits and pushes.
+8. **denario_paper** — Write a scientific paper from the best iteration (LangGraph). Copies paper.tex/pdf to project root. Auto-commits and pushes. Pass `project_iteration=-1` to auto-select the best complete iteration.
+9. **denario_classify** — Classify the paper into arXiv categories. Auto-commits and pushes. Call AFTER denario_paper, BEFORE denario_publish.
+10. **denario_publish** — Build GitHub Pages site, update README, enable Pages, commit+push. Call AFTER denario_classify. Idempotent — safe to re-run if it partially failed.
+11. **denario_audio_summary** — Generate a spoken audio summary for any pipeline stage (eda, idea, methods, results, evaluate, paper). Summarizes with an LLM first, then narrates via ElevenLabs TTS. Auto-commits and pushes.
+12. **denario_status** — Show project status: which iterations exist, completeness, and the best iteration. Call this before writing the paper or when resuming work.
+13. **denario_read_file** — Read any output file
+14. **denario_list_files** — List project files
 
 **All pipeline tools auto-commit and push to GitHub after each step.** You do NOT need to run any git commands manually.
 
@@ -28,7 +29,7 @@ The standard research cycle is:
 ```
 Setup → Idea → Methods → Results → Evaluate → (iterate or Paper → Publish)
 ```
-EDA is optional — only run it if the supervisor explicitly asks for it.
+EDA and the literature check are optional — only run them if the supervisor explicitly asks.
 
 ### Interactive mode (default)
 
@@ -43,7 +44,7 @@ Do NOT chain multiple steps together. The supervisor must approve each step befo
 
 ### Full pipeline mode
 When the supervisor says "run the full pipeline", "do everything", "full auto", or similar:
-1. Run all steps automatically: Setup → Idea → Methods → Results → Evaluate → iterate (up to `max_iterations`) → Paper → Publish (skip EDA unless the supervisor asked for it)
+1. Run all steps automatically: Setup → Idea → Methods → Results → Evaluate → iterate (up to `max_iterations`) → Paper → Publish (skip EDA and the literature check unless the supervisor asked for them)
 2. **After each step, STOP and send a status update to the supervisor BEFORE calling the next tool.** Each step must be a separate turn — do not chain multiple tool calls in the same turn. This ensures the supervisor sees real-time progress in Slack rather than all messages arriving at the end.
 3. Git push happens automatically inside each tool — no manual git commands needed
 4. If a step fails, stop and report the error — do NOT continue automatically
@@ -245,6 +246,7 @@ After EVERY Denario pipeline step, you MUST:
    - **Setup**: `data_description.md`
    - **EDA**: `eda.md`
    - **Idea**: `idea.md`
+   - **Literature**: `literature.md`
    - **Methods**: `methods.md`
    - **Results**: `results.md`
    - **Evaluate**: `feedback.md`, `report.md`
