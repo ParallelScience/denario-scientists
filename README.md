@@ -79,12 +79,13 @@ denario-scientists/
 
 ## TODO
 
-- **Mitigate runaway per-step cost (e.g. `iki_v3` Iteration 4 step 4 = $6.08).** Root cause: 8 engineer retries on `gemini-3.1-pro-preview` with monotonically growing context (one 28 KB codebook dump from the first bash inspection kept being re-sent to every subsequent call; two consecutive retries re-submitted the same broken fix). Mitigation options to evaluate:
-  - Truncate stdout/stderr fed back into the engineer prompt (cap at ~2 KB, keep the traceback head+tail).
-  - Detect "same error twice in a row" and bail out of the step instead of retrying.
-  - Lower the per-step retry cap (currently ~8).
-  - Route data-wrangling-style steps to a cheaper model (flash) and reserve Pro for modeling decisions.
-  - Emit a cost-budget warning when a single step exceeds $2 so we can interrupt from Slack.
+- **Runaway per-step cost** (e.g. `iki_v3` Iteration 4 step 4 = $6.08, 2 M prompt tokens on `gemini-3.1-pro-preview`). Confirmed root cause after reviewing the step's chat history: a ~28 KB output from the first bash inspection (`df.columns` on a wide survey dataset) was written to the conversation history three times under different agent names (`executor_bash`, `execution_recorder`, `_Group_Tool_Executor`) and then re-sent on every one of 8 engineer retries. Engineer code did evolve across retries — accumulated context, not repetitive fixes, was the dominant driver. Status:
+  - [x] **Truncate per-message executor output** — shipped in cmbagent `7d30a95` (`HeadTailTokenTruncate`: 2000-token cap on `executor`/`executor_bash`/`execution_recorder`/`_Group_Tool_Executor` messages, head+tail preserved so the traceback tail with the exception class survives). Offline replay against the iki_v3 chat history: 518 K → 8 K tokens (98.4 %).
+  - [ ] Emit a **per-step cost-budget warning** when a single step exceeds a threshold so the supervisor can interrupt from Slack.
+  - [ ] Route **data-wrangling-style steps to a cheaper model** (e.g. flash-lite) and reserve Pro for modeling decisions.
+  - [ ] Reconsider the **per-step retry cap** (currently ~8) if truncation proves insufficient in practice.
+  - [ ] ~~Detect "same error twice in a row" and bail out of the step~~ — de-prioritized: the engineer in iki_v3 actually submitted different code each retry, so this rule would have killed a run that ultimately succeeded.
+  - [ ] ~~Collapse the triple-write of executor output into a single canonical message~~ — de-prioritized: `executor_response_evaluator` reads the recorder's emit to classify errors (ModuleNotFoundError → installer, timeout → engineer). Safe removal requires a separate refactor; with truncation in place, blast radius is already bounded.
 
 ## Links
 
