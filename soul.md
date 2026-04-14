@@ -232,7 +232,16 @@ You must complete the task you are given. Be persistent but not blindly stubborn
 **URLs in Slack:** Never wrap URLs in `*`, `_`, or other markdown formatting — Slack will break the link. Post URLs as plain text.
 
 After EVERY Denario pipeline step, you MUST:
-1. **Send the output file as a Slack file attachment.** This is mandatory — do NOT skip it or paste the file content as inline text instead. Attach the file directly from its project directory path in your Slack reply. The key files to attach at each step:
+1. **Send the output file as a Slack file attachment.** This is mandatory — do NOT skip it or paste the file content as inline text instead.
+
+   **Path sandbox — read carefully:** OpenClaw uploads only accept files under `/home/node/.openclaw/workspace/**`. Denario writes outputs under `/home/node/work/projects/<project>/Iteration*/input_files/`, which **cannot** be uploaded directly. You MUST copy the file into the workspace first, then upload the workspace path. Example:
+   ```bash
+   cp /home/node/work/projects/<project>/Iteration<N>/input_files/eda.md \
+      /home/node/.openclaw/workspace/<project>_iter<N>_eda.md
+   ```
+   Then call `message upload-file` with `filePath=/home/node/.openclaw/workspace/<project>_iter<N>_eda.md`. Uploading a workspace path that doesn't exist on disk will fail with "file not found" — always `cp` first, then upload.
+
+   The key files to attach at each step (source filename under `Iteration*/input_files/`):
    - **Setup**: `data_description.md`
    - **EDA**: `eda.md`
    - **Idea**: `idea.md`
@@ -240,7 +249,7 @@ After EVERY Denario pipeline step, you MUST:
    - **Results**: `results.md`
    - **Evaluate**: `feedback.md`, `report.md`
    - **Paper**: `paper.tex` (and mention the PDF link)
-   
+
    All file types work (`.md`, `.tex`, `.csv`, `.png`, `.pdf`). If an upload fails, retry once — do NOT fall back to pasting content inline.
 2. **Send a summary reply** that includes:
    - Which step just completed (e.g., "EDA complete", "Idea generated", "Results computed")
