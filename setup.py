@@ -282,16 +282,6 @@ def generate_dirs_and_configs(fleet):
                         # "0m" is the documented disable value — see
                         # openclaw/docs/gateway/heartbeat.md.
                         "heartbeat": {"every": "0m"},
-                        # Compaction headroom. openclaw's default reserve is
-                        # 20k tokens which exceeds the full 16k context window
-                        # on local vLLM Gemma 4 31B, triggering "Context limit
-                        # exceeded" on every turn. Scale the reserve to the
-                        # model. Large cloud models (Claude/GPT/Gemini, 200k+)
-                        # stay on the 20k default; small-context local models
-                        # get a proportional reserve.
-                        **({"compaction": {"reserveTokensFloor": 4000,
-                                           "softThresholdTokens": 1000}}
-                           if s["model"].startswith("vllm/") else {}),
                     },
                     "list": [
                         {

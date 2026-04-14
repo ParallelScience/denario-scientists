@@ -45,7 +45,7 @@ VLLM_PROVIDER_CATALOGS = {
                 "reasoning": True,
                 "input": ["text"],
                 "cost": {"input": 0, "output": 0, "cacheRead": 0, "cacheWrite": 0},
-                "contextWindow": 16384,
+                "contextWindow": 262144,
                 "maxTokens": 8192,
             }
         ],
