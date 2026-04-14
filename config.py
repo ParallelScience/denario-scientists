@@ -37,6 +37,7 @@ GPU_ASSIGNMENT = {
 # Scientists not listed here get DEFAULT_MEMORY / DEFAULT_CPUS.
 RESOURCE_OVERRIDES = {
     "denario-3": {"memory": "64g", "cpus": "32"},  # GPU scientist gets more resources
+    "denario-5": {"memory": "16g", "cpus": "8"},
     "denario-6": {"memory": "16g", "cpus": "8"},
     **{f"denario-{i}": {"memory": MINIMAL_MEMORY, "cpus": MINIMAL_CPUS} for i in range(7, 13)},
 }
@@ -66,6 +67,22 @@ MINIMAL_HARDWARE_CONSTRAINTS = (
 # Unset scientists get the base params.yaml as-is.
 PARAMS_OVERRIDES = {
     **{f"denario-{i}": {"hardware_constraints": MINIMAL_HARDWARE_CONSTRAINTS} for i in range(7, 13)},
+    "denario-5": {
+        "hardware_constraints": (
+            "- Linux x86_64 Docker container\n"
+            "- 8 CPUs (AMD Ryzen Threadripper PRO 9995WX), 16 GB RAM\n"
+            "- No GPU — do not use CUDA or GPU-dependent libraries\n"
+            "- Multiprocessing: limit to 8 workers max\n"
+            "- NumPy/SciPy use OpenBLAS — set OMP_NUM_THREADS=2 to avoid thread oversubscription with multiprocessing\n"
+            "- Memory is limited — avoid loading large datasets entirely into RAM; use chunked/streaming approaches for data > 4 GB"
+        ),
+        "EDA module": {
+            "code_execution_timeout": 1800,
+        },
+        "Analysis module": {
+            "code_execution_timeout": 1800,
+        },
+    },
     "denario-6": {
         "hardware_constraints": (
             "- Linux x86_64 Docker container\n"

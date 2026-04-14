@@ -279,8 +279,8 @@ services:
     ports:
       - "18800:18789"
       - "18824:18790"
-    cpus: "4"
-    mem_limit: 8g
+    cpus: "8"
+    mem_limit: 16g
     init: true
     restart: unless-stopped
     command:
