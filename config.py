@@ -23,7 +23,33 @@ MODEL_OVERRIDES = {
     "denario-2": "nvidia/nvidia/nemotron-3-super-120b-a12b",
     "denario-3": "anthropic/claude-sonnet-4-6",
     "denario-4": "zai/glm-5.1",
-    "denario-6": "anthropic/claude-sonnet-4-6",
+    # denario-6: gateway brain on the host-side vLLM Gemma 4 31B.
+    # openclaw.json also gets a models.providers.vllm block (see VLLM_PROVIDER_CATALOGS)
+    # so the provider catalog knows the base URL + model metadata.
+    "denario-6": "vllm//rds/models/gemma-4-31B-it",
+}
+
+# Extra models.providers.<id> blocks injected into a scientist's openclaw.json
+# when its gateway model lives behind a self-hosted OpenAI-compatible backend.
+# setup.py merges the value into the config only when the scientist's model
+# prefix matches (e.g. "vllm/..."). Keys are scientist names.
+VLLM_PROVIDER_CATALOGS = {
+    "denario-6": {
+        "baseUrl": "http://host.docker.internal:8010/v1",
+        "apiKey": "EMPTY",
+        "api": "openai-completions",
+        "models": [
+            {
+                "id": "/rds/models/gemma-4-31B-it",
+                "name": "Gemma 4 31B (local vLLM)",
+                "reasoning": True,
+                "input": ["text"],
+                "cost": {"input": 0, "output": 0, "cacheRead": 0, "cacheWrite": 0},
+                "contextWindow": 16384,
+                "maxTokens": 8192,
+            }
+        ],
+    },
 }
 
 # GPU assignment (optional). Key = scientist name, value = list of GPU device IDs.
@@ -68,6 +94,20 @@ MINIMAL_HARDWARE_CONSTRAINTS = (
 # Unset scientists get the base params.yaml as-is.
 PARAMS_OVERRIDES = {
     **{f"denario-{i}": {"hardware_constraints": MINIMAL_HARDWARE_CONSTRAINTS} for i in range(7, 13)},
+    "denario-1": {
+        # Route the cmbagent engineer + researcher through the host-side
+        # vLLM Gemma 4 31B (reached via GEMMA4_URL / host.docker.internal).
+        # cmbagent's local_llm_urls registry maps this id to the base URL and
+        # local_llm_extra_body turns on chat_template_kwargs.enable_thinking.
+        "EDA module": {
+            "engineer":   {"model": "/rds/models/gemma-4-31B-it", "temperature": 0.2},
+            "researcher": {"model": "/rds/models/gemma-4-31B-it", "temperature": 0.2},
+        },
+        "Analysis module": {
+            "engineer":   {"model": "/rds/models/gemma-4-31B-it", "temperature": 0.2},
+            "researcher": {"model": "/rds/models/gemma-4-31B-it", "temperature": 0.2},
+        },
+    },
     "denario-5": {
         "hardware_constraints": (
             "- Linux x86_64 Docker container\n"

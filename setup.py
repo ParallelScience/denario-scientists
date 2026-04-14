@@ -66,6 +66,12 @@ def generate_compose(fleet):
                 "MINIMAX_API_KEY": "${MINIMAX_API_KEY}",
                 "NVIDIA_API_KEY": "${NVIDIA_API_KEY}",
                 "ZAI_API_KEY": "${ZAI_API_KEY}",
+                # Host-side vLLM Gemma 4 31B (reached via host.docker.internal).
+                # Override with GEMMA4_URL in .env if the endpoint moves.
+                "GEMMA4_URL": "${GEMMA4_URL:-http://host.docker.internal:8010/v1}",
+                # openclaw's vllm provider needs any non-empty auth value;
+                # the host vLLM serves without auth but the plugin gates on it.
+                "VLLM_API_KEY": "${VLLM_API_KEY:-EMPTY}",
                 "GITHUB_TOKEN": "${GITHUB_TOKEN}",
                 "GITHUB_ORG": "${GITHUB_ORG:-ParallelScience}",
                 "ELEVENLABS_API_KEY": "${ELEVENLABS_API_KEY}",
@@ -108,6 +114,10 @@ def generate_compose(fleet):
             }} if s.get("gpus") else {}),
             "init": True,
             "restart": "unless-stopped",
+            # Let containers reach the host-side vLLM (GEMMA4_URL) via the
+            # standard host.docker.internal alias — on Linux this requires an
+            # explicit host-gateway mapping.
+            "extra_hosts": ["host.docker.internal:host-gateway"],
             "command": [
                 "sh", "/app/entrypoint.sh",
             ],
@@ -159,6 +169,10 @@ def generate_compose(fleet):
                     lines.append(f"                - {cap}")
         lines.append(f"    init: true")
         lines.append(f"    restart: unless-stopped")
+        if svc.get("extra_hosts"):
+            lines.append(f"    extra_hosts:")
+            for h in svc["extra_hosts"]:
+                lines.append(f'      - "{h}"')
         cmd = svc["command"]
         lines.append(f"    command:")
         for c in cmd:
@@ -363,6 +377,14 @@ def generate_dirs_and_configs(fleet):
                     },
                 },
             }
+
+            # Explicit self-hosted provider catalog (e.g. local vLLM for
+            # Gemma 4). When declared in config.py, openclaw skips discovery
+            # and uses these models directly.
+            vllm_catalog = getattr(cfg, "VLLM_PROVIDER_CATALOGS", {}).get(name)
+            if vllm_catalog:
+                config.setdefault("models", {}).setdefault("providers", {})["vllm"] = vllm_catalog
+
             with open(config_path, "w") as f:
                 json.dump(config, f, indent=2)
             print(f"  Created config for {name}")
