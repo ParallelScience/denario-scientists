@@ -28,8 +28,9 @@ MODEL_OVERRIDES = {
 # GPU assignment (optional). Key = scientist name, value = list of GPU device IDs.
 # Only listed scientists get GPU access; others get none.
 GPU_ASSIGNMENT = {
-    "denario-3": ["0"],  # GPU 0 — NVIDIA RTX PRO 6000 Blackwell (96 GB VRAM)
-    # "denario-2": ["1"],  # GPU 1
+    # GPU 0 is reserved for the host-side vLLM Gemma 4 31B deployment
+    # (serves the parallel fan-out pool). Scientists use GPU 1.
+    "denario-3": ["1"],  # GPU 1 — NVIDIA RTX PRO 6000 Blackwell (96 GB VRAM)
 }
 
 # Per-scientist resource overrides (optional). Key = scientist name.

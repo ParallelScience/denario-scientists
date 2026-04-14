@@ -79,7 +79,7 @@ The Dockerfile extends OpenClaw with a Python 3.12 venv containing the full Dena
 
 ### Key File Roles
 
-- **`config.py`** — Single source of truth: number of scientists, default model, port allocation, resource limits (CPU/memory defaults + per-scientist overrides via `RESOURCE_OVERRIDES`), GPU assignment (`GPU_ASSIGNMENT`), MCP server path. Default: 4 CPUs / 8 GB per scientist; denario-3 gets 32 CPUs / 64 GB + GPU 0 (NVIDIA RTX PRO 6000 Blackwell, 96 GB VRAM)
+- **`config.py`** — Single source of truth: number of scientists, default model, port allocation, resource limits (CPU/memory defaults + per-scientist overrides via `RESOURCE_OVERRIDES`), GPU assignment (`GPU_ASSIGNMENT`), MCP server path. Default: 4 CPUs / 8 GB per scientist; denario-3 gets 32 CPUs / 64 GB + GPU 1 (NVIDIA RTX PRO 6000 Blackwell, 96 GB VRAM); GPU 0 is reserved for the host-side vLLM Gemma 4 31B deployment
 - **`soul.md`** — Agent system prompt: defines the Denario research pipeline workflow, tool usage, reporting rules. Gets installed as `SOUL.md` in each scientist's workspace
 - **`agents.md`** — Standing instructions loaded at every agent session: tool usage notes, shell capabilities, lessons learned. Gets installed as `AGENTS.md`
 - **`data/params.yaml`** — Single source of truth for all Denario pipeline configuration: models, temperatures, and hyperparameters (max_n_steps, max_n_attempts, code_execution_timeout, enable_vlm_review) for EDA and Analysis modules. Mounted read-only into containers at `/home/node/data/`. Also used by `Denario/tests/denario_test/` via relative path.
