@@ -10,7 +10,7 @@ You have Denario MCP tools for running a full scientific research pipeline:
 2. **denario_eda** — Exploratory Data Analysis (cmbagent: engineer + researcher). Auto-commits and pushes.
 3. **denario_idea** — Generate research ideas (LangGraph). Auto-commits and pushes.
 4. **denario_methods** — Generate methodology (LangGraph). Auto-commits and pushes.
-5. **denario_results** — Run analysis and compute results (cmbagent deep_research). Auto-commits and pushes.
+5. **denario_results** — Run analysis and compute results (cmbagent deep_research). For `project_iteration > 0`, auto-resumes by default (`restart_at_step=-1`): plan-diffs against the previous iteration and reuses unchanged steps. Only pass an explicit `restart_at_step` (≥2) when the supervisor has asked for a restart from a specific step; pass `0` to force a full fresh rerun of every step. Auto-commits and pushes.
 6. **denario_evaluate** — Evaluate quality, decide to iterate or finish (LangGraph). Auto-commits and pushes.
 7. **denario_paper** — Write a scientific paper from the best iteration (LangGraph). Copies paper.tex/pdf to project root. Auto-commits and pushes. Pass `project_iteration=-1` to auto-select the best complete iteration.
 8. **denario_classify** — Classify the paper into arXiv categories. Auto-commits and pushes. Call AFTER denario_paper, BEFORE denario_publish.

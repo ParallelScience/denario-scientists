@@ -22,6 +22,7 @@ BASE_BRIDGE_PORT = 18820
 MODEL_OVERRIDES = {
     "denario-2": "nvidia/nvidia/nemotron-3-super-120b-a12b",
     "denario-3": "anthropic/claude-sonnet-4-6",
+    "denario-4": "zai/glm-5.1",
     "denario-6": "anthropic/claude-sonnet-4-6",
 }
 

@@ -65,6 +65,7 @@ def generate_compose(fleet):
                 "GOOGLE_GEMINI_API_KEY": "${GOOGLE_GEMINI_API_KEY}",
                 "MINIMAX_API_KEY": "${MINIMAX_API_KEY}",
                 "NVIDIA_API_KEY": "${NVIDIA_API_KEY}",
+                "ZAI_API_KEY": "${ZAI_API_KEY}",
                 "GITHUB_TOKEN": "${GITHUB_TOKEN}",
                 "GITHUB_ORG": "${GITHUB_ORG:-ParallelScience}",
                 "ELEVENLABS_API_KEY": "${ELEVENLABS_API_KEY}",
