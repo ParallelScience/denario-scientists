@@ -24,6 +24,7 @@ services:
       ZAI_API_KEY: ${ZAI_API_KEY}
       MATERIALS_API_KEY: ${MATERIALS_API_KEY}
       MP_API_KEY: ${MATERIALS_API_KEY}
+      PERPLEXITY_API_KEY: ${PERPLEXITY_API_KEY}
       GEMMA4_URL: ${GEMMA4_URL:-http://host.docker.internal:8010/v1}
       VLLM_API_KEY: ${VLLM_API_KEY:-EMPTY}
       GITHUB_TOKEN: ${GITHUB_TOKEN}
@@ -88,6 +89,7 @@ services:
       ZAI_API_KEY: ${ZAI_API_KEY}
       MATERIALS_API_KEY: ${MATERIALS_API_KEY}
       MP_API_KEY: ${MATERIALS_API_KEY}
+      PERPLEXITY_API_KEY: ${PERPLEXITY_API_KEY}
       GEMMA4_URL: ${GEMMA4_URL:-http://host.docker.internal:8010/v1}
       VLLM_API_KEY: ${VLLM_API_KEY:-EMPTY}
       GITHUB_TOKEN: ${GITHUB_TOKEN}
@@ -152,6 +154,7 @@ services:
       ZAI_API_KEY: ${ZAI_API_KEY}
       MATERIALS_API_KEY: ${MATERIALS_API_KEY}
       MP_API_KEY: ${MATERIALS_API_KEY}
+      PERPLEXITY_API_KEY: ${PERPLEXITY_API_KEY}
       GEMMA4_URL: ${GEMMA4_URL:-http://host.docker.internal:8010/v1}
       VLLM_API_KEY: ${VLLM_API_KEY:-EMPTY}
       GITHUB_TOKEN: ${GITHUB_TOKEN}
@@ -225,6 +228,7 @@ services:
       ZAI_API_KEY: ${ZAI_API_KEY}
       MATERIALS_API_KEY: ${MATERIALS_API_KEY}
       MP_API_KEY: ${MATERIALS_API_KEY}
+      PERPLEXITY_API_KEY: ${PERPLEXITY_API_KEY}
       GEMMA4_URL: ${GEMMA4_URL:-http://host.docker.internal:8010/v1}
       VLLM_API_KEY: ${VLLM_API_KEY:-EMPTY}
       GITHUB_TOKEN: ${GITHUB_TOKEN}
@@ -289,6 +293,7 @@ services:
       ZAI_API_KEY: ${ZAI_API_KEY}
       MATERIALS_API_KEY: ${MATERIALS_API_KEY}
       MP_API_KEY: ${MATERIALS_API_KEY}
+      PERPLEXITY_API_KEY: ${PERPLEXITY_API_KEY}
       GEMMA4_URL: ${GEMMA4_URL:-http://host.docker.internal:8010/v1}
       VLLM_API_KEY: ${VLLM_API_KEY:-EMPTY}
       GITHUB_TOKEN: ${GITHUB_TOKEN}
@@ -353,6 +358,7 @@ services:
       ZAI_API_KEY: ${ZAI_API_KEY}
       MATERIALS_API_KEY: ${MATERIALS_API_KEY}
       MP_API_KEY: ${MATERIALS_API_KEY}
+      PERPLEXITY_API_KEY: ${PERPLEXITY_API_KEY}
       GEMMA4_URL: ${GEMMA4_URL:-http://host.docker.internal:8010/v1}
       VLLM_API_KEY: ${VLLM_API_KEY:-EMPTY}
       GITHUB_TOKEN: ${GITHUB_TOKEN}
@@ -378,6 +384,15 @@ services:
       - "18825:18790"
     cpus: "8"
     mem_limit: 16g
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              device_ids:
+                - "1"
+              capabilities:
+                - gpu
     init: true
     restart: unless-stopped
     extra_hosts:
@@ -417,6 +432,7 @@ services:
       ZAI_API_KEY: ${ZAI_API_KEY}
       MATERIALS_API_KEY: ${MATERIALS_API_KEY}
       MP_API_KEY: ${MATERIALS_API_KEY}
+      PERPLEXITY_API_KEY: ${PERPLEXITY_API_KEY}
       GEMMA4_URL: ${GEMMA4_URL:-http://host.docker.internal:8010/v1}
       VLLM_API_KEY: ${VLLM_API_KEY:-EMPTY}
       GITHUB_TOKEN: ${GITHUB_TOKEN}
@@ -481,6 +497,7 @@ services:
       ZAI_API_KEY: ${ZAI_API_KEY}
       MATERIALS_API_KEY: ${MATERIALS_API_KEY}
       MP_API_KEY: ${MATERIALS_API_KEY}
+      PERPLEXITY_API_KEY: ${PERPLEXITY_API_KEY}
       GEMMA4_URL: ${GEMMA4_URL:-http://host.docker.internal:8010/v1}
       VLLM_API_KEY: ${VLLM_API_KEY:-EMPTY}
       GITHUB_TOKEN: ${GITHUB_TOKEN}
@@ -545,6 +562,7 @@ services:
       ZAI_API_KEY: ${ZAI_API_KEY}
       MATERIALS_API_KEY: ${MATERIALS_API_KEY}
       MP_API_KEY: ${MATERIALS_API_KEY}
+      PERPLEXITY_API_KEY: ${PERPLEXITY_API_KEY}
       GEMMA4_URL: ${GEMMA4_URL:-http://host.docker.internal:8010/v1}
       VLLM_API_KEY: ${VLLM_API_KEY:-EMPTY}
       GITHUB_TOKEN: ${GITHUB_TOKEN}
@@ -609,6 +627,7 @@ services:
       ZAI_API_KEY: ${ZAI_API_KEY}
       MATERIALS_API_KEY: ${MATERIALS_API_KEY}
       MP_API_KEY: ${MATERIALS_API_KEY}
+      PERPLEXITY_API_KEY: ${PERPLEXITY_API_KEY}
       GEMMA4_URL: ${GEMMA4_URL:-http://host.docker.internal:8010/v1}
       VLLM_API_KEY: ${VLLM_API_KEY:-EMPTY}
       GITHUB_TOKEN: ${GITHUB_TOKEN}
@@ -673,6 +692,7 @@ services:
       ZAI_API_KEY: ${ZAI_API_KEY}
       MATERIALS_API_KEY: ${MATERIALS_API_KEY}
       MP_API_KEY: ${MATERIALS_API_KEY}
+      PERPLEXITY_API_KEY: ${PERPLEXITY_API_KEY}
       GEMMA4_URL: ${GEMMA4_URL:-http://host.docker.internal:8010/v1}
       VLLM_API_KEY: ${VLLM_API_KEY:-EMPTY}
       GITHUB_TOKEN: ${GITHUB_TOKEN}
@@ -737,6 +757,7 @@ services:
       ZAI_API_KEY: ${ZAI_API_KEY}
       MATERIALS_API_KEY: ${MATERIALS_API_KEY}
       MP_API_KEY: ${MATERIALS_API_KEY}
+      PERPLEXITY_API_KEY: ${PERPLEXITY_API_KEY}
       GEMMA4_URL: ${GEMMA4_URL:-http://host.docker.internal:8010/v1}
       VLLM_API_KEY: ${VLLM_API_KEY:-EMPTY}
       GITHUB_TOKEN: ${GITHUB_TOKEN}

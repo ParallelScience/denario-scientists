@@ -71,6 +71,9 @@ def generate_compose(fleet):
                 # engineer having to know our custom env var name.
                 "MATERIALS_API_KEY": "${MATERIALS_API_KEY}",
                 "MP_API_KEY": "${MATERIALS_API_KEY}",
+                # Perplexity API — used by Denario's paper module to look up
+                # citations (langgraph_agents/paper_module/literature.py).
+                "PERPLEXITY_API_KEY": "${PERPLEXITY_API_KEY}",
                 # Host-side vLLM Gemma 4 31B (reached via host.docker.internal).
                 # Override with GEMMA4_URL in .env if the endpoint moves.
                 "GEMMA4_URL": "${GEMMA4_URL:-http://host.docker.internal:8010/v1}",

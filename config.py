@@ -26,7 +26,8 @@ MODEL_OVERRIDES = {
     # denario-6: gateway brain on the host-side vLLM Gemma 4 31B.
     # openclaw.json also gets a models.providers.vllm block (see VLLM_PROVIDER_CATALOGS)
     # so the provider catalog knows the base URL + model metadata.
-    "denario-6": "vllm//rds/models/gemma-4-31B-it",
+    # Temporarily disabled — falling back to DEFAULT_MODEL (MiniMax-M2.7).
+    # "denario-6": "vllm//rds/models/gemma-4-31B-it",
 }
 
 # Extra models.providers.<id> blocks injected into a scientist's openclaw.json
@@ -58,6 +59,7 @@ GPU_ASSIGNMENT = {
     # GPU 0 is reserved for the host-side vLLM Gemma 4 31B deployment
     # (serves the parallel fan-out pool). Scientists use GPU 1.
     "denario-3": ["1"],  # GPU 1 — NVIDIA RTX PRO 6000 Blackwell (96 GB VRAM)
+    "denario-6": ["1"],  # shares GPU 1 with denario-3
 }
 
 # Per-scientist resource overrides (optional). Key = scientist name.
@@ -102,11 +104,21 @@ PARAMS_OVERRIDES = {
         "EDA module": {
             "engineer":   {"model": "/rds/models/gemma-4-31B-it", "temperature": 0.2},
             "researcher": {"model": "/rds/models/gemma-4-31B-it", "temperature": 0.2},
+            "code_execution_timeout": 1800,
         },
         "Analysis module": {
             "engineer":   {"model": "/rds/models/gemma-4-31B-it", "temperature": 0.2},
             "researcher": {"model": "/rds/models/gemma-4-31B-it", "temperature": 0.2},
+            "code_execution_timeout": 1800,
         },
+    },
+    "denario-2": {
+        "EDA module":      {"code_execution_timeout": 1800},
+        "Analysis module": {"code_execution_timeout": 1800},
+    },
+    "denario-4": {
+        "EDA module":      {"code_execution_timeout": 1800},
+        "Analysis module": {"code_execution_timeout": 1800},
     },
     "denario-5": {
         "hardware_constraints": (
@@ -128,11 +140,14 @@ PARAMS_OVERRIDES = {
         "hardware_constraints": (
             "- Linux x86_64 Docker container\n"
             "- 8 CPUs (AMD Ryzen Threadripper PRO 9995WX), 16 GB RAM\n"
-            "- No GPU — do not use CUDA or GPU-dependent libraries\n"
+            "- NVIDIA RTX PRO 6000 Blackwell Edition (96 GB VRAM, shared with denario-3), CUDA 13.0\n"
+            "- For PyTorch GPU: use device='cuda'\n"
             "- Multiprocessing: limit to 8 workers max\n"
             "- NumPy/SciPy use OpenBLAS — set OMP_NUM_THREADS=2 to avoid thread oversubscription with multiprocessing\n"
             "- Memory is limited — avoid loading large datasets entirely into RAM; use chunked/streaming approaches for data > 4 GB"
         ),
+        "EDA module":      {"code_execution_timeout": 1800},
+        "Analysis module": {"code_execution_timeout": 1800},
     },
     "denario-3": {
         "hardware_constraints": (
