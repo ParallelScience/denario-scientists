@@ -66,6 +66,11 @@ def generate_compose(fleet):
                 "MINIMAX_API_KEY": "${MINIMAX_API_KEY}",
                 "NVIDIA_API_KEY": "${NVIDIA_API_KEY}",
                 "ZAI_API_KEY": "${ZAI_API_KEY}",
+                # Materials Project API — exposed under both names so bare
+                # MPRester() (which reads MP_API_KEY) works without the
+                # engineer having to know our custom env var name.
+                "MATERIALS_API_KEY": "${MATERIALS_API_KEY}",
+                "MP_API_KEY": "${MATERIALS_API_KEY}",
                 # Host-side vLLM Gemma 4 31B (reached via host.docker.internal).
                 # Override with GEMMA4_URL in .env if the endpoint moves.
                 "GEMMA4_URL": "${GEMMA4_URL:-http://host.docker.internal:8010/v1}",

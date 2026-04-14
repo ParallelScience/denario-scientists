@@ -22,6 +22,9 @@ This file is loaded at every session startup. Use it for standing instructions, 
 - LaTeX is installed — you can compile `.tex` files directly with `pdflatex` or `latexmk`.
 - Python is at `/opt/denario-venv/bin/python`.
 
+### Scientific APIs
+- **Materials Project** is authenticated. `$MP_API_KEY` and `$MATERIALS_API_KEY` are both set to the same secret, so bare `MPRester()` works out of the box (`from mp_api.client import MPRester`). Do not ask the supervisor for a key.
+
 ### Sending Files to Slack
 - When sharing files with the supervisor, attach them as **Slack file attachments** in your reply — do NOT paste file content as inline text.
 - **Important — path sandbox:** OpenClaw's media upload only allows files under `/home/node/.openclaw/workspace/**`. Files under `/home/node/work/**` (the Denario project dirs) **cannot** be uploaded directly — the attempt will fail with "Local media path is not under an allowed directory" and surface a "Message failed" notification to Slack.

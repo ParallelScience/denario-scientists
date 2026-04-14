@@ -30,6 +30,7 @@ if [ -f "$CONFIG" ]; then
       const keys = [
         'ANTHROPIC_API_KEY', 'OPENAI_API_KEY', 'GEMINI_API_KEY',
         'GOOGLE_API_KEY', 'GOOGLE_GEMINI_API_KEY', 'MINIMAX_API_KEY',
+        'MATERIALS_API_KEY', 'MP_API_KEY',
         'GITHUB_TOKEN', 'GITHUB_ORG', 'ELEVENLABS_API_KEY',
         'SCIENTIST_NAME',
       ];
