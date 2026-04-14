@@ -224,24 +224,35 @@ def _install_workspace_files(config_dir: str, workspace_dir: str, scientist: dic
     if os.path.exists(agents_src):
         shutil.copy2(agents_src, os.path.join(workspace_dir, "AGENTS.md"))
 
-    # IDENTITY.md — per-scientist
-    gpu_info = ""
-    if scientist.get("gpus"):
-        gpu_ids = ", ".join(scientist["gpus"])
-        gpu_info = f"""
-## Hardware
-
-You have **GPU access** (device ID: {gpu_ids}). Use it for heavy computation — PyTorch, TensorFlow, JAX, and CUDA are available. When writing code that could benefit from GPU acceleration, use it. Other scientists do NOT have GPU access, so this is your advantage for compute-intensive tasks.
-"""
+    # IDENTITY.md — per-scientist (identity only; hardware lives in TOOLS.md)
     with open(os.path.join(workspace_dir, "IDENTITY.md"), "w") as f:
-        f.write(f"""# Identity
+        f.write(
+            f"# Identity\n\n"
+            f"- **Name:** {scientist['name']}\n"
+            f"- **Role:** Denario research scientist\n"
+        )
 
-- **Name:** {scientist['name']}
-- **Role:** Denario research scientist
-{gpu_info}""")
+    # TOOLS.md — per-scientist local setup. Every fact is pulled from config.py
+    # (scientist dict + PARAMS_OVERRIDES) so Denario's params.yaml and TOOLS.md
+    # share a single source of truth for hardware.
+    hardware = (
+        cfg.PARAMS_OVERRIDES.get(scientist["name"], {}).get("hardware_constraints")
+        or cfg.DEFAULT_HARDWARE_CONSTRAINTS
+    )
+    with open(os.path.join(workspace_dir, "TOOLS.md"), "w") as f:
+        f.write(
+            f"# TOOLS.md — Local Setup for {scientist['name']}\n\n"
+            f"## Model\n\n"
+            f"- Default agent: `{scientist['model']}`\n\n"
+            f"## Hardware\n\n"
+            f"{hardware}\n\n"
+            f"## Gateway ports (host-side)\n\n"
+            f"- Gateway UI: {scientist['gateway_port']}\n"
+            f"- Bridge: {scientist['bridge_port']}\n"
+        )
 
     # Remove files we don't need
-    for filename in ["BOOTSTRAP.md", "HEARTBEAT.md", "TOOLS.md", "USER.md"]:
+    for filename in ["BOOTSTRAP.md", "HEARTBEAT.md", "USER.md"]:
         filepath = os.path.join(workspace_dir, filename)
         if os.path.exists(filepath):
             os.remove(filepath)
