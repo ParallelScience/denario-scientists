@@ -23,6 +23,8 @@ MODEL_OVERRIDES = {
     "denario-2": "nvidia/nvidia/nemotron-3-super-120b-a12b",
     "denario-3": "anthropic/claude-sonnet-4-6",
     "denario-4": "zai/glm-5.1",
+    "denario-5": "zai/glm-5.1",
+    "denario-6": "anthropic/claude-sonnet-4-6",
     # denario-6: gateway brain on the host-side vLLM Gemma 4 31B.
     # openclaw.json also gets a models.providers.vllm block (see VLLM_PROVIDER_CATALOGS)
     # so the provider catalog knows the base URL + model metadata.
@@ -67,7 +69,7 @@ GPU_ASSIGNMENT = {
 RESOURCE_OVERRIDES = {
     "denario-3": {"memory": "64g", "cpus": "32"},  # GPU scientist gets more resources
     "denario-5": {"memory": "16g", "cpus": "8"},
-    "denario-6": {"memory": "16g", "cpus": "8"},
+    "denario-6": {"memory": "128g", "cpus": "64"},
     **{f"denario-{i}": {"memory": MINIMAL_MEMORY, "cpus": MINIMAL_CPUS} for i in range(7, 13)},
 }
 
@@ -139,15 +141,17 @@ PARAMS_OVERRIDES = {
     "denario-6": {
         "hardware_constraints": (
             "- Linux x86_64 Docker container\n"
-            "- 8 CPUs (AMD Ryzen Threadripper PRO 9995WX), 16 GB RAM\n"
-            "- NVIDIA RTX PRO 6000 Blackwell Edition (96 GB VRAM, shared with denario-3), CUDA 13.0\n"
+            "- 64 vCPUs (AMD Ryzen Threadripper PRO 9995WX), 128 GB RAM\n"
+            "- NVIDIA RTX PRO 6000 Blackwell Edition (96 GB VRAM), CUDA 13.0\n"
             "- For PyTorch GPU: use device='cuda'\n"
-            "- Multiprocessing: limit to 8 workers max\n"
-            "- NumPy/SciPy use OpenBLAS — set OMP_NUM_THREADS=2 to avoid thread oversubscription with multiprocessing\n"
-            "- Memory is limited — avoid loading large datasets entirely into RAM; use chunked/streaming approaches for data > 4 GB"
+            "- Multiprocessing: limit to ~8-16 workers to avoid oversubscription\n"
+            "- NumPy/SciPy use OpenBLAS — set OMP_NUM_THREADS to avoid thread oversubscription with multiprocessing"
         ),
-        "EDA module":      {"code_execution_timeout": 1800},
-        "Analysis module": {"code_execution_timeout": 1800},
+        "EDA module":      {"code_execution_timeout": 3600},
+        "Analysis module": {
+            "code_execution_timeout": 7200,
+            "enable_vlm_review": True,
+            },
     },
     "denario-3": {
         "hardware_constraints": (
@@ -177,6 +181,7 @@ VOICE_OVERRIDES = {
     "denario-3": "GPQBwvkAgD34c9QL6VOy",
     "denario-4": "wHmPF60BN2ikHIqbdAP6",
     "denario-5": "W2ZOpTX05dpEry2h5LQb",
+    "denario-6": "GPQBwvkAgD34c9QL6VOy",
     # denario-6 through denario-12: use DEFAULT_VOICE_ID (same as denario-1)
 }
 

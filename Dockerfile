@@ -85,6 +85,9 @@ RUN /opt/denario-venv/bin/pip install \
       sympy \
       scikit-learn \
       slack_bolt \
+      healpy \
+      torch \
+      astropy \
       beautifulsoup4
 
 # Clean up source copies
