@@ -15,7 +15,7 @@ EDA module:
       model: gemini-3.1-pro-preview
       temperature: 0.2
    planner:
-      model: gemini-3.1-flash-lite-preview
+      model: gemini-3.1-pro-preview
       temperature: 0.2
    plan_reviewer:
       model: claude-sonnet-4-6
@@ -87,7 +87,7 @@ Analysis module:
       model: gemini-3.1-pro-preview
       temperature: 0.1
    planner:
-      model: gemini-3.1-flash-lite-preview
+      model: gemini-3.1-pro-preview
       temperature: 0.1
    plan_reviewer:
       model: claude-sonnet-4-6
