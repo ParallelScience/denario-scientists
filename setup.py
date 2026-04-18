@@ -41,6 +41,13 @@ def generate_compose(fleet):
     services = {}
     for s in fleet:
         name = s["name"]
+        idx = name.split("-")[1]
+        # Per-scientist API key overrides: fall back to the shared key when
+        # <NAME>_<N> isn't set in .env (nested substitution, compose v2+).
+        anthropic_key = f"${{ANTHROPIC_API_KEY_{idx}:-${{ANTHROPIC_API_KEY}}}}"
+        gemini_key = f"${{GEMINI_API_KEY_{idx}:-${{GEMINI_API_KEY}}}}"
+        google_key = f"${{GOOGLE_API_KEY_{idx}:-${{GOOGLE_API_KEY}}}}"
+        google_gemini_key = f"${{GOOGLE_GEMINI_API_KEY_{idx}:-${{GOOGLE_GEMINI_API_KEY}}}}"
         services[name] = {
             "build": {
                 "context": "../openclaw",
@@ -58,11 +65,11 @@ def generate_compose(fleet):
                 "SCIENTIST_NAME": name,
                 "OPENCLAW_GATEWAY_TOKEN": f"${{{name.upper().replace('-', '_')}_TOKEN:-{s['token']}}}",
                 "OPENCLAW_ALLOW_INSECURE_PRIVATE_WS": "1",
-                "ANTHROPIC_API_KEY": "${ANTHROPIC_API_KEY}",
+                "ANTHROPIC_API_KEY": anthropic_key,
                 "OPENAI_API_KEY": "${OPENAI_API_KEY}",
-                "GEMINI_API_KEY": "${GEMINI_API_KEY}",
-                "GOOGLE_API_KEY": "${GOOGLE_API_KEY}",
-                "GOOGLE_GEMINI_API_KEY": "${GOOGLE_GEMINI_API_KEY}",
+                "GEMINI_API_KEY": gemini_key,
+                "GOOGLE_API_KEY": google_key,
+                "GOOGLE_GEMINI_API_KEY": google_gemini_key,
                 "MINIMAX_API_KEY": "${MINIMAX_API_KEY}",
                 "NVIDIA_API_KEY": "${NVIDIA_API_KEY}",
                 "ZAI_API_KEY": "${ZAI_API_KEY}",

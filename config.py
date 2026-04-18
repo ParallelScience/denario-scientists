@@ -23,7 +23,7 @@ MODEL_OVERRIDES = {
     "denario-2": "nvidia/nvidia/nemotron-3-super-120b-a12b",
     "denario-3": "anthropic/claude-sonnet-4-6",
     "denario-4": "zai/glm-5.1",
-    "denario-5": "zai/glm-5.1",
+    "denario-5": "anthropic/claude-sonnet-4-6",
     "denario-6": "anthropic/claude-sonnet-4-6",
     # denario-6: gateway brain on the host-side vLLM Gemma 4 31B.
     # openclaw.json also gets a models.providers.vllm block (see VLLM_PROVIDER_CATALOGS)
