@@ -39,6 +39,9 @@ h1, h2, h3 { font-family: 'EB Garamond', serif; }
 
 .best-iter-badge { font-size: 11px; padding: 1px 6px; border-radius: 3px; background: #1a2e1a; color: #8bcd8b; }
 
+.data-desc-link { font-size: 11px; padding: 2px 8px; border-radius: 3px; background: #1a1a1a; color: #999; border: 1px solid #2a2a2a; cursor: pointer; user-select: none; display: inline-block; }
+.data-desc-link:hover { color: #ddd; border-color: #444; background: #222; }
+
 .repo-chip { display: inline-block; padding: 4px 10px; border: 1px solid #333; border-radius: 4px; font-size: 12px; margin: 3px; }
 .repo-chip:hover { border-color: #555; background: #1a1a1a; }
 

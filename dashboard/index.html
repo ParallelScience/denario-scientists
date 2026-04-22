@@ -6,7 +6,7 @@
     <title>Fleet — Parallel Science</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=EB+Garamond:wght@400;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="style.css?v=5">
+    <link rel="stylesheet" href="style.css?v=7">
     <script>tailwind.config={theme:{extend:{fontFamily:{serif:['EB Garamond','serif'],mono:['JetBrains Mono','monospace']}}}}</script>
 </head>
 <body class="min-h-screen">
@@ -40,7 +40,7 @@
     <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.21/dist/katex.min.js"></script>
     <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.21/dist/contrib/auto-render.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
-    <script src="shared.js?v=5"></script>
+    <script src="shared.js?v=7"></script>
     <script>
     renderNav('fleet');
 
@@ -91,6 +91,7 @@
                     ${proj.best_iteration != null && proj.iteration_count > 1 ? `<div class="text-xs mt-0.5"><span class="best-iter-badge">best iter: ${proj.best_iteration}</span></div>` : ''}
                     <div class="mt-1" id="pipeline-${key}">${renderPipelineBar(curStages, (proj.plan_by_iteration && proj.plan_by_iteration[curIter]) || null, sci.status === 'busy' && curIter === maxIter, sci.name, proj.name, proj.iteration_count, curIter)}</div>
                     <div id="plan-summary-${key}">${(proj.plan_by_iteration && proj.plan_by_iteration[curIter]) ? renderPlanTable(proj.plan_by_iteration[curIter], key) : ''}</div>
+                    <div id="datadesc-${key}">${renderDataDesc(key, proj, curIter)}</div>
                     ${otherCount > 0 ? `<div class="text-xs text-gray-600 mt-2">+ ${otherCount} other project${otherCount > 1 ? 's' : ''}</div>` : ''}
                 </div>`;
             }

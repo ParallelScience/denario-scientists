@@ -529,11 +529,21 @@ def scan_projects(scientist_name: str) -> list[dict]:
 
         # Plan execution detail (per-iteration)
         plan_by_iteration = {}
+        data_desc_by_iteration = {}
         for it in iterations:
             idx = int(re.search(r"\d+", it.name).group())
             plan = get_plan_steps(proj_dir, iteration_dir=it)
             if plan:
                 plan_by_iteration[idx] = plan
+            dd_file = it / "input_files" / "data_description.md"
+            if dd_file.exists():
+                try:
+                    text = dd_file.read_text(errors="ignore")
+                    if len(text) > 20000:
+                        text = text[:20000] + "\n\n…(truncated)"
+                    data_desc_by_iteration[idx] = text
+                except OSError:
+                    pass
         plan_execution = plan_by_iteration.get(iteration_count - 1) if iterations else None
 
         # Cost aggregation
@@ -548,6 +558,7 @@ def scan_projects(scientist_name: str) -> list[dict]:
             "stages_by_iteration": pipeline["stages_by_iteration"],
             "plan_execution": plan_execution,
             "plan_by_iteration": plan_by_iteration,
+            "data_desc_by_iteration": {str(k): v for k, v in data_desc_by_iteration.items()},
             "cost": cost,
             "last_modified": last_modified,
             "github_url": github_url,

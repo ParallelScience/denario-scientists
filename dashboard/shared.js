@@ -71,6 +71,114 @@ function updateCardIteration(key) {
         const iterPlan = (proj.plan_by_iteration && proj.plan_by_iteration[currentIter]) || null;
         planSummary.innerHTML = iterPlan ? renderPlanTable(iterPlan, key) : '';
     }
+
+    // Update data description trigger (reflects current iter)
+    const dataDesc = document.getElementById('datadesc-' + key);
+    if (dataDesc) {
+        dataDesc.innerHTML = renderDataDesc(key, proj, currentIter);
+    }
+}
+
+function renderDataDesc(key, proj, currentIter) {
+    const map = proj.data_desc_by_iteration || {};
+    const hasAny = Object.keys(map).length > 0;
+    if (!hasAny) return '';
+    const hasCur = (map[String(currentIter)] || map[currentIter]) != null;
+    const label = hasCur ? `Data description (iter ${currentIter})` : 'Data description';
+    return `<div class="mt-2"><span class="data-desc-link" onclick="openDataDescModal('${key}', ${currentIter})">${label}</span></div>`;
+}
+
+// --- Data description modal (reuses stage-modal CSS) ---
+let _ddModal = { key: '', iteration: 0 };
+
+function openDataDescModal(key, startIter) {
+    const cp = _cardProjects[key];
+    if (!cp) return;
+    const map = cp.proj.data_desc_by_iteration || {};
+    const iters = Object.keys(map).map(Number).sort((a, b) => a - b);
+    if (iters.length === 0) return;
+
+    // Pick the nearest available iteration ≤ startIter, else first available
+    let iter = iters.includes(startIter) ? startIter : (iters.filter(i => i <= startIter).pop() ?? iters[0]);
+
+    let modal = document.getElementById('datadesc-modal');
+    if (!modal) {
+        modal = document.createElement('div');
+        modal.id = 'datadesc-modal';
+        // Reuse stage-modal styling by applying the same class structure
+        modal.className = 'stage-modal-like';
+        modal.innerHTML = `
+            <div class="stage-modal-backdrop" onclick="closeDataDescModal()"></div>
+            <div class="stage-modal-content">
+                <div class="stage-modal-header">
+                    <div class="stage-modal-nav">
+                        <span id="datadesc-modal-prev" class="stage-modal-arrow" onclick="ddModalPrev()">&larr;</span>
+                        <span id="datadesc-modal-title"></span>
+                        <span id="datadesc-modal-next" class="stage-modal-arrow" onclick="ddModalNext()">&rarr;</span>
+                    </div>
+                    <span class="stage-modal-close" onclick="closeDataDescModal()">&times;</span>
+                </div>
+                <div id="datadesc-modal-body" class="stage-modal-body"></div>
+            </div>`;
+        // Position: stage-modal CSS binds to #stage-modal id, replicate inline
+        modal.style.cssText = 'display:none; position:fixed; inset:0; z-index:1000; align-items:center; justify-content:center;';
+        document.body.appendChild(modal);
+    }
+
+    _ddModal = { key, iteration: iter };
+    modal.style.display = 'flex';
+    renderDataDescModal();
+}
+
+function renderDataDescModal() {
+    const { key, iteration } = _ddModal;
+    const cp = _cardProjects[key];
+    if (!cp) return;
+    const map = cp.proj.data_desc_by_iteration || {};
+    const iters = Object.keys(map).map(Number).sort((a, b) => a - b);
+    const title = document.getElementById('datadesc-modal-title');
+    const body = document.getElementById('datadesc-modal-body');
+    const prev = document.getElementById('datadesc-modal-prev');
+    const next = document.getElementById('datadesc-modal-next');
+
+    const idx = iters.indexOf(iteration);
+    const hasNav = iters.length > 1;
+    prev.style.visibility = hasNav && idx > 0 ? 'visible' : 'hidden';
+    next.style.visibility = hasNav && idx < iters.length - 1 ? 'visible' : 'hidden';
+
+    const projLabel = cp.proj.title || cp.proj.name;
+    title.textContent = hasNav ? `Data description — ${projLabel}  ${iteration}/${iters[iters.length - 1]}` : `Data description — ${projLabel}`;
+
+    const text = map[String(iteration)] || map[iteration] || '';
+    try {
+        body.innerHTML = (typeof marked !== 'undefined')
+            ? `<div class="stage-md-content">${marked.parse(text)}</div>`
+            : `<pre class="stage-tex-content">${escapeHtml(text)}</pre>`;
+        if (typeof renderMath === 'function') renderMath(body);
+    } catch (e) {
+        body.innerHTML = `<pre class="stage-tex-content">${escapeHtml(text)}</pre>`;
+    }
+}
+
+function ddModalPrev() {
+    const cp = _cardProjects[_ddModal.key];
+    if (!cp) return;
+    const iters = Object.keys(cp.proj.data_desc_by_iteration || {}).map(Number).sort((a, b) => a - b);
+    const idx = iters.indexOf(_ddModal.iteration);
+    if (idx > 0) { _ddModal.iteration = iters[idx - 1]; renderDataDescModal(); }
+}
+
+function ddModalNext() {
+    const cp = _cardProjects[_ddModal.key];
+    if (!cp) return;
+    const iters = Object.keys(cp.proj.data_desc_by_iteration || {}).map(Number).sort((a, b) => a - b);
+    const idx = iters.indexOf(_ddModal.iteration);
+    if (idx >= 0 && idx < iters.length - 1) { _ddModal.iteration = iters[idx + 1]; renderDataDescModal(); }
+}
+
+function closeDataDescModal() {
+    const modal = document.getElementById('datadesc-modal');
+    if (modal) modal.style.display = 'none';
 }
 
 function toggleProject(key) {
@@ -257,7 +365,7 @@ function renderMath(container) {
 
 // Keyboard navigation for modal
 document.addEventListener('keydown', (e) => {
-    if (e.key === 'Escape') closeStageModal();
+    if (e.key === 'Escape') { closeStageModal(); closeDataDescModal(); }
     if (e.key === 'ArrowLeft') modalPrev();
     if (e.key === 'ArrowRight') modalNext();
 });
