@@ -133,6 +133,17 @@ Paper module:
       model: gemini-3.1-flash-lite-preview
       temperature: 0.3
 
+
+Citations:
+   # Backend used when add_citations is enabled. Options: 'perplexity', 'valency'.
+   backend: valency
+
+   # Only used when backend = valency. The LLM that decides which retrieved
+   # papers to cite where, and emits \citep{} markers in-place.
+   citation_inserter:
+      model: gemini-3.1-flash-lite-preview
+      temperature: 0.1
+
 Classifier module:
    archive_classifier:
       model: gemini-3.1-flash-lite-preview
