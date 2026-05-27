@@ -107,6 +107,11 @@ def generate_compose(fleet):
                 "./bootstrap:/app/bootstrap:ro",
                 "${DATA_DIR:-./data}:/home/node/data:ro",
                 "./tools:/home/node/tools:ro",
+                # Valency OAuth token cache. RW so the in-container refresh
+                # path can write back to the shared file (UID 1000 on both
+                # host and container, so no perms issue). Override the host
+                # path with DENARIO_TOKEN_DIR in .env if needed.
+                "${DENARIO_TOKEN_DIR:-/home/cmbagent/.denario}:/home/node/.denario",
             ],
             "ports": [
                 f"{s['gateway_port']}:18789",
