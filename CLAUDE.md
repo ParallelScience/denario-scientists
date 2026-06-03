@@ -12,12 +12,19 @@ This repo has no pip dependencies itself. It generates Docker configurations tha
 
 ```
 ../openclaw    → OpenClaw gateway (Node/TypeScript, Docker build context)
-../ag2         → AG2 multi-agent framework (installed in container venv)
-../cmbagent    → Research backend (installed in container venv)
-../Denario     → Research assistant + MCP server (installed in container venv)
+../cmbagent_lg → LangGraph research backend (installed in container venv;
+                 Denario's analysis/results stage runs on it)
+../Denario     → Research assistant + MCP server (installed in container venv,
+                 on the `cmbagent_lg` branch)
 ```
 
-All four sibling repos must exist. The Dockerfile uses `additional_contexts` to pull them in at build time.
+All three sibling repos must exist. The Dockerfile uses `additional_contexts` to pull them in at build time.
+
+> **Note:** `../ag2` and `../cmbagent` were dropped from the image. No pipeline
+> stage the fleet runs (idea/methods use `mode="fast"`, results run on
+> cmbagent_lg) needs them. The legacy `cmbagent` is only reachable via three
+> opt-in stages (`mode="cmbagent"` idea/methods, `preprocess_task`,
+> `cmbagent_keywords=True`) which raise a clear error if invoked.
 
 ## Commands
 
@@ -71,7 +78,17 @@ docker exec denario-1 tail -f /tmp/cancel-watcher.log
 
 ### Container Internals
 
-The Dockerfile extends OpenClaw with a Python 3.12 venv containing the full Denario stack (ag2 → cmbagent → Denario). On startup, `entrypoint.sh`:
+### Two backends (per-scientist runtime)
+
+Each scientist runs one of two runtimes, selected by `config.py:BACKEND_OVERRIDES`
+(default `openclaw`):
+
+- **`openclaw`** — the OpenClaw gateway + Slack/voice, local control UI on `gateway_port`. Built from `Dockerfile`, started by `entrypoint.sh`, configured by a generated `openclaw.json` + `soul.md`/`agents.md`.
+- **`claude`** — a **Claude Code** session running the [`denario-claude-plugin`](../denario-claude-plugin) over MCP, driven via `claude --remote-control "<name>"`. Built from `Dockerfile.claude`, started by `entrypoint.claude.sh`. No OpenClaw, no Slack, **no inbound port** (Remote Control is outbound HTTPS) — you control it from **claude.ai/code** or the mobile app by session name. The plugin (mounted at `/opt/denario-plugin`, loaded with `--plugin-dir`) carries the workflow knowledge that `soul.md`/`agents.md` gave the OpenClaw agent, and its bundled `.mcp.json` auto-starts the denario + cmbagent_lg MCP servers (wired via `DENARIO_MCP_PYTHON`/`DENARIO_MCP_DIR`).
+
+Currently `denario-3` and `denario-6` are on the `claude` backend; the rest are `openclaw`. `setup.py` emits the right compose service + dirs per backend. Claude scientists need a logged-in **claude.ai subscription** seeded as credentials (mount `~/.claude/.credentials.json` via `CLAUDE_CREDENTIALS_FILE`), not an API key.
+
+The OpenClaw Dockerfile extends OpenClaw with a Python 3.12 venv containing the Denario stack (cmbagent_lg → Denario). On startup, `entrypoint.sh`:
 1. Copies bootstrap files (`SOUL.md`, `AGENTS.md`, `.gitignore`) into the workspace before the gateway writes defaults
 2. Patches `openclaw.json` MCP server entries with container API keys
 3. Configures git identity and authenticates `gh` CLI (if `GITHUB_TOKEN` is set)

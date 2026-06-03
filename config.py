@@ -18,6 +18,19 @@ MINIMAL_CPUS = "2"
 BASE_GATEWAY_PORT = 18796
 BASE_BRIDGE_PORT = 18820
 
+# Agent runtime fronting each scientist:
+#   "openclaw" (default) — OpenClaw gateway + Slack/voice, local control UI
+#   "claude"             — a Claude Code session running the denario plugin,
+#                          driven over MCP and controlled REMOTELY via
+#                          `claude --remote-control` (attach from claude.ai/code
+#                          or the mobile app by session name). No OpenClaw, no
+#                          Slack, no inbound port — outbound HTTPS only.
+DEFAULT_BACKEND = "openclaw"
+BACKEND_OVERRIDES = {
+    "denario-3": "claude",
+    "denario-6": "claude",
+}
+
 # Per-scientist overrides (optional). Key = scientist name, value = model.
 MODEL_OVERRIDES = {
     "denario-2": "nvidia/nvidia/nemotron-3-super-120b-a12b",
@@ -198,6 +211,7 @@ def scientists(n=None):
             "name": f"denario-{i}",
             "container": f"denario-{i}",
             "agent": "main",
+            "backend": BACKEND_OVERRIDES.get(f"denario-{i}", DEFAULT_BACKEND),
             "gateway_port": BASE_GATEWAY_PORT + i - 1,
             "bridge_port": BASE_BRIDGE_PORT + i - 1,
             "token": f"denario-{i}-token",

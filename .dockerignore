@@ -1,0 +1,11 @@
+# Dockerfile.claude copies nothing from this (the main) build context — it only
+# uses the cmbagent_lg-src / denario-src additional_contexts. Keep the uploaded
+# context tiny by excluding the heavy, irrelevant directories.
+scientists/
+data/
+dashboard/
+__pycache__/
+*.pyc
+.env
+docker-compose.yml
+*.png

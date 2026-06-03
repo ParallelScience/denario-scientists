@@ -55,10 +55,10 @@ if $DO_BUILD; then
   # Source repos used as Docker build contexts
   REPOS=(
     "$SCRIPT_DIR"
-    "$PARENT_DIR/ag2"
-    "$PARENT_DIR/cmbagent"
+    "$PARENT_DIR/cmbagent_lg"
     "$PARENT_DIR/Denario"
     "$PARENT_DIR/openclaw"
+    "$PARENT_DIR/denario-claude-plugin"
   )
 
   echo "=== Pulling latest code ==="

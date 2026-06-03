@@ -36,10 +36,109 @@ def parse_args():
     return parser.parse_args()
 
 
+def _emit_claude_lines(lines, s):
+    """Append a Claude-Code-native scientist service to the compose `lines`.
+
+    No OpenClaw: the container runs `claude --remote-control "<name>"` with the
+    denario plugin (`--plugin-dir`), which auto-starts the denario + cmbagent_lg
+    MCP servers (via the plugin's .mcp.json, configured by DENARIO_MCP_*). You
+    drive it from claude.ai/code or the mobile app by session name. Remote
+    Control is outbound-only, so there are no published ports and no healthcheck.
+    """
+    name = s["name"]
+    idx = name.split("-")[1]
+    anthropic_key = f"${{ANTHROPIC_API_KEY_{idx}:-${{ANTHROPIC_API_KEY}}}}"
+    gemini_key = f"${{GEMINI_API_KEY_{idx}:-${{GEMINI_API_KEY}}}}"
+    google_key = f"${{GOOGLE_API_KEY_{idx}:-${{GOOGLE_API_KEY}}}}"
+    google_gemini_key = f"${{GOOGLE_GEMINI_API_KEY_{idx}:-${{GOOGLE_GEMINI_API_KEY}}}}"
+
+    env = {
+        "HOME": "/home/node",
+        "TERM": "xterm-256color",
+        "SCIENTIST_NAME": name,
+        # Wiring for the denario plugin's bundled .mcp.json (env-var configured).
+        "DENARIO_MCP_PYTHON": "/opt/denario-venv/bin/python",
+        "DENARIO_MCP_DIR": "/opt/denario-venv/lib/python3.12/site-packages/denario/mcp_servers",
+        "DENARIO_WORK_DIR": "/home/node/work",
+        "DENARIO_PARAMS_FILE": "/home/node/work/params.yaml",
+        # Provider keys the MCP server reads (results/idea/methods/paper stages).
+        "ANTHROPIC_API_KEY": anthropic_key,
+        "OPENAI_API_KEY": "${OPENAI_API_KEY}",
+        "GEMINI_API_KEY": gemini_key,
+        "GOOGLE_API_KEY": google_key,
+        "GOOGLE_GEMINI_API_KEY": google_gemini_key,
+        "PERPLEXITY_API_KEY": "${PERPLEXITY_API_KEY}",
+        "MATERIALS_API_KEY": "${MATERIALS_API_KEY}",
+        "MP_API_KEY": "${MATERIALS_API_KEY}",
+        "GITHUB_TOKEN": "${GITHUB_TOKEN}",
+        "GITHUB_ORG": "${GITHUB_ORG:-ParallelScience}",
+        "GEMMA4_URL": "${GEMMA4_URL:-http://host.docker.internal:8010/v1}",
+        # Container reproducibility + a hook to pass extra `claude` flags
+        # (e.g. trust/permission bypass) without rebuilding.
+        "DISABLE_AUTOUPDATER": "1",
+        "CLAUDE_EXTRA_ARGS": "${CLAUDE_EXTRA_ARGS:-}",
+        "TZ": "${TZ:-UTC}",
+    }
+    volumes = [
+        f"./scientists/{name}/work:/home/node/work",
+        f"./scientists/{name}/claude:/home/node/.claude",
+        "../denario-claude-plugin:/opt/denario-plugin:ro",
+        "./entrypoint.claude.sh:/app/entrypoint.claude.sh:ro",
+        "${DATA_DIR:-./data}:/home/node/data:ro",
+        "./tools:/home/node/tools:ro",
+        # claude.ai credentials (a logged-in subscription) seeded into the
+        # session; override the host path with CLAUDE_CREDENTIALS_FILE in .env.
+        "${CLAUDE_CREDENTIALS_FILE:-/home/cmbagent/.claude/.credentials.json}:/seed/credentials.json:ro",
+        "${DENARIO_TOKEN_DIR:-/home/cmbagent/.denario}:/home/node/.denario",
+    ]
+
+    lines.append(f"  {name}:")
+    lines.append("    build:")
+    lines.append("      context: ../denario-scientists")
+    lines.append("      dockerfile: ../denario-scientists/Dockerfile.claude")
+    lines.append("      additional_contexts:")
+    lines.append("        cmbagent_lg-src: ../cmbagent_lg")
+    lines.append("        denario-src: ../Denario")
+    lines.append(f"    container_name: {name}")
+    lines.append("    environment:")
+    for k, v in env.items():
+        lines.append(f"      {k}: {v}")
+    lines.append("    volumes:")
+    for v in volumes:
+        lines.append(f"      - {v}")
+    lines.append(f"    cpus: \"{s.get('cpus', '4')}\"")
+    lines.append(f"    mem_limit: {s.get('memory', '8g')}")
+    if s.get("gpus"):
+        lines.append("    deploy:")
+        lines.append("      resources:")
+        lines.append("        reservations:")
+        lines.append("          devices:")
+        lines.append("            - driver: nvidia")
+        lines.append("              device_ids:")
+        for did in s["gpus"]:
+            lines.append(f"                - \"{did}\"")
+        lines.append("              capabilities:")
+        lines.append("                - gpu")
+    lines.append("    init: true")
+    lines.append("    restart: unless-stopped")
+    # Remote Control is an interactive session — keep a pty alive in the
+    # detached container so it doesn't exit immediately.
+    lines.append("    tty: true")
+    lines.append("    stdin_open: true")
+    lines.append("    extra_hosts:")
+    lines.append('      - "host.docker.internal:host-gateway"')
+    lines.append("    command:")
+    lines.append('      - "sh"')
+    lines.append('      - "/app/entrypoint.claude.sh"')
+    lines.append("")
+
+
 def generate_compose(fleet):
     """Generate docker-compose.yml from scientist configs."""
     services = {}
     for s in fleet:
+        if s.get("backend", cfg.DEFAULT_BACKEND) == "claude":
+            continue  # Claude-Code scientists are emitted separately, below.
         name = s["name"]
         idx = name.split("-")[1]
         # Per-scientist API key overrides: fall back to the shared key when
@@ -53,8 +152,7 @@ def generate_compose(fleet):
                 "context": "../openclaw",
                 "dockerfile": "../denario-scientists/Dockerfile",
                 "additional_contexts": {
-                    "ag2-src": "../ag2",
-                    "cmbagent-src": "../cmbagent",
+                    "cmbagent_lg-src": "../cmbagent_lg",
                     "denario-src": "../Denario",
                 },
             },
@@ -206,6 +304,12 @@ def generate_compose(fleet):
         lines.append(f"      start_period: {hc['start_period']}")
         lines.append("")
 
+    # Claude-Code-native scientists (driven via `claude --remote-control`,
+    # controlled from claude.ai/code — no OpenClaw gateway, no inbound port).
+    for s in fleet:
+        if s.get("backend", cfg.DEFAULT_BACKEND) == "claude":
+            _emit_claude_lines(lines, s)
+
     path = os.path.join(PROJECT_DIR, "docker-compose.yml")
     with open(path, "w") as f:
         f.write("\n".join(lines) + "\n")
@@ -282,6 +386,9 @@ def generate_dirs_and_configs(fleet):
     """Create config/workspace dirs and openclaw.json for each scientist."""
     for s in fleet:
         name = s["name"]
+        if s.get("backend", cfg.DEFAULT_BACKEND) == "claude":
+            _generate_claude_dirs(s)
+            continue
         config_dir = os.path.join(PROJECT_DIR, "scientists", name, "config")
         workspace_dir = os.path.join(PROJECT_DIR, "scientists", name, "workspace")
         work_dir = os.path.join(PROJECT_DIR, "scientists", name, "work")
@@ -427,6 +534,38 @@ def generate_dirs_and_configs(fleet):
         print(f"  Installed workspace for {name}")
 
 
+def _generate_claude_dirs(s):
+    """Per-scientist dirs/config for a Claude-Code-native scientist.
+
+    No openclaw.json: the denario plugin (mounted at /opt/denario-plugin, loaded
+    via `--plugin-dir`) provides the skills + the bundled MCP servers. We create
+    the work dir (+ params.yaml the MCP server reads) and a host-backed `.claude`
+    dir holding settings.json (and, after first start, the seeded credentials,
+    session history, and refreshed tokens).
+    """
+    name = s["name"]
+    work_dir = os.path.join(PROJECT_DIR, "scientists", name, "work")
+    claude_dir = os.path.join(PROJECT_DIR, "scientists", name, "claude")
+    os.makedirs(work_dir, exist_ok=True)
+    os.makedirs(claude_dir, exist_ok=True)
+
+    settings_path = os.path.join(claude_dir, "settings.json")
+    if not os.path.exists(settings_path):
+        settings = {
+            # Pin updates off inside the container (image controls the version).
+            "env": {"DISABLE_AUTOUPDATER": "1"},
+            "autoUpdatesChannel": "stable",
+        }
+        with open(settings_path, "w") as f:
+            json.dump(settings, f, indent=2)
+        print(f"  Created Claude config for {name}")
+    else:
+        print(f"  Claude config exists for {name}")
+
+    _install_params(work_dir, s)
+    print(f"  Installed work dir for {name} (claude backend)")
+
+
 def _deep_merge(base: dict, overrides: dict) -> dict:
     """Recursively merge overrides into a copy of base."""
     result = copy.deepcopy(base)
@@ -569,7 +708,11 @@ def main():
     print("\nDone.")
     print(f"\nScientist Control UIs:")
     for s in fleet:
-        print(f"  {s['name']}: http://localhost:{s['gateway_port']}/#token={s['token']}")
+        if s.get("backend", cfg.DEFAULT_BACKEND) == "claude":
+            print(f"  {s['name']}: Claude Code remote-control — open claude.ai/code "
+                  f"and select session '{s['name']}'")
+        else:
+            print(f"  {s['name']}: http://localhost:{s['gateway_port']}/#token={s['token']}")
 
 
 if __name__ == "__main__":

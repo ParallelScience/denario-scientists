@@ -55,24 +55,24 @@ FROM build AS runtime-assets
 RUN CI=true pnpm prune --prod && \
     find dist -type f \( -name '*.d.ts' -o -name '*.d.mts' -o -name '*.d.cts' -o -name '*.map' \) -delete
 
-# ── Stage 4: Python 3.12 + Denario + cmbagent + ag2 ─────────
+# ── Stage 4: Python 3.12 + Denario + cmbagent_lg ─────────
 FROM python:3.12-bookworm AS python-env
 
-# Copy local source repos (via docker-compose additional_contexts)
-COPY --from=ag2-src . /tmp/ag2/
-COPY --from=cmbagent-src . /tmp/cmbagent/
+# Copy local source repos (via docker-compose additional_contexts).
+# ag2 + legacy cmbagent were dropped: the cmbagent_lg stack (Denario on its
+# cmbagent_lg branch + the cmbagent_lg LangGraph backend) no longer depends on
+# them for any pipeline stage the fleet runs.
+COPY --from=cmbagent_lg-src . /tmp/cmbagent_lg/
 COPY --from=denario-src . /tmp/denario/
 
 RUN python3.12 -m venv /opt/denario-venv && \
     /opt/denario-venv/bin/pip install --upgrade pip
 
-# Install ag2 (cmbagent_autogen) from local source first
-RUN /opt/denario-venv/bin/pip install /tmp/ag2/
+# Install cmbagent_lg (LangGraph backend) from local source. Denario's
+# cmbagent_lg branch imports it eagerly (cmbagent_agents/experiment.py).
+RUN /opt/denario-venv/bin/pip install /tmp/cmbagent_lg/
 
-# Install cmbagent from local source (uses cmbagent_autogen already installed)
-RUN /opt/denario-venv/bin/pip install /tmp/cmbagent/
-
-# Install Denario from local source (uses cmbagent already installed)
+# Install Denario from local source (uses cmbagent_lg already installed)
 RUN /opt/denario-venv/bin/pip install /tmp/denario/
 
 # Install MCP server dependency + scientific packages
@@ -91,7 +91,7 @@ RUN /opt/denario-venv/bin/pip install \
       beautifulsoup4
 
 # Clean up source copies
-RUN rm -rf /tmp/ag2 /tmp/cmbagent /tmp/denario
+RUN rm -rf /tmp/cmbagent_lg /tmp/denario
 
 # ── Stage 5: Runtime base ────────────────────────────────────
 FROM ${OPENCLAW_NODE_BOOKWORM_IMAGE} AS base-default

@@ -1,0 +1,87 @@
+# syntax=docker/dockerfile:1.7
+#
+# Claude-Code-native Denario scientist.
+#
+# Same Denario cmbagent_lg venv as the OpenClaw image, but the runtime is the
+# Claude Code CLI instead of the OpenClaw gateway. The container launches
+# `claude --remote-control "<name>"` with the denario plugin (--plugin-dir);
+# the plugin's bundled .mcp.json starts the denario + cmbagent_lg MCP servers.
+# You drive the session remotely from claude.ai/code or the mobile app.
+# No Node, no OpenClaw, no inbound port (Remote Control is outbound HTTPS).
+
+# ── Stage 1: Python 3.12 + Denario + cmbagent_lg venv ────────
+FROM python:3.12-bookworm AS python-env
+
+# Local source repos via docker-compose additional_contexts.
+COPY --from=cmbagent_lg-src . /tmp/cmbagent_lg/
+COPY --from=denario-src . /tmp/denario/
+
+RUN python3.12 -m venv /opt/denario-venv && \
+    /opt/denario-venv/bin/pip install --upgrade pip
+
+# cmbagent_lg (LangGraph backend) — Denario imports it eagerly.
+RUN /opt/denario-venv/bin/pip install /tmp/cmbagent_lg/
+# Denario (on its cmbagent_lg branch).
+RUN /opt/denario-venv/bin/pip install /tmp/denario/
+# MCP server dependency + scientific stack.
+RUN /opt/denario-venv/bin/pip install \
+      mcp \
+      numpy \
+      scipy \
+      matplotlib \
+      pandas \
+      sympy \
+      scikit-learn \
+      healpy \
+      torch \
+      astropy \
+      beautifulsoup4
+
+RUN rm -rf /tmp/cmbagent_lg /tmp/denario
+
+# ── Stage 2: runtime (Python + LaTeX + git/gh + Claude Code) ─
+FROM python:3.12-bookworm
+
+# System deps: LaTeX (denario_paper → latexmk), git + gh (the MCP tools
+# auto-commit/push), curl + ca-certificates (Claude Code installer).
+RUN --mount=type=cache,id=denario-claude-apt-cache,target=/var/cache/apt,sharing=locked \
+    --mount=type=cache,id=denario-claude-apt-lists,target=/var/lib/apt,sharing=locked \
+    apt-get update && \
+    DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends \
+      procps hostname curl git lsof openssl ca-certificates \
+      libopenblas0 liblapack3 \
+      texlive-latex-recommended texlive-latex-extra texlive-fonts-recommended \
+      texlive-xetex texlive-science latexmk cm-super && \
+    curl -fsSL https://cli.github.com/packages/githubcli-archive-keyring.gpg \
+      | dd of=/usr/share/keyrings/githubcli-archive-keyring.gpg && \
+    echo "deb [arch=$(dpkg --print-architecture) signed-by=/usr/share/keyrings/githubcli-archive-keyring.gpg] https://cli.github.com/packages stable main" \
+      > /etc/apt/sources.list.d/github-cli.list && \
+    apt-get update && \
+    DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends gh
+
+# Pre-built Denario venv from stage 1.
+COPY --from=python-env /opt/denario-venv /opt/denario-venv
+
+# Non-root user `node` with home /home/node — matches the OpenClaw image's
+# path convention so mounted work dirs, params.yaml, and any existing
+# /home/node/... absolute paths line up (UID 1000 matches the host).
+RUN useradd -m -u 1000 -s /bin/bash node && \
+    chown -R node:node /opt/denario-venv && \
+    mkdir -p /app && chown node:node /app
+USER node
+ENV HOME=/home/node
+WORKDIR /home/node
+
+# Claude Code CLI — native installer → ~/.local/bin/claude. Pin the stable
+# channel; auto-update is disabled at runtime via DISABLE_AUTOUPDATER.
+RUN curl -fsSL https://claude.ai/install.sh | bash -s stable
+
+ENV PATH="/home/node/.local/bin:/opt/denario-venv/bin:${PATH}"
+# Wiring for the denario plugin's bundled .mcp.json (also set in compose env).
+ENV DENARIO_MCP_PYTHON=/opt/denario-venv/bin/python
+ENV DENARIO_MCP_DIR=/opt/denario-venv/lib/python3.12/site-packages/denario/mcp_servers
+ENV DENARIO_PYTHON_PATH=/opt/denario-venv/bin/python
+ENV DISABLE_AUTOUPDATER=1
+
+# entrypoint.claude.sh is mounted at /app/entrypoint.claude.sh by compose.
+CMD ["sh", "/app/entrypoint.claude.sh"]
