@@ -86,9 +86,12 @@ def _emit_claude_lines(lines, s):
         "./entrypoint.claude.sh:/app/entrypoint.claude.sh:ro",
         "${DATA_DIR:-./data}:/home/node/data:ro",
         "./tools:/home/node/tools:ro",
-        # claude.ai credentials (a logged-in subscription) seeded into the
-        # session; override the host path with CLAUDE_CREDENTIALS_FILE in .env.
-        "${CLAUDE_CREDENTIALS_FILE:-/home/cmbagent/.claude/.credentials.json}:/seed/credentials.json:ro",
+        # claude.ai /login credentials (Remote Control needs subscription OAuth,
+        # NOT a setup-token) seeded into the session. Per-scientist override
+        # CLAUDE_CREDENTIALS_FILE_<N> in .env (own account/seat → no shared-token
+        # refresh race), falling back to a shared CLAUDE_CREDENTIALS_FILE, then
+        # the host default.
+        f"${{CLAUDE_CREDENTIALS_FILE_{idx}:-${{CLAUDE_CREDENTIALS_FILE:-/home/cmbagent/.claude/.credentials.json}}}}:/seed/credentials.json:ro",
         "${DENARIO_TOKEN_DIR:-/home/cmbagent/.denario}:/home/node/.denario",
     ]
 
@@ -555,6 +558,13 @@ def _generate_claude_dirs(s):
             # Pin updates off inside the container (image controls the version).
             "env": {"DISABLE_AUTOUPDATER": "1"},
             "autoUpdatesChannel": "stable",
+            # Pin the permission mode explicitly to "default". This suppresses the
+            # PROACTIVE "Enable auto mode?" startup offer, which otherwise BLOCKS
+            # the session before Remote Control registers (so it never appears in
+            # the dashboard). With this set, the session boots straight to a live,
+            # RC-connected prompt; the driver can switch to auto mode in-session
+            # (Shift+Tab) from claude.ai/code if they want autonomy.
+            "permissions": {"defaultMode": "default"},
         }
         with open(settings_path, "w") as f:
             json.dump(settings, f, indent=2)
