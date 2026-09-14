@@ -72,6 +72,10 @@ def _emit_claude_lines(lines, s):
         "MP_API_KEY": "${MATERIALS_API_KEY}",
         "GITHUB_TOKEN": "${GITHUB_TOKEN}",
         "GITHUB_ORG": "${GITHUB_ORG:-ParallelScience}",
+        # Denario's MCP server treats git as optional and defaults to "auto",
+        # which no-ops because a fresh project dir isn't a repo yet. The fleet
+        # wants a GitHub repo per project, so force it on.
+        "DENARIO_GIT": "${DENARIO_GIT:-on}",
         "GEMMA4_URL": "${GEMMA4_URL:-http://host.docker.internal:8010/v1}",
         # Container reproducibility + a hook to pass extra `claude` flags
         # (e.g. trust/permission bypass) without rebuilding.
@@ -190,6 +194,10 @@ def generate_compose(fleet):
                 "VLLM_API_KEY": "${VLLM_API_KEY:-EMPTY}",
                 "GITHUB_TOKEN": "${GITHUB_TOKEN}",
                 "GITHUB_ORG": "${GITHUB_ORG:-ParallelScience}",
+                # Denario's MCP server treats git as optional and defaults to
+                # "auto", which no-ops because a fresh project dir isn't a repo
+                # yet. The fleet wants a GitHub repo per project, so force it on.
+                "DENARIO_GIT": "${DENARIO_GIT:-on}",
                 "ELEVENLABS_API_KEY": "${ELEVENLABS_API_KEY}",
                 "ELEVENLABS_VOICE_ID": s["voice_id"],
                 "DENARIO_WORK_DIR": "/home/node/work",
