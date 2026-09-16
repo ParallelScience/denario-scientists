@@ -33,7 +33,7 @@ BACKEND_OVERRIDES = {
 
 # Per-scientist overrides (optional). Key = scientist name, value = model.
 MODEL_OVERRIDES = {
-    "denario-2": "nvidia/nvidia/nemotron-3-super-120b-a12b",
+    "denario-2": "anthropic/claude-sonnet-4-6",
     "denario-3": "anthropic/claude-sonnet-4-6",
     "denario-4": "zai/glm-5.1",
     "denario-5": "anthropic/claude-sonnet-4-6",
