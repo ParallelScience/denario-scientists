@@ -27,11 +27,17 @@ if [ -f "$CONFIG" ]; then
     const servers = cfg.mcp?.servers || {};
     for (const [name, server] of Object.entries(servers)) {
       if (!server.env) server.env = {};
+      // This list is the ONLY thing the MCP server subprocess sees: OpenClaw
+      // starts stdio servers with mcp.servers.<name>.env, not the container
+      // env. Anything set in compose but missing here is silently unset for
+      // the pipeline (DENARIO_GIT=on read as "auto", Langfuse tracing off).
       const keys = [
         'ANTHROPIC_API_KEY', 'OPENAI_API_KEY', 'GEMINI_API_KEY',
         'GOOGLE_API_KEY', 'GOOGLE_GEMINI_API_KEY', 'MINIMAX_API_KEY',
+        'NVIDIA_API_KEY', 'ZAI_API_KEY', 'VLLM_API_KEY',
         'MATERIALS_API_KEY', 'MP_API_KEY', 'PERPLEXITY_API_KEY',
-        'GITHUB_TOKEN', 'GITHUB_ORG', 'ELEVENLABS_API_KEY',
+        'GITHUB_TOKEN', 'GITHUB_ORG', 'DENARIO_GIT', 'ELEVENLABS_API_KEY',
+        'LANGFUSE_BASE_URL', 'LANGFUSE_HOST', 'LANGFUSE_PUBLIC_KEY', 'LANGFUSE_SECRET_KEY',
         'SCIENTIST_NAME',
       ];
       for (const key of keys) {
