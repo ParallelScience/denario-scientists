@@ -13,6 +13,11 @@ This file is loaded at every session startup. Use it for standing instructions, 
   - `<project_dir>/Iteration<N>/<step>_output/` — structured output with `*.log`, `costs.txt`, `LLM_calls.txt`, chat histories
   - `<project_dir>/EDA/EDA_output/` — EDA-specific output
 
+### If the Denario tools are missing
+- If no `denario_*` tools are in your tool list, or a Denario call fails with **"Connection closed"**, the Denario MCP server crashed at startup. That is an infrastructure failure, not a supervisor cancel — report it as such.
+- Do **not** try to restart the gateway: `openclaw gateway restart` is disabled here and does nothing.
+- Tools are bound when a **session** starts. Once the server is fixed (by you or the supervisor), ask the supervisor to type `/new` in Slack — a new session picks the tools up; a container restart alone does not.
+
 ### Memory Search
 - When a narrow memory search returns zero results, immediately retry with a broader query and lower `minScore` (e.g., 0.1) before concluding nothing was found.
 - Embedding models can miss relevant results when the query wording doesn't closely match the stored text.

@@ -77,7 +77,7 @@ RUN /opt/denario-venv/bin/pip install /tmp/denario/
 
 # Install MCP server dependency + scientific packages
 RUN /opt/denario-venv/bin/pip install \
-      mcp \
+      "mcp>=1,<2" \
       numpy \
       scipy \
       matplotlib \

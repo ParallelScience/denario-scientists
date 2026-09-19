@@ -25,7 +25,7 @@ RUN /opt/denario-venv/bin/pip install /tmp/cmbagent_lg/
 RUN /opt/denario-venv/bin/pip install /tmp/denario/
 # MCP server dependency + scientific stack.
 RUN /opt/denario-venv/bin/pip install \
-      mcp \
+      "mcp>=1,<2" \
       numpy \
       scipy \
       matplotlib \
