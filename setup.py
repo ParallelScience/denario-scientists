@@ -68,6 +68,13 @@ def _emit_claude_lines(lines, s):
         "GOOGLE_API_KEY": google_key,
         "GOOGLE_GEMINI_API_KEY": google_gemini_key,
         "PERPLEXITY_API_KEY": "${PERPLEXITY_API_KEY}",
+        # Langfuse tracing — cmbagent_lg's langfuse_callbacks() returns [] when
+        # these are unset, so the pipeline runs either way; with them, every
+        # LLM call in the graph is traced to the "denario" project.
+        "LANGFUSE_BASE_URL": "${LANGFUSE_BASE_URL:-https://langfuse.empyrean-labs.io}",
+        "LANGFUSE_HOST": "${LANGFUSE_HOST:-https://langfuse.empyrean-labs.io}",
+        "LANGFUSE_PUBLIC_KEY": "${LANGFUSE_PUBLIC_KEY}",
+        "LANGFUSE_SECRET_KEY": "${LANGFUSE_SECRET_KEY}",
         "MATERIALS_API_KEY": "${MATERIALS_API_KEY}",
         "MP_API_KEY": "${MATERIALS_API_KEY}",
         "GITHUB_TOKEN": "${GITHUB_TOKEN}",
@@ -186,6 +193,13 @@ def generate_compose(fleet):
                 # Perplexity API — used by Denario's paper module to look up
                 # citations (langgraph_agents/paper_module/literature.py).
                 "PERPLEXITY_API_KEY": "${PERPLEXITY_API_KEY}",
+                # Langfuse tracing — cmbagent_lg's langfuse_callbacks() returns [] when
+                # these are unset, so the pipeline runs either way; with them, every
+                # LLM call in the graph is traced to the "denario" project.
+                "LANGFUSE_BASE_URL": "${LANGFUSE_BASE_URL:-https://langfuse.empyrean-labs.io}",
+                "LANGFUSE_HOST": "${LANGFUSE_HOST:-https://langfuse.empyrean-labs.io}",
+                "LANGFUSE_PUBLIC_KEY": "${LANGFUSE_PUBLIC_KEY}",
+                "LANGFUSE_SECRET_KEY": "${LANGFUSE_SECRET_KEY}",
                 # Host-side vLLM Gemma 4 31B (reached via host.docker.internal).
                 # Override with GEMMA4_URL in .env if the endpoint moves.
                 "GEMMA4_URL": "${GEMMA4_URL:-http://host.docker.internal:8010/v1}",
