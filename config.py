@@ -85,6 +85,11 @@ VLLM_PROVIDER_CATALOGS = {
                     "supportsStrictMode": False,
                     "supportsReasoningEffort": False,
                     "thinkingFormat": "qwen-chat-template",
+                    # Without this the fork never sends stream_options.include_usage
+                    # to a non-localhost host, llama-server then reports no usage,
+                    # and OpenClaw's compaction is blind (usage all zeros — the
+                    # 2026-09-19 overflow loop). llama-server returns usage when asked.
+                    "supportsUsageInStreaming": True,
                 },
             }
         ],
@@ -113,7 +118,16 @@ VLLM_PROVIDER_CATALOGS = {
 # slot usable per compaction cycle (trigger at ~90k instead of ~78k).
 AGENT_DEFAULTS_OVERRIDES = {
     "denario-3": {
-        "compaction": {"reserveTokensFloor": 8192, "reserveTokens": 8192},
+        # Sized for the 98304-token llama-server slot. reserve >= 16k so a
+        # compaction request itself still fits after a fat tool-heavy turn;
+        # keepRecentTokens well below the history size, otherwise the
+        # pre-emptive compaction cut lands at the very start and frees ~0
+        # (measured 2026-09-19: three compactions, net -212 tokens).
+        "compaction": {
+            "reserveTokensFloor": 16384,
+            "reserveTokens": 16384,
+            "keepRecentTokens": 8000,
+        },
     },
 }
 
