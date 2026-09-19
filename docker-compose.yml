@@ -24,6 +24,10 @@ services:
       MATERIALS_API_KEY: ${MATERIALS_API_KEY}
       MP_API_KEY: ${MATERIALS_API_KEY}
       PERPLEXITY_API_KEY: ${PERPLEXITY_API_KEY}
+      LANGFUSE_BASE_URL: ${LANGFUSE_BASE_URL:-https://langfuse.empyrean-labs.io}
+      LANGFUSE_HOST: ${LANGFUSE_HOST:-https://langfuse.empyrean-labs.io}
+      LANGFUSE_PUBLIC_KEY: ${LANGFUSE_PUBLIC_KEY}
+      LANGFUSE_SECRET_KEY: ${LANGFUSE_SECRET_KEY}
       GEMMA4_URL: ${GEMMA4_URL:-http://host.docker.internal:8010/v1}
       VLLM_API_KEY: ${VLLM_API_KEY:-EMPTY}
       GITHUB_TOKEN: ${GITHUB_TOKEN}
@@ -52,7 +56,7 @@ services:
     cpus: "4"
     mem_limit: 8g
     init: true
-    restart: "no"
+    restart: unless-stopped
     extra_hosts:
       - "host.docker.internal:host-gateway"
     command:
@@ -90,6 +94,10 @@ services:
       MATERIALS_API_KEY: ${MATERIALS_API_KEY}
       MP_API_KEY: ${MATERIALS_API_KEY}
       PERPLEXITY_API_KEY: ${PERPLEXITY_API_KEY}
+      LANGFUSE_BASE_URL: ${LANGFUSE_BASE_URL:-https://langfuse.empyrean-labs.io}
+      LANGFUSE_HOST: ${LANGFUSE_HOST:-https://langfuse.empyrean-labs.io}
+      LANGFUSE_PUBLIC_KEY: ${LANGFUSE_PUBLIC_KEY}
+      LANGFUSE_SECRET_KEY: ${LANGFUSE_SECRET_KEY}
       GEMMA4_URL: ${GEMMA4_URL:-http://host.docker.internal:8010/v1}
       VLLM_API_KEY: ${VLLM_API_KEY:-EMPTY}
       GITHUB_TOKEN: ${GITHUB_TOKEN}
@@ -118,7 +126,86 @@ services:
     cpus: "4"
     mem_limit: 8g
     init: true
-    restart: "no"
+    restart: unless-stopped
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    command:
+      - "sh"
+      - "/app/entrypoint.sh"
+    healthcheck:
+      test: ["CMD", "node", "-e", "fetch('http://127.0.0.1:18789/healthz').then((r)=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"]
+      interval: 30s
+      timeout: 5s
+      retries: 5
+      start_period: 20s
+
+  denario-3:
+    build:
+      context: ../openclaw
+      dockerfile: ../denario-scientists/Dockerfile
+      additional_contexts:
+        cmbagent_lg-src: ../cmbagent_lg
+        denario-src: ../Denario
+    container_name: denario-3
+    environment:
+      HOME: /home/node
+      TERM: xterm-256color
+      SCIENTIST_NAME: denario-3
+      OPENCLAW_GATEWAY_TOKEN: ${DENARIO_3_TOKEN:-denario-3-token}
+      OPENCLAW_ALLOW_INSECURE_PRIVATE_WS: 1
+      ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY_3:-${ANTHROPIC_API_KEY}}
+      OPENAI_API_KEY: ${OPENAI_API_KEY}
+      GEMINI_API_KEY: ${GEMINI_API_KEY_3:-${GEMINI_API_KEY}}
+      GOOGLE_API_KEY: ${GOOGLE_API_KEY_3:-${GOOGLE_API_KEY}}
+      GOOGLE_GEMINI_API_KEY: ${GOOGLE_GEMINI_API_KEY_3:-${GOOGLE_GEMINI_API_KEY}}
+      MINIMAX_API_KEY: ${MINIMAX_API_KEY}
+      NVIDIA_API_KEY: ${NVIDIA_API_KEY}
+      ZAI_API_KEY: ${ZAI_API_KEY}
+      MATERIALS_API_KEY: ${MATERIALS_API_KEY}
+      MP_API_KEY: ${MATERIALS_API_KEY}
+      PERPLEXITY_API_KEY: ${PERPLEXITY_API_KEY}
+      LANGFUSE_BASE_URL: ${LANGFUSE_BASE_URL:-https://langfuse.empyrean-labs.io}
+      LANGFUSE_HOST: ${LANGFUSE_HOST:-https://langfuse.empyrean-labs.io}
+      LANGFUSE_PUBLIC_KEY: ${LANGFUSE_PUBLIC_KEY}
+      LANGFUSE_SECRET_KEY: ${LANGFUSE_SECRET_KEY}
+      GEMMA4_URL: ${GEMMA4_URL:-http://host.docker.internal:8010/v1}
+      VLLM_API_KEY: ${VLLM_API_KEY:-EMPTY}
+      GITHUB_TOKEN: ${GITHUB_TOKEN}
+      GITHUB_ORG: ${GITHUB_ORG:-ParallelScience}
+      DENARIO_GIT: ${DENARIO_GIT:-on}
+      ELEVENLABS_API_KEY: ${ELEVENLABS_API_KEY}
+      ELEVENLABS_VOICE_ID: GPQBwvkAgD34c9QL6VOy
+      DENARIO_WORK_DIR: /home/node/work
+      TZ: ${TZ:-UTC}
+      SLACK_BOT_TOKEN: ${SLACK_BOT_TOKEN_3}
+      SLACK_APP_TOKEN: ${SLACK_APP_TOKEN_3}
+    volumes:
+      - ./scientists/denario-3/config:/home/node/.openclaw
+      - ./scientists/denario-3/workspace:/home/node/.openclaw/workspace
+      - ./scientists/denario-3/work:/home/node/work
+      - ./auto-pair.sh:/app/auto-pair.sh:ro
+      - ./entrypoint.sh:/app/entrypoint.sh:ro
+      - ./cancel-watcher.py:/app/cancel-watcher.py:ro
+      - ./bootstrap:/app/bootstrap:ro
+      - ${DATA_DIR:-./data}:/home/node/data:ro
+      - ./tools:/home/node/tools:ro
+      - ${DENARIO_TOKEN_DIR:-/home/cmbagent/.denario}:/home/node/.denario
+    ports:
+      - "18798:18789"
+      - "18822:18790"
+    cpus: "32"
+    mem_limit: 64g
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              device_ids:
+                - "0"
+              capabilities:
+                - gpu
+    init: true
+    restart: unless-stopped
     extra_hosts:
       - "host.docker.internal:host-gateway"
     command:
@@ -156,6 +243,10 @@ services:
       MATERIALS_API_KEY: ${MATERIALS_API_KEY}
       MP_API_KEY: ${MATERIALS_API_KEY}
       PERPLEXITY_API_KEY: ${PERPLEXITY_API_KEY}
+      LANGFUSE_BASE_URL: ${LANGFUSE_BASE_URL:-https://langfuse.empyrean-labs.io}
+      LANGFUSE_HOST: ${LANGFUSE_HOST:-https://langfuse.empyrean-labs.io}
+      LANGFUSE_PUBLIC_KEY: ${LANGFUSE_PUBLIC_KEY}
+      LANGFUSE_SECRET_KEY: ${LANGFUSE_SECRET_KEY}
       GEMMA4_URL: ${GEMMA4_URL:-http://host.docker.internal:8010/v1}
       VLLM_API_KEY: ${VLLM_API_KEY:-EMPTY}
       GITHUB_TOKEN: ${GITHUB_TOKEN}
@@ -184,7 +275,7 @@ services:
     cpus: "4"
     mem_limit: 8g
     init: true
-    restart: "no"
+    restart: unless-stopped
     extra_hosts:
       - "host.docker.internal:host-gateway"
     command:
@@ -222,6 +313,10 @@ services:
       MATERIALS_API_KEY: ${MATERIALS_API_KEY}
       MP_API_KEY: ${MATERIALS_API_KEY}
       PERPLEXITY_API_KEY: ${PERPLEXITY_API_KEY}
+      LANGFUSE_BASE_URL: ${LANGFUSE_BASE_URL:-https://langfuse.empyrean-labs.io}
+      LANGFUSE_HOST: ${LANGFUSE_HOST:-https://langfuse.empyrean-labs.io}
+      LANGFUSE_PUBLIC_KEY: ${LANGFUSE_PUBLIC_KEY}
+      LANGFUSE_SECRET_KEY: ${LANGFUSE_SECRET_KEY}
       GEMMA4_URL: ${GEMMA4_URL:-http://host.docker.internal:8010/v1}
       VLLM_API_KEY: ${VLLM_API_KEY:-EMPTY}
       GITHUB_TOKEN: ${GITHUB_TOKEN}
@@ -250,7 +345,7 @@ services:
     cpus: "8"
     mem_limit: 16g
     init: true
-    restart: "no"
+    restart: unless-stopped
     extra_hosts:
       - "host.docker.internal:host-gateway"
     command:
@@ -288,6 +383,10 @@ services:
       MATERIALS_API_KEY: ${MATERIALS_API_KEY}
       MP_API_KEY: ${MATERIALS_API_KEY}
       PERPLEXITY_API_KEY: ${PERPLEXITY_API_KEY}
+      LANGFUSE_BASE_URL: ${LANGFUSE_BASE_URL:-https://langfuse.empyrean-labs.io}
+      LANGFUSE_HOST: ${LANGFUSE_HOST:-https://langfuse.empyrean-labs.io}
+      LANGFUSE_PUBLIC_KEY: ${LANGFUSE_PUBLIC_KEY}
+      LANGFUSE_SECRET_KEY: ${LANGFUSE_SECRET_KEY}
       GEMMA4_URL: ${GEMMA4_URL:-http://host.docker.internal:8010/v1}
       VLLM_API_KEY: ${VLLM_API_KEY:-EMPTY}
       GITHUB_TOKEN: ${GITHUB_TOKEN}
@@ -316,7 +415,7 @@ services:
     cpus: "2"
     mem_limit: 2g
     init: true
-    restart: "no"
+    restart: unless-stopped
     extra_hosts:
       - "host.docker.internal:host-gateway"
     command:
@@ -354,6 +453,10 @@ services:
       MATERIALS_API_KEY: ${MATERIALS_API_KEY}
       MP_API_KEY: ${MATERIALS_API_KEY}
       PERPLEXITY_API_KEY: ${PERPLEXITY_API_KEY}
+      LANGFUSE_BASE_URL: ${LANGFUSE_BASE_URL:-https://langfuse.empyrean-labs.io}
+      LANGFUSE_HOST: ${LANGFUSE_HOST:-https://langfuse.empyrean-labs.io}
+      LANGFUSE_PUBLIC_KEY: ${LANGFUSE_PUBLIC_KEY}
+      LANGFUSE_SECRET_KEY: ${LANGFUSE_SECRET_KEY}
       GEMMA4_URL: ${GEMMA4_URL:-http://host.docker.internal:8010/v1}
       VLLM_API_KEY: ${VLLM_API_KEY:-EMPTY}
       GITHUB_TOKEN: ${GITHUB_TOKEN}
@@ -382,7 +485,7 @@ services:
     cpus: "2"
     mem_limit: 2g
     init: true
-    restart: "no"
+    restart: unless-stopped
     extra_hosts:
       - "host.docker.internal:host-gateway"
     command:
@@ -420,6 +523,10 @@ services:
       MATERIALS_API_KEY: ${MATERIALS_API_KEY}
       MP_API_KEY: ${MATERIALS_API_KEY}
       PERPLEXITY_API_KEY: ${PERPLEXITY_API_KEY}
+      LANGFUSE_BASE_URL: ${LANGFUSE_BASE_URL:-https://langfuse.empyrean-labs.io}
+      LANGFUSE_HOST: ${LANGFUSE_HOST:-https://langfuse.empyrean-labs.io}
+      LANGFUSE_PUBLIC_KEY: ${LANGFUSE_PUBLIC_KEY}
+      LANGFUSE_SECRET_KEY: ${LANGFUSE_SECRET_KEY}
       GEMMA4_URL: ${GEMMA4_URL:-http://host.docker.internal:8010/v1}
       VLLM_API_KEY: ${VLLM_API_KEY:-EMPTY}
       GITHUB_TOKEN: ${GITHUB_TOKEN}
@@ -448,7 +555,7 @@ services:
     cpus: "2"
     mem_limit: 2g
     init: true
-    restart: "no"
+    restart: unless-stopped
     extra_hosts:
       - "host.docker.internal:host-gateway"
     command:
@@ -486,6 +593,10 @@ services:
       MATERIALS_API_KEY: ${MATERIALS_API_KEY}
       MP_API_KEY: ${MATERIALS_API_KEY}
       PERPLEXITY_API_KEY: ${PERPLEXITY_API_KEY}
+      LANGFUSE_BASE_URL: ${LANGFUSE_BASE_URL:-https://langfuse.empyrean-labs.io}
+      LANGFUSE_HOST: ${LANGFUSE_HOST:-https://langfuse.empyrean-labs.io}
+      LANGFUSE_PUBLIC_KEY: ${LANGFUSE_PUBLIC_KEY}
+      LANGFUSE_SECRET_KEY: ${LANGFUSE_SECRET_KEY}
       GEMMA4_URL: ${GEMMA4_URL:-http://host.docker.internal:8010/v1}
       VLLM_API_KEY: ${VLLM_API_KEY:-EMPTY}
       GITHUB_TOKEN: ${GITHUB_TOKEN}
@@ -514,7 +625,7 @@ services:
     cpus: "2"
     mem_limit: 2g
     init: true
-    restart: "no"
+    restart: unless-stopped
     extra_hosts:
       - "host.docker.internal:host-gateway"
     command:
@@ -552,6 +663,10 @@ services:
       MATERIALS_API_KEY: ${MATERIALS_API_KEY}
       MP_API_KEY: ${MATERIALS_API_KEY}
       PERPLEXITY_API_KEY: ${PERPLEXITY_API_KEY}
+      LANGFUSE_BASE_URL: ${LANGFUSE_BASE_URL:-https://langfuse.empyrean-labs.io}
+      LANGFUSE_HOST: ${LANGFUSE_HOST:-https://langfuse.empyrean-labs.io}
+      LANGFUSE_PUBLIC_KEY: ${LANGFUSE_PUBLIC_KEY}
+      LANGFUSE_SECRET_KEY: ${LANGFUSE_SECRET_KEY}
       GEMMA4_URL: ${GEMMA4_URL:-http://host.docker.internal:8010/v1}
       VLLM_API_KEY: ${VLLM_API_KEY:-EMPTY}
       GITHUB_TOKEN: ${GITHUB_TOKEN}
@@ -580,7 +695,7 @@ services:
     cpus: "2"
     mem_limit: 2g
     init: true
-    restart: "no"
+    restart: unless-stopped
     extra_hosts:
       - "host.docker.internal:host-gateway"
     command:
@@ -618,6 +733,10 @@ services:
       MATERIALS_API_KEY: ${MATERIALS_API_KEY}
       MP_API_KEY: ${MATERIALS_API_KEY}
       PERPLEXITY_API_KEY: ${PERPLEXITY_API_KEY}
+      LANGFUSE_BASE_URL: ${LANGFUSE_BASE_URL:-https://langfuse.empyrean-labs.io}
+      LANGFUSE_HOST: ${LANGFUSE_HOST:-https://langfuse.empyrean-labs.io}
+      LANGFUSE_PUBLIC_KEY: ${LANGFUSE_PUBLIC_KEY}
+      LANGFUSE_SECRET_KEY: ${LANGFUSE_SECRET_KEY}
       GEMMA4_URL: ${GEMMA4_URL:-http://host.docker.internal:8010/v1}
       VLLM_API_KEY: ${VLLM_API_KEY:-EMPTY}
       GITHUB_TOKEN: ${GITHUB_TOKEN}
@@ -646,7 +765,7 @@ services:
     cpus: "2"
     mem_limit: 2g
     init: true
-    restart: "no"
+    restart: unless-stopped
     extra_hosts:
       - "host.docker.internal:host-gateway"
     command:
@@ -658,67 +777,6 @@ services:
       timeout: 5s
       retries: 5
       start_period: 20s
-
-  denario-3:
-    build:
-      context: ../denario-scientists
-      dockerfile: ../denario-scientists/Dockerfile.claude
-      additional_contexts:
-        cmbagent_lg-src: ../cmbagent_lg
-        denario-src: ../Denario
-    container_name: denario-3
-    environment:
-      HOME: /home/node
-      TERM: xterm-256color
-      SCIENTIST_NAME: denario-3
-      DENARIO_MCP_PYTHON: /opt/denario-venv/bin/python
-      DENARIO_MCP_DIR: /opt/denario-venv/lib/python3.12/site-packages/denario/mcp_servers
-      DENARIO_WORK_DIR: /home/node/work
-      DENARIO_PARAMS_FILE: /home/node/work/params.yaml
-      ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY_3:-${ANTHROPIC_API_KEY}}
-      OPENAI_API_KEY: ${OPENAI_API_KEY}
-      GEMINI_API_KEY: ${GEMINI_API_KEY_3:-${GEMINI_API_KEY}}
-      GOOGLE_API_KEY: ${GOOGLE_API_KEY_3:-${GOOGLE_API_KEY}}
-      GOOGLE_GEMINI_API_KEY: ${GOOGLE_GEMINI_API_KEY_3:-${GOOGLE_GEMINI_API_KEY}}
-      PERPLEXITY_API_KEY: ${PERPLEXITY_API_KEY}
-      MATERIALS_API_KEY: ${MATERIALS_API_KEY}
-      MP_API_KEY: ${MATERIALS_API_KEY}
-      GITHUB_TOKEN: ${GITHUB_TOKEN}
-      GITHUB_ORG: ${GITHUB_ORG:-ParallelScience}
-      DENARIO_GIT: ${DENARIO_GIT:-on}
-      GEMMA4_URL: ${GEMMA4_URL:-http://host.docker.internal:8010/v1}
-      DISABLE_AUTOUPDATER: 1
-      CLAUDE_EXTRA_ARGS: ${CLAUDE_EXTRA_ARGS:-}
-      TZ: ${TZ:-UTC}
-    volumes:
-      - ./scientists/denario-3/work:/home/node/work
-      - ./scientists/denario-3/claude:/home/node/.claude
-      - ../denario-claude-plugin:/opt/denario-plugin:ro
-      - ./entrypoint.claude.sh:/app/entrypoint.claude.sh:ro
-      - ${DATA_DIR:-./data}:/home/node/data:ro
-      - ./tools:/home/node/tools:ro
-      - ${CLAUDE_CREDENTIALS_FILE_3:-${CLAUDE_CREDENTIALS_FILE:-/home/cmbagent/.claude/.credentials.json}}:/seed/credentials.json:ro
-      - ${DENARIO_TOKEN_DIR:-/home/cmbagent/.denario}:/home/node/.denario
-    cpus: "32"
-    mem_limit: 64g
-    deploy:
-      resources:
-        reservations:
-          devices:
-            - driver: nvidia
-              device_ids:
-                - "1"
-              capabilities:
-                - gpu
-    init: true
-    restart: "no"
-    tty: true
-    stdin_open: true
-    extra_hosts:
-      - "host.docker.internal:host-gateway"
-    command:
-      - "sh"
-      - "/app/entrypoint.claude.sh"
 
   denario-6:
     build:
@@ -742,6 +800,10 @@ services:
       GOOGLE_API_KEY: ${GOOGLE_API_KEY_6:-${GOOGLE_API_KEY}}
       GOOGLE_GEMINI_API_KEY: ${GOOGLE_GEMINI_API_KEY_6:-${GOOGLE_GEMINI_API_KEY}}
       PERPLEXITY_API_KEY: ${PERPLEXITY_API_KEY}
+      LANGFUSE_BASE_URL: ${LANGFUSE_BASE_URL:-https://langfuse.empyrean-labs.io}
+      LANGFUSE_HOST: ${LANGFUSE_HOST:-https://langfuse.empyrean-labs.io}
+      LANGFUSE_PUBLIC_KEY: ${LANGFUSE_PUBLIC_KEY}
+      LANGFUSE_SECRET_KEY: ${LANGFUSE_SECRET_KEY}
       MATERIALS_API_KEY: ${MATERIALS_API_KEY}
       MP_API_KEY: ${MATERIALS_API_KEY}
       GITHUB_TOKEN: ${GITHUB_TOKEN}
@@ -772,7 +834,7 @@ services:
               capabilities:
                 - gpu
     init: true
-    restart: "no"
+    restart: unless-stopped
     tty: true
     stdin_open: true
     extra_hosts:
