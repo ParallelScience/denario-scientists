@@ -72,8 +72,9 @@ VLLM_PROVIDER_CATALOGS = {
                 # MUST be the per-slot context (server -c / --parallel), NOT the
                 # 262144 training window: it is what drives OpenClaw's compaction.
                 # The class deployment ran 196608/32 = 6144, far too small for a
-                # ~22k-token bootstrap; it is relaunched with PARALLEL=4 -> 49152.
-                "contextWindow": 49152,
+                # ~22k-token bootstrap; it now runs PARALLEL=2 -> 196608/2 = 98304
+                # (2 requests in flight server-wide; a 3rd queues, never fails).
+                "contextWindow": 98304,
                 "maxTokens": 8192,
                 # llama.cpp is not vLLM: no developer role / store / strict tool
                 # schemas, and it ignores reasoning_effort. Thinking is driven
@@ -108,8 +109,8 @@ VLLM_PROVIDER_CATALOGS = {
 
 # Per-scientist agents.defaults overrides, merged into a FRESH openclaw.json by
 # setup.py (same rule as VLLM_PROVIDER_CATALOGS). OpenClaw's default compaction
-# reserve floor is 20000 tokens; on denario-3's 49152-token slot with a ~22k
-# bootstrap that would fire compaction at ~29k. 8192 moves the trigger to ~41k.
+# reserve floor is 20000 tokens; 8192 keeps more of denario-3's 98304-token
+# slot usable per compaction cycle (trigger at ~90k instead of ~78k).
 AGENT_DEFAULTS_OVERRIDES = {
     "denario-3": {
         "compaction": {"reserveTokensFloor": 8192, "reserveTokens": 8192},
