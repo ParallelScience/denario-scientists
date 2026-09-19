@@ -548,6 +548,12 @@ def generate_dirs_and_configs(fleet):
             if vllm_catalog:
                 config.setdefault("models", {}).setdefault("providers", {})["vllm"] = vllm_catalog
 
+            # Per-scientist agents.defaults overrides (e.g. a compaction budget
+            # sized to a small-context self-hosted model). Same fresh-config-only
+            # rule as the provider catalog above.
+            for key, value in getattr(cfg, "AGENT_DEFAULTS_OVERRIDES", {}).get(name, {}).items():
+                config["agents"]["defaults"][key] = value
+
             with open(config_path, "w") as f:
                 json.dump(config, f, indent=2)
             print(f"  Created config for {name}")

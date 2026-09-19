@@ -27,14 +27,20 @@ BASE_BRIDGE_PORT = 18820
 #                          Slack, no inbound port — outbound HTTPS only.
 DEFAULT_BACKEND = "openclaw"
 BACKEND_OVERRIDES = {
-    "denario-3": "claude",
+    # denario-3 moved back to openclaw on 2026-09-19: its brain is the local
+    # qwen3.8 llama-server (see MODEL_OVERRIDES / VLLM_PROVIDER_CATALOGS), and
+    # only the OpenClaw gateway can be pointed at a self-hosted model.
     "denario-6": "claude",
 }
 
 # Per-scientist overrides (optional). Key = scientist name, value = model.
 MODEL_OVERRIDES = {
     "denario-2": "anthropic/claude-sonnet-4-6",
-    "denario-3": "anthropic/claude-sonnet-4-6",
+    # denario-3: gateway brain on the host-side llama.cpp Qwen3.8-Flash-Next
+    # (GPU 1, reached at host.docker.internal:30000). The "vllm/" prefix is just
+    # the provider key setup.py injects the catalog under (parseModelRef splits
+    # on the first slash); the server is llama-server, not vLLM.
+    "denario-3": "vllm/qwen3.8-flash-next",
     "denario-4": "zai/glm-5.1",
     "denario-5": "anthropic/claude-sonnet-4-6",
     "denario-6": "anthropic/claude-sonnet-4-6",
@@ -47,9 +53,41 @@ MODEL_OVERRIDES = {
 
 # Extra models.providers.<id> blocks injected into a scientist's openclaw.json
 # when its gateway model lives behind a self-hosted OpenAI-compatible backend.
-# setup.py merges the value into the config only when the scientist's model
-# prefix matches (e.g. "vllm/..."). Keys are scientist names.
+# setup.py injects the value as models.providers.vllm into a FRESH openclaw.json
+# for ANY scientist listed here -- there is no model-prefix check -- so only list
+# scientists whose model really starts with "vllm/". Keys are scientist names.
 VLLM_PROVIDER_CATALOGS = {
+    "denario-3": {
+        "baseUrl": "http://host.docker.internal:30000/v1",
+        "apiKey": "EMPTY",               # sent as "Authorization: Bearer EMPTY"; llama-server ignores it
+        "api": "openai-completions",     # REQUIRED: without it OpenClaw falls back to openai-responses + 200k defaults
+        "models": [
+            {
+                # OpenClaw matches this against the model string suffix exactly.
+                "id": "qwen3.8-flash-next",
+                "name": "Qwen3.8 Flash Next (local llama.cpp, GPU 1)",
+                "reasoning": True,
+                "input": ["text", "image"],
+                "cost": {"input": 0, "output": 0, "cacheRead": 0, "cacheWrite": 0},
+                # MUST be the per-slot context (server -c / --parallel), NOT the
+                # 262144 training window: it is what drives OpenClaw's compaction.
+                # The class deployment ran 196608/32 = 6144, far too small for a
+                # ~22k-token bootstrap; it is relaunched with PARALLEL=4 -> 49152.
+                "contextWindow": 49152,
+                "maxTokens": 8192,
+                # llama.cpp is not vLLM: no developer role / store / strict tool
+                # schemas, and it ignores reasoning_effort. Thinking is driven
+                # through the Qwen chat template instead.
+                "compat": {
+                    "supportsDeveloperRole": False,
+                    "supportsStore": False,
+                    "supportsStrictMode": False,
+                    "supportsReasoningEffort": False,
+                    "thinkingFormat": "qwen-chat-template",
+                },
+            }
+        ],
+    },
     "denario-6": {
         "baseUrl": "http://host.docker.internal:8010/v1",
         "apiKey": "EMPTY",
@@ -68,13 +106,24 @@ VLLM_PROVIDER_CATALOGS = {
     },
 }
 
+# Per-scientist agents.defaults overrides, merged into a FRESH openclaw.json by
+# setup.py (same rule as VLLM_PROVIDER_CATALOGS). OpenClaw's default compaction
+# reserve floor is 20000 tokens; on denario-3's 49152-token slot with a ~22k
+# bootstrap that would fire compaction at ~29k. 8192 moves the trigger to ~41k.
+AGENT_DEFAULTS_OVERRIDES = {
+    "denario-3": {
+        "compaction": {"reserveTokensFloor": 8192, "reserveTokens": 8192},
+    },
+}
+
 # GPU assignment (optional). Key = scientist name, value = list of GPU device IDs.
 # Only listed scientists get GPU access; others get none.
 GPU_ASSIGNMENT = {
-    # GPU 0 is reserved for the host-side vLLM Gemma 4 31B deployment
-    # (serves the parallel fan-out pool). Scientists use GPU 1.
-    "denario-3": ["1"],  # GPU 1 — NVIDIA RTX PRO 6000 Blackwell (96 GB VRAM)
-    "denario-6": ["1"],  # shares GPU 1 with denario-3
+    # GPU 1 holds the host-side llama.cpp Qwen3.8 server (~91 GB of 96), so
+    # scientists that run experiments on a GPU take GPU 0. GPU 0 is shared with
+    # the denario_fleet workers (~3-4 GB each); ~80 GB stays free.
+    "denario-3": ["0"],  # GPU 0 — NVIDIA RTX PRO 6000 Blackwell (96 GB VRAM, shared)
+    "denario-6": ["1"],  # (claude backend, currently down) still on GPU 1
 }
 
 # Per-scientist resource overrides (optional). Key = scientist name.
@@ -112,20 +161,13 @@ MINIMAL_HARDWARE_CONSTRAINTS = (
 PARAMS_OVERRIDES = {
     **{f"denario-{i}": {"hardware_constraints": MINIMAL_HARDWARE_CONSTRAINTS} for i in range(7, 13)},
     "denario-1": {
-        # Route the cmbagent engineer + researcher through the host-side
-        # vLLM Gemma 4 31B (reached via GEMMA4_URL / host.docker.internal).
-        # cmbagent's local_llm_urls registry maps this id to the base URL and
-        # local_llm_extra_body turns on chat_template_kwargs.enable_thinking.
-        "EDA module": {
-            "engineer":   {"model": "/rds/models/gemma-4-31B-it", "temperature": 0.2},
-            "researcher": {"model": "/rds/models/gemma-4-31B-it", "temperature": 0.2},
-            "code_execution_timeout": 1800,
-        },
-        "Analysis module": {
-            "engineer":   {"model": "/rds/models/gemma-4-31B-it", "temperature": 0.2},
-            "researcher": {"model": "/rds/models/gemma-4-31B-it", "temperature": 0.2},
-            "code_execution_timeout": 1800,
-        },
+        # The Gemma 4 routing ("/rds/models/gemma-4-31B-it" via GEMMA4_URL on
+        # port 8010) was removed 2026-09-19: that vLLM server is gone, and the
+        # id has no provider rule in cmbagent_lg, so read_params() raised at
+        # Denario() init and EVERY denario MCP tool call failed before spending.
+        # denario-1 now uses the base data/params.yaml models, like denario-2/4.
+        "EDA module":      {"code_execution_timeout": 1800},
+        "Analysis module": {"code_execution_timeout": 1800},
     },
     "denario-2": {
         "EDA module":      {"code_execution_timeout": 1800},
@@ -170,7 +212,7 @@ PARAMS_OVERRIDES = {
         "hardware_constraints": (
             "- Linux x86_64 Docker container\n"
             "- 32 CPUs (AMD Ryzen Threadripper PRO 9995WX), 64 GB RAM\n"
-            "- NVIDIA RTX PRO 6000 Blackwell Edition (96 GB VRAM), CUDA 13.0\n"
+            "- NVIDIA RTX PRO 6000 Blackwell Edition, CUDA 13.0 — SHARED with other jobs: budget ~60 GB VRAM and check torch.cuda.mem_get_info() first\n"
             "- For PyTorch GPU: use device='cuda'\n"
             "- Multiprocessing: limit to ~8-16 workers to avoid oversubscription\n"
             "- NumPy/SciPy use OpenBLAS — set OMP_NUM_THREADS to avoid thread oversubscription with multiprocessing"
