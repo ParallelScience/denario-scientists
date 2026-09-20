@@ -19,6 +19,18 @@ if [ -d /app/bootstrap ]; then
   echo "[entrypoint] Installed bootstrap files into workspace"
 fi
 
+# Denario MCP job state (denario_job_* tools): keep it on the per-container
+# work volume, OUTSIDE every project git repo (the default would be
+# <project_dir>/.denario_jobs) and outside ~/.denario — that directory is ONE
+# host dir mounted into every scientist container, so a registry there would
+# be shared across containers and hold container-local paths. Set before the
+# MCP env allow-list below is built, so the MCP server subprocess inherits it.
+if [ -z "$DENARIO_JOBS_DIR" ]; then
+  export DENARIO_JOBS_DIR=/home/node/work/.denario_jobs
+fi
+mkdir -p "$DENARIO_JOBS_DIR" 2>/dev/null || echo "[entrypoint] WARNING: could not create $DENARIO_JOBS_DIR"
+echo "[entrypoint] DENARIO_JOBS_DIR=$DENARIO_JOBS_DIR"
+
 # Patch MCP env with actual API keys from container environment
 if [ -f "$CONFIG" ]; then
   node -e "
@@ -39,6 +51,14 @@ if [ -f "$CONFIG" ]; then
         'GITHUB_TOKEN', 'GITHUB_ORG', 'DENARIO_GIT', 'ELEVENLABS_API_KEY',
         'LANGFUSE_BASE_URL', 'LANGFUSE_HOST', 'LANGFUSE_PUBLIC_KEY', 'LANGFUSE_SECRET_KEY',
         'SCIENTIST_NAME',
+        // Denario MCP job model: DENARIO_JOBS_DIR (set above) holds the job
+        // state and the registry (<DENARIO_JOBS_DIR>/registry.jsonl) on the
+        // per-container work volume; HOME is the fallback the server would use
+        // without it (~/.denario/jobs — a SHARED mount here, hence the export).
+        // DENARIO_JOB_REGISTRY / DENARIO_JOB_WAIT_MAX / DENARIO_JOB_STALE_S are
+        // optional knobs.
+        'HOME', 'DENARIO_JOBS_DIR', 'DENARIO_JOB_REGISTRY',
+        'DENARIO_JOB_WAIT_MAX', 'DENARIO_JOB_STALE_S',
       ];
       for (const key of keys) {
         if (process.env[key]) {

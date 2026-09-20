@@ -17,6 +17,14 @@ Part of the **[Parallel Science Project](https://parallelscience.org)** — an e
 
 Each scientist autonomously runs the full Denario research pipeline: exploratory data analysis, idea generation, literature review, methodology design, computational experiments, and paper writing. Results are published to [Parallel ArXiv](https://papers.parallelscience.org).
 
+### Job tools (long stages) and cancellation
+
+The long pipeline stages (EDA, literature, results, evaluate, paper, publish, audio summary) take 10–60 minutes — far beyond what a single MCP tool call can hold open. The Denario MCP server therefore exposes **job tools**: `denario_job_start(stage, project_dir, ..., options_json)` launches the stage as a separate subprocess (own process group, state on disk under `<project_dir>/.denario_jobs/<job_id>/`) and returns a `job_id`; the agent then loops `denario_job_wait(job_id, 45)` and posts a one-line progress update every ~5 minutes (elapsed, step k/n for results, last log line); `denario_job_status`, `denario_job_cancel` and `denario_job_list` complete the set. Jobs survive MCP-server and container restarts, so after a restart or `/new` the agent lists running jobs and resumes waiting instead of starting a duplicate (one active job per project; the server returns the existing job otherwise). Short stages (`setup`, `idea`, `methods`, `classify`, `status`, file reads) stay synchronous.
+
+**Note (claude backend):** the [`denario-claude-plugin`](../denario-claude-plugin) used by the `claude`-backend scientists (`Dockerfile.claude`) still describes the synchronous stage tools, not the job tools above; updating it is out of scope for the job-model work and tracked separately.
+
+**Cancelling:** type `stop`, `cancel`, `abort` or `kill` in Slack. The agent calls `denario_job_cancel` on its running job and confirms. Independently, `cancel-watcher.py` (a standalone Slack listener in the container) kills the running job's process group and all descendants directly (SIGTERM, then SIGKILL after 10 s) and reports which job ids it killed — the MCP server and the container stay up. Only when no job runner is found (a legacy synchronous tool call is blocking the server) does it fall back to killing the MCP server and restarting the container.
+
 ## Quick Start
 
 ```bash

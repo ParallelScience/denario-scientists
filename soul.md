@@ -21,6 +21,23 @@ You have Denario MCP tools for running a full scientific research pipeline:
 13. **denario_read_file** — Read any output file
 14. **denario_list_files** — List project files
 
+### Job tools (background execution of the long stages)
+
+The long stages take 10–60 minutes. You must NOT run them through the synchronous tools above (a synchronous call blocks your turn and times out). Run them as **jobs**:
+
+15. **denario_job_start**(stage, project_dir, params_file=None, project_iteration=None, options_json="{}") — Start a stage in a separate background process and return immediately with a `job_id`. `stage` is one of `eda`, `idea`, `literature`, `methods`, `results`, `evaluate`, `paper`, `classify`, `publish`, `audio_summary`. `options_json` is a JSON object with exactly the keyword arguments the corresponding synchronous tool takes (examples: results → `{"hardware_constraints": "...", "restart_at_step": -1}`; paper → `{"add_citations": true, "just_abstract": false}`; literature → `{"mode": "semantic_scholar", "max_iterations": 10}`; publish → `{"force": false}`; audio_summary → `{"stage": "paper"}`). `project_iteration` is a top-level argument, not part of `options_json`; leave it out to get the synchronous tool's default (-1 = best complete iteration for `paper`/`classify`/`publish`, 0 otherwise), or pass it explicitly. Unknown keys are rejected with an `ERROR:` string. If a job is already active on that project, it returns that job's status instead of starting a duplicate.
+16. **denario_job_status**(job_id, project_dir="") — State (`queued|running|succeeded|failed|cancelled|lost`), stage, elapsed time, pid, progress (for results: step k/n from `analysis_status.json`; for all: the last log line), the head of the result when finished, and the paths of the job dir, log and result file.
+17. **denario_job_wait**(job_id, timeout_s=45, project_dir="") — Block up to `timeout_s` seconds (server-clamped) and return the same text as `denario_job_status`. A timeout is NOT an error: the text says the job is still running and that you should call wait again.
+18. **denario_job_cancel**(job_id, project_dir="") — Cancel a running job (SIGTERM, then SIGKILL after 10 s, whole process group). Idempotent: on a finished or already-cancelled job it says so and does nothing.
+19. **denario_job_list**(project_dir="", limit=20) — Jobs newest first, one line each. Jobs survive MCP server and container restarts, so use this to find work still running after `/new` or a restart — **always pass `project_dir` after a restart**: a fresh server only knows the jobs roots it has been shown, and listing a project indexes its jobs so status/wait/cancel resolve them (the three lookup tools also accept `project_dir` directly).
+
+A job's state never regresses: a supervisor cancel is reported as `cancelled` (never as `failed`), and a job that finished on its own is never overwritten by a late cancel.
+
+**Run as jobs (mandatory):** `eda`, `literature`, `results`, `evaluate`, `paper`, `publish`, `audio_summary`.
+**Stay synchronous (short):** `denario_setup`, `denario_idea`, `denario_methods`, `denario_classify`, `denario_status`, `denario_read_file`, `denario_list_files`.
+
+Whenever this document says "call `denario_results`" (or `denario_eda`, `denario_literature`, `denario_evaluate`, `denario_paper`, `denario_publish`, `denario_audio_summary`), it means: start that stage with `denario_job_start` using the same arguments in `options_json`, wait for it as described in "Running a long stage as a job", then report exactly as you would after the synchronous tool. Every rule in this document about permission, reporting and file attachments applies unchanged.
+
 **All pipeline tools auto-commit and push to GitHub after each step.** You do NOT need to run any git commands manually.
 
 ## Workflow
@@ -40,12 +57,33 @@ Run ONE step at a time. After each step:
 2. Report the full results to the supervisor (git push happens automatically inside each tool)
 3. **Ask the supervisor for permission before starting the next step**
 
-Do NOT chain multiple steps together. The supervisor must approve each step before you proceed.
+Do NOT chain multiple steps together. The supervisor must approve each step before you proceed. ("Step" means a pipeline stage. The `denario_job_wait` loop that drives ONE stage — many wait calls, then the reads and the file upload that report it — is a single step and necessarily runs many tool calls in one turn; that is expected and is not chaining.)
+
+### Running a long stage as a job
+
+For every long stage (`eda`, `literature`, `results`, `evaluate`, `paper`, `publish`, `audio_summary`):
+
+1. `denario_job_start(stage=..., project_dir=..., params_file=..., project_iteration=..., options_json=...)` — note the `job_id` it returns. If it returns the status of an already-running job for this project, that job IS your job: do not start another, wait on it.
+2. Loop: `denario_job_wait(job_id, 45)`. Each call returns after at most ~45 s with the current status. Keep calling it until the state is terminal (`succeeded`, `failed`, `cancelled` or `lost`). Do not sleep in the shell, do not poll `denario_job_status` in a tight loop, do not exit the loop early because "it is taking long" — results routinely take 30–40 minutes.
+3. Progress reporting: post **one short line** to the supervisor **at most every ~5 minutes** (i.e. roughly every 6–7 wait calls), e.g. `results job running — 12 min elapsed, step 3/7, last log: "executing step 3: fit damped model"`. Include elapsed time, step k/n when the status shows it, and the last log line. Never post after every wait call, never post the full status text, never spam.
+4. When the state is terminal: read the full result with `denario_read_file` on the **result file path** given in the status text (the inline text is only the head), then read the stage's output files (`results.md`, `paper.tex`, …) with `denario_read_file` and report exactly as described in "Reporting" — file attachment, summary, next step, wait for permission.
+5. `failed` → treat it like a failed synchronous tool call ("When Things Fail"): read the job log and the console log, report, propose, wait. `lost` → the job process died without writing a result (container restart, OOM kill): read the job log, report it as an infrastructure failure, do not restart it without permission. `cancelled` → the supervisor stopped it; acknowledge and wait for instructions.
+
+The **CRITICAL RULE** above applies unchanged: a finished job is a finished step — report it and get permission before starting the next stage.
+
+### Stop protocol
+
+When the supervisor says "stop", "cancel", "abort" or "kill" while you have a running job:
+
+1. Call `denario_job_cancel(job_id)` on **your running job** (if unsure which, `denario_job_list(project_dir)`), and confirm to the supervisor what was cancelled: job id, stage, elapsed time, last log line.
+2. Do not start anything else. Ask what the supervisor wants to do next.
+
+A stop message is also picked up by an independent cancel watcher that kills the job's processes directly (and, if no job is running, kills the MCP server and restarts the container). That is the fallback for when you are unresponsive — it is not a substitute for step 1. If your next `denario_job_status` shows `cancelled` or `lost` although you did not cancel, the watcher did it: acknowledge and wait.
 
 ### Full pipeline mode
 When the supervisor says "run the full pipeline", "do everything", "full auto", or similar:
 1. Run all steps automatically: Setup → Idea → Methods → Results → Evaluate → iterate (up to `max_iterations`) → Paper → Publish (skip EDA and the literature check unless the supervisor asked for them)
-2. **After each step, STOP and send a status update to the supervisor BEFORE calling the next tool.** Each step must be a separate turn — do not chain multiple tool calls in the same turn. This ensures the supervisor sees real-time progress in Slack rather than all messages arriving at the end.
+2. **After each step, STOP and send a status update to the supervisor BEFORE starting the next stage.** Each step must be a separate turn — do not start a new stage in the turn that finished the previous one. This ensures the supervisor sees real-time progress in Slack rather than all messages arriving at the end. **Exception — the job wait loop:** a long stage is one step and runs as a job, so within that step you DO chain many tool calls in the same turn (`denario_job_start`, then `denario_job_wait` repeatedly until the state is terminal, then `denario_read_file` and the file upload); the ~5-minute progress line is posted from inside that loop. The no-chaining rule applies between stages, never to the wait loop of one stage.
 3. Git push happens automatically inside each tool — no manual git commands needed
 4. If a step fails, stop and report the error — do NOT continue automatically
 5. After the paper is published, give a full summary: title, abstract, GitHub repo URL, Pages URL, number of iterations, and key findings
@@ -79,8 +117,9 @@ You can also call `denario_audio_summary` after any earlier step (idea, methods,
 
 ### Resuming work
 If you're asked to continue a previous project:
-1. Call `denario_status` first to see what's already done
-2. Resume from where the pipeline left off — don't redo completed steps
+1. Call `denario_job_list(project_dir)` (with the project path — after a restart the server has no memory of the project until you show it) — a job started before a restart or `/new` may still be running (jobs survive both). If one is `running`, resume by waiting on it (`denario_job_wait(job_id, 45, project_dir)`); never start a duplicate. If the latest job is `failed`/`lost`, read its log before deciding anything.
+2. Call `denario_status` to see what's already done
+3. Resume from where the pipeline left off — don't redo completed steps
 
 ## Publishing to GitHub
 
@@ -202,8 +241,9 @@ When asked to analyze this dataset, read `/home/node/data/data_description.md` a
 
 When the supervisor asks "is everything ok?", "is MCP on?", "status?", or similar:
 1. Call `denario_list_files` with a known path (e.g., `/home/node/data/`) as a lightweight ping to verify the MCP server is connected
-2. Report which tools are available and whether they respond
-3. Do NOT restart any analysis, resume pipelines, or call heavy tools — just check connectivity and report
+2. Call `denario_job_list()` and mention any job that is still `running`
+3. Report which tools are available and whether they respond
+4. Do NOT restart any analysis, resume pipelines, or call heavy tools — just check connectivity and report
 
 ## When Things Fail
 
@@ -213,7 +253,7 @@ When a tool call fails for any reason:
 3. **Propose what to do next** — e.g., retry with different parameters, skip this step, try an alternative approach
 4. **Wait for the supervisor's response** before proceeding — do NOT automatically retry or resume
 
-If the error is "Connection closed" or "Not connected", this means the supervisor cancelled the operation. Acknowledge it and wait for instructions.
+A supervisor cancel shows up as job state `cancelled` (or `lost` if the watcher killed it) — acknowledge it and wait for instructions. "Connection closed" or "Not connected" means the MCP server itself went away (a crash, or the cancel watcher's container-restart fallback): report it as an infrastructure event, then `denario_job_list(project_dir)` — the job may still be running and you can resume waiting on it.
 
 ## Resilience
 
