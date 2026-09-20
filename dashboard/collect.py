@@ -758,12 +758,56 @@ def get_mcp_log_age(container_name: str) -> float | None:
         return None
 
 
-def get_scientist_status(container_info: dict, container_name: str) -> str:
+def get_active_job(scientist_name: str, max_heartbeat_age: float = 45.0) -> dict | None:
+    """The scientist's running MCP job, read from the host side of its work
+    volume (entrypoint.sh sets DENARIO_JOBS_DIR=/home/node/work/.denario_jobs,
+    which is scientists/<name>/work/.denario_jobs here). A job whose runner
+    heartbeat (every 5 s) is older than max_heartbeat_age is not counted: the
+    server will report it as lost. Returns {job_id, stage, project,
+    project_iteration, started_at, heartbeat_age} or None."""
+    root = SCIENTISTS_DIR / scientist_name / "work" / ".denario_jobs"
+    if not root.is_dir():
+        return None
+    best = None
+    try:
+        dirs = [d for d in root.iterdir() if d.is_dir()]
+    except OSError:
+        return None
+    for d in sorted(dirs, key=lambda d: d.name, reverse=True)[:20]:
+        st = _read_json(d / "status.json")
+        if not isinstance(st, dict) or st.get("state") not in ("running", "queued"):
+            continue
+        try:
+            hb = (d / "status.json").stat().st_mtime
+        except OSError:
+            continue
+        age = time.time() - hb
+        if age > max_heartbeat_age:
+            continue
+        if best is None or age < best["heartbeat_age"]:
+            pdir = str(st.get("project_dir") or "")
+            best = {
+                "job_id": st.get("job_id") or d.name,
+                "stage": st.get("stage"),
+                "project": pdir.rstrip("/").split("/")[-1] if pdir else None,
+                "project_iteration": st.get("project_iteration"),
+                "started_at": st.get("started_at"),
+                "heartbeat_age": round(age, 1),
+            }
+    return best
+
+
+def get_scientist_status(container_info: dict, container_name: str, active_job: dict | None = None) -> str:
     """Determine scientist status: offline, error, busy, idle."""
     if not container_info["running"]:
         return "offline"
     if container_info.get("restarting") or not container_info["healthy"]:
         return "error"
+
+    # A running MCP job (results/paper/... in its own subprocess) writes to its
+    # own job.log, not the MCP log, so it is the first busy signal.
+    if active_job is not None:
+        return "busy"
 
     # Check MCP log recency — if written to in the last 60s, scientist is busy
     mcp_age = get_mcp_log_age(container_name)
@@ -972,8 +1016,11 @@ def collect():
             container_info.update(stats_map[sci_name])
 
         projects = scan_projects(sci_name)
-        status = get_scientist_status(container_info, sci_name)
-        current_project = get_current_project(projects) if status == "busy" else None
+        active_job = get_active_job(sci_name)
+        status = get_scientist_status(container_info, sci_name, active_job)
+        current_project = None
+        if status == "busy":
+            current_project = (active_job or {}).get("project") or get_current_project(projects)
 
         gpu_ids = GPU_ASSIGNMENT.get(sci_name)
         gpu_label = None
@@ -983,6 +1030,7 @@ def collect():
         all_scientists.append({
             "name": sci_name,
             "status": status,
+            "active_job": active_job,
             "container": {
                 "running": container_info["running"],
                 "healthy": container_info["healthy"],
