@@ -218,15 +218,39 @@ def _lg_step_status(exp_out: Path, i: int, n_steps: int, task: dict,
     """
     logs = exp_out / "logs"
     code = exp_out / "codebase"
-    verdict = _read_json(logs / f"step_{i}_verdict.json")
+    # A re-plan rewrites planning/final_plan.json and resets deep_research_run.json,
+    # but the previous run's per-step files stay in logs/ and codebase/. Anything
+    # older than the current plan belongs to that earlier run and must not make a
+    # new step look executed (denario-3's qm9_v1 re-run showed 8/8 completed at
+    # 20:37 from verdicts written at 02:08).
+    try:
+        plan_mtime = (exp_out / "planning" / "final_plan.json").stat().st_mtime
+    except OSError:
+        plan_mtime = 0.0
+
+    def current(path: Path) -> bool:
+        try:
+            return path.stat().st_mtime >= plan_mtime - 1.0
+        except OSError:
+            return False
+
+    def read_current(path: Path):
+        return _read_json(path) if current(path) else None
+
+    verdict = read_current(logs / f"step_{i}_verdict.json")
     if verdict is None:
-        verdict = _read_json(logs / f"step_{i}_researcher_verdict.json")
-    exec_verdict = _read_json(logs / f"step_{i}_execution_verdict.json")
+        verdict = read_current(logs / f"step_{i}_researcher_verdict.json")
+    exec_verdict = read_current(logs / f"step_{i}_execution_verdict.json")
     started = (verdict is not None or exec_verdict is not None
-               or (code / f"step_{i}.py").exists() or (exp_out / "reports" / f"step_{i}.md").exists()
-               or any(code.glob(f"step_{i}_failure_*.py")) or any(logs.glob(f"step_{i}_*.json")))
-    if not started and not (logs / "deep_research_run.json").exists() and analysis_status is None:
-        return None
+               or current(code / f"step_{i}.py") or current(exp_out / "reports" / f"step_{i}.md")
+               or any(current(f) for f in code.glob(f"step_{i}_failure_*.py"))
+               or any(current(f) for f in logs.glob(f"step_{i}_*.json")))
+    if not current(logs / "deep_research_run.json"):
+        outcomes = {}
+    if isinstance(analysis_status, dict) and not current(logs / "analysis_status.json"):
+        analysis_status = None
+    if not started and not current(logs / "deep_research_run.json") and analysis_status is None:
+        return {"status": "pending"} if plan_mtime else None
 
     out = {}
     outcome = outcomes.get(i) if isinstance(outcomes, dict) else None
@@ -252,7 +276,7 @@ def _lg_step_status(exp_out: Path, i: int, n_steps: int, task: dict,
     else:
         out["status"] = "pending"
 
-    failures = len(list(code.glob(f"step_{i}_failure_*.py")))
+    failures = sum(1 for f in code.glob(f"step_{i}_failure_*.py") if current(f))
     attempts = None
     if isinstance(outcome, dict) and isinstance(outcome.get("attempts"), int):
         attempts = outcome["attempts"]
@@ -266,7 +290,7 @@ def _lg_step_status(exp_out: Path, i: int, n_steps: int, task: dict,
     end = None
     for name in (f"step_{i}_verdict.json", f"step_{i}_researcher_verdict.json"):
         f = logs / name
-        if f.exists():
+        if current(f):
             end = f.stat().st_mtime
             break
     if end is not None:
