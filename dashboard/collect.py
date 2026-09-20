@@ -190,6 +190,132 @@ def detect_pipeline_stages_all(project_dir: Path) -> dict:
     }
 
 
+
+def _read_json(path: Path):
+    """JSON file or None (missing, torn or unreadable)."""
+    try:
+        with open(path) as f:
+            return json.load(f)
+    except (OSError, ValueError):
+        return None
+
+
+def _lg_step_status(exp_out: Path, i: int, n_steps: int, task: dict,
+                    analysis_status, outcomes: dict) -> dict | None:
+    """Execution status of plan step ``i`` in the cmbagent_lg layout.
+
+    cmbagent_lg writes, per step, under experiment_output/:
+      logs/step_{i}_verdict.json             engineer steps: {"fulfilled": bool, ...}
+      logs/step_{i}_researcher_verdict.json  researcher steps
+      logs/step_{i}_execution_verdict.json   {"status": "success"|..., ...}
+      codebase/step_{i}.py / .log            the code that ran (engineer)
+      codebase/step_{i}_failure_{k}.py       each failed attempt before it
+      reports/step_{i}.md                    the researcher's report
+      logs/deep_research_run.json            {"outcomes": [{"step_number", "fulfilled", "attempts", ...}], ...}
+      logs/analysis_status.json              {"status": "complete"|"halted"|..., "halted_at_step": int|None, ...}
+    Returns None when nothing of that layout exists for the step (so the
+    legacy cmbagent branch still applies), else a dict of step fields.
+    """
+    logs = exp_out / "logs"
+    code = exp_out / "codebase"
+    verdict = _read_json(logs / f"step_{i}_verdict.json")
+    if verdict is None:
+        verdict = _read_json(logs / f"step_{i}_researcher_verdict.json")
+    exec_verdict = _read_json(logs / f"step_{i}_execution_verdict.json")
+    started = (verdict is not None or exec_verdict is not None
+               or (code / f"step_{i}.py").exists() or (exp_out / "reports" / f"step_{i}.md").exists()
+               or any(code.glob(f"step_{i}_failure_*.py")) or any(logs.glob(f"step_{i}_*.json")))
+    if not started and not (logs / "deep_research_run.json").exists() and analysis_status is None:
+        return None
+
+    out = {}
+    outcome = outcomes.get(i) if isinstance(outcomes, dict) else None
+    fulfilled = None
+    if isinstance(outcome, dict) and isinstance(outcome.get("fulfilled"), bool):
+        fulfilled = outcome["fulfilled"]
+    elif isinstance(verdict, dict) and isinstance(verdict.get("fulfilled"), bool):
+        fulfilled = verdict["fulfilled"]
+
+    halted_at = analysis_status.get("halted_at_step") if isinstance(analysis_status, dict) else None
+    run_done = isinstance(analysis_status, dict) and analysis_status.get("status") in ("complete", "halted")
+    if isinstance(halted_at, int) and i > halted_at and fulfilled is not True:
+        out["status"] = "pending"        # never reached: the run halted earlier
+        return out
+    if fulfilled is True:
+        out["status"] = "completed"
+    elif fulfilled is False or (isinstance(halted_at, int) and halted_at == i):
+        out["status"] = "failed"
+    elif started and not run_done:
+        out["status"] = "in_progress"
+    elif started:
+        out["status"] = "failed"          # the run ended without a verdict for a started step
+    else:
+        out["status"] = "pending"
+
+    failures = len(list(code.glob(f"step_{i}_failure_*.py")))
+    attempts = None
+    if isinstance(outcome, dict) and isinstance(outcome.get("attempts"), int):
+        attempts = outcome["attempts"]
+    elif started:
+        attempts = failures + 1
+    if attempts is not None and attempts > 1:
+        out["attempt"] = attempts
+        out["max_attempts"] = _lg_max_attempts(exp_out)
+
+    # Wall time: from the previous step's verdict (or the plan) to this step's verdict.
+    end = None
+    for name in (f"step_{i}_verdict.json", f"step_{i}_researcher_verdict.json"):
+        f = logs / name
+        if f.exists():
+            end = f.stat().st_mtime
+            break
+    if end is not None:
+        start = None
+        if i == 1:
+            pf = exp_out / "planning" / "final_plan.json"
+            start = pf.stat().st_mtime if pf.exists() else None
+        else:
+            for name in (f"step_{i-1}_verdict.json", f"step_{i-1}_researcher_verdict.json"):
+                f = logs / name
+                if f.exists():
+                    start = f.stat().st_mtime
+                    break
+        if start is not None and 0 <= end - start < 24 * 3600:
+            out["time_seconds"] = round(end - start, 1)
+    return out
+
+
+_MAX_ATTEMPTS_CACHE: dict = {}
+
+
+def _lg_max_attempts(exp_out: Path):
+    """max_n_attempts from the project's params.yaml (Analysis block), cached per project."""
+    proj = exp_out.parent.parent
+    if proj in _MAX_ATTEMPTS_CACHE:
+        return _MAX_ATTEMPTS_CACHE[proj]
+    val = None
+    try:
+        import yaml  # optional
+        with open(proj / "params.yaml") as f:
+            params = yaml.safe_load(f) or {}
+        # max_n_attempts lives in a nested module block whose name varies
+        # (Analysis / analysis / results ...); prefer a parent mentioning analysis.
+        found = []
+        def walk(node, path):
+            if isinstance(node, dict):
+                if isinstance(node.get("max_n_attempts"), int):
+                    found.append((path, node["max_n_attempts"]))
+                for k, v in node.items():
+                    walk(v, path + [str(k)])
+        walk(params, [])
+        found.sort(key=lambda pv: (0 if any("analysis" in seg.lower() or "result" in seg.lower() for seg in pv[0]) else 1))
+        val = found[0][1] if found else None
+    except Exception:
+        val = None
+    _MAX_ATTEMPTS_CACHE[proj] = val
+    return val
+
+
 def get_plan_steps(project_dir: Path, iteration_dir: Path | None = None) -> list[dict] | None:
     """Extract plan steps and their execution status from experiment_output.
 
@@ -224,6 +350,14 @@ def get_plan_steps(project_dir: Path, iteration_dir: Path | None = None) -> list
     if not sub_tasks:
         return None
 
+    lg_status = _read_json(exp_out / "logs" / "analysis_status.json")
+    lg_run = _read_json(exp_out / "logs" / "deep_research_run.json")
+    lg_outcomes = {}
+    if isinstance(lg_run, dict):
+        for o in lg_run.get("outcomes") or []:
+            if isinstance(o, dict) and isinstance(o.get("step_number"), int):
+                lg_outcomes[o["step_number"]] = o
+
     steps = []
     for i, task in enumerate(sub_tasks, 1):
         step = {
@@ -238,7 +372,15 @@ def get_plan_steps(project_dir: Path, iteration_dir: Path | None = None) -> list
             "cost_dollars": None,
         }
 
-        # Check execution status from chat history
+        # cmbagent_lg layout (results stage since Denario moved to cmbagent_lg):
+        # no control/ tree at all; per-step verdict files under logs/ are the
+        # record of execution. Checked first because the old cmbagent layout
+        # is never produced by these runs.
+        lg = _lg_step_status(exp_out, i, len(sub_tasks), sub_tasks[i - 1], lg_status, lg_outcomes)
+        if lg is not None:
+            step.update(lg)
+
+        # Check execution status from chat history (legacy cmbagent layout)
         chat_file = exp_out / "control" / "chats" / f"chat_history_step_{i}.json"
         if chat_file.exists():
             step["status"] = "completed"
@@ -303,6 +445,15 @@ def get_plan_steps(project_dir: Path, iteration_dir: Path | None = None) -> list
 
     # Planning cost and time
     planning_info = {"time_seconds": None, "cost_dollars": None}
+    if not (exp_out / "control").exists():
+        # cmbagent_lg: no timing report; the plan file's age relative to the
+        # experiment_output directory is the planning wall time.
+        try:
+            dt = plan_file.stat().st_mtime - exp_out.stat().st_ctime
+            if 0 < dt < 6 * 3600:
+                planning_info["time_seconds"] = round(dt, 1)
+        except OSError:
+            pass
     plan_time_dir = exp_out / "planning" / "time"
     if plan_time_dir.exists():
         for tf in plan_time_dir.glob("timing_report_planning_*.json"):

@@ -218,6 +218,7 @@ function formatTime(seconds) {
 function stepStatusIcon(status) {
     if (status === 'completed') return '<span class="text-green-500">&#10003;</span>';
     if (status === 'in_progress') return '<span class="text-amber-400">&#9679;</span>';
+    if (status === 'failed') return '<span class="text-red-500" title="unfulfilled / halted">&#10007;</span>';
     return '<span class="text-gray-600">&mdash;</span>';
 }
 
