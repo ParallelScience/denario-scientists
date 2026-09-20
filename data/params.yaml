@@ -1,5 +1,7 @@
 # Production params for denario-scientists fleet
-# Uses gemini-3.1-pro-preview for coding/research, flash-lite for orchestration
+# Models follow denario_fleet/fleets/qm9-joint/params.yaml (validated by its check_params.py):
+# gemini-3-flash-preview for bulk engineer/researcher work, gemini-3.1-pro-preview for
+# planning, plan review, idea/methods writing and the paper, gemini-3.1-flash-lite elsewhere.
 
 max_iterations: 12
 
@@ -9,70 +11,70 @@ EDA module:
    code_execution_timeout: 300
    enable_vlm_review: true
    engineer:
-      model: gemini-3.1-pro-preview
+      model: gemini-3-flash-preview
       temperature: 0.2
    researcher:
-      model: gemini-3.1-pro-preview
+      model: gemini-3-flash-preview
       temperature: 0.2
    planner:
       model: gemini-3.1-pro-preview
       temperature: 0.2
    plan_reviewer:
-      model: claude-sonnet-4-6
+      model: gemini-3.1-pro-preview
       temperature: 0.2
    orchestration:
-      model: gemini-3.1-flash-lite-preview
+      model: gemini-3.1-flash-lite
       temperature: 0.2
    evaluator:
-      model: gemini-3.1-flash-lite-preview
+      model: gemini-3.1-flash-lite
       temperature: 0.2
 
 Idea module:
    idea_sampler:
-      model: gemini-3.1-flash-lite-preview
+      model: gemini-3.1-pro-preview
       temperature: 0.7
    idea_selector1:
-      model: gemini-3.1-flash-lite-preview
+      model: gemini-3.1-flash-lite
       temperature: 0.1
    idea_selector2:
-      model: gemini-3.1-flash-lite-preview
+      model: gemini-3.1-flash-lite
       temperature: 0.1
    idea_selector3:
-      model: gemini-3.1-flash-lite-preview
+      model: gemini-3.1-flash-lite
       temperature: 0.1
    idea_chooser:
-      model: gemini-3.1-flash-lite-preview
+      model: gemini-3.1-flash-lite
       temperature: 0.1
    idea_maker:
-      model: gemini-3.1-flash-lite-preview
+      model: gemini-3.1-pro-preview
       temperature: 0.7
    idea_hater:
-      model: gemini-3.1-flash-lite-preview
+      model: gemini-3.1-flash-lite
       temperature: 0.1
 
 Literature module:
    literature:
-      model: gemini-3.1-flash-lite-preview
+      model: gemini-3.1-flash-lite
       temperature: 0.2
    summarizer:
-      model: gemini-3.1-flash-lite-preview
+      model: gemini-3.1-flash-lite
       temperature: 0.2
 
 Methods module:
    methods:
-      model: gemini-3.1-flash-lite-preview
+      model: gemini-3.1-pro-preview
       temperature: 0.1
    reviewer1:
-      model: gemini-3.1-flash-lite-preview
+      model: gemini-3.1-flash-lite
       temperature: 0.1
    reviewer2:
-      model: gemini-3.1-flash-lite-preview
+      model: gemini-3.1-flash-lite
       temperature: 0.2
    reviewer3:
-      model: gemini-3.1-flash-lite-preview
+      model: gemini-3.1-flash-lite
       temperature: 0.2
    improver:
-      model: gemini-3.1-flash-lite-preview
+      model: gemini-3.1-pro-preview
       temperature: 0.2
 
 Analysis module:
@@ -81,62 +83,62 @@ Analysis module:
    code_execution_timeout: 300
    enable_vlm_review: false
    engineer:
-      model: gemini-3.1-pro-preview
+      model: gemini-3-flash-preview
       temperature: 0.1
    researcher:
-      model: gemini-3.1-pro-preview
+      model: gemini-3-flash-preview
       temperature: 0.1
    planner:
       model: gemini-3.1-pro-preview
       temperature: 0.1
    plan_reviewer:
-      model: claude-sonnet-4-6
+      model: gemini-3.1-pro-preview
       temperature: 0.1
    orchestration:
-      model: gemini-3.1-flash-lite-preview
+      model: gemini-3.1-flash-lite
       temperature: 0.2
    evaluator:
-      model: gemini-3.1-flash-lite-preview
+      model: gemini-3.1-flash-lite
       temperature: 0.2
 
 Evaluator module:
    reporter:
-      model: gemini-3.1-flash-lite-preview
+      model: gemini-3.1-flash-lite
       temperature: 0.1
    idea_reviewer:
-      model: gemini-3.1-flash-lite-preview
+      model: gemini-3.1-flash-lite
       temperature: 0.2
    methods_reviewer:
-      model: gemini-3.1-flash-lite-preview
+      model: gemini-3.1-flash-lite
       temperature: 0.2
    input_reviewer:
-      model: gemini-3.1-flash-lite-preview
+      model: gemini-3.1-flash-lite
       temperature: 0.2
    new_iteration_reviewer:
-      model: gemini-3.1-flash-lite-preview
+      model: gemini-3.1-pro-preview
       temperature: 0.1
    results_reviewer:
-      model: gemini-3.1-flash-lite-preview
+      model: gemini-3.1-flash-lite
       temperature: 0.2
    plan_consistency_reviewer:
-      model: gemini-3.1-flash-lite-preview
+      model: gemini-3.1-flash-lite
       temperature: 0.1
    code_consistency_reviewer:
-      model: gemini-3.1-flash-lite-preview
+      model: gemini-3.1-flash-lite
       temperature: 0.1
 
 Paper module:
    keywords_writer:
-      model: gemini-3.1-flash-lite-preview
+      model: gemini-3.1-flash-lite
       temperature: 0.1
    section_writer:
-      model: gemini-2.5-pro
+      model: gemini-3.1-pro-preview
       temperature: 0.1
    refiner:
-      model: gemini-2.5-pro
+      model: gemini-3.1-pro-preview
       temperature: 0.1
    audio_summarizer:
-      model: gemini-3.1-flash-lite-preview
+      model: gemini-3.1-flash-lite
       temperature: 0.3
 
 
@@ -147,27 +149,27 @@ Citations:
    # Only used when backend = valency. The LLM that decides which retrieved
    # papers to cite where, and emits \citep{} markers in-place.
    citation_inserter:
-      model: gemini-3.1-flash-lite-preview
+      model: gemini-3.1-flash-lite
       temperature: 0.1
 
 Classifier module:
    archive_classifier:
-      model: gemini-3.1-flash-lite-preview
+      model: gemini-3.1-flash-lite
       temperature: 0.1
    subcategory_classifier:
-      model: gemini-3.1-flash-lite-preview
+      model: gemini-3.1-flash-lite
       temperature: 0.1
 
 Reviewer module:
    reviewer1:
-      model: gemini-3.1-flash-lite-preview
+      model: gemini-3.1-flash-lite
       temperature: 0.2
    reviewer2:
-      model: gemini-3.1-flash-lite-preview
+      model: gemini-3.1-flash-lite
       temperature: 0.2
    reviewer3:
-      model: gemini-3.1-flash-lite-preview
+      model: gemini-3.1-flash-lite
       temperature: 0.2
    meta_reviewer:
-      model: gemini-3.1-flash-lite-preview
+      model: gemini-3.1-pro-preview
       temperature: 0.2
