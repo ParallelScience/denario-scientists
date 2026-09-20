@@ -5,7 +5,9 @@ This file is loaded at every session startup. Use it for standing instructions, 
 ## Tool Usage
 
 ### Denario MCP Tools
-- Tools run long operations (minutes to hours). Always report full output to the supervisor after each tool call.
+- Pipeline stages run long operations (minutes to hours). The long stages (`eda`, `literature`, `results`, `evaluate`, `paper`, `publish`, `audio_summary`) must be run as **jobs** — `denario_job_start` → loop `denario_job_wait(job_id, 45)` → read the result file — never through their synchronous tools (see SOUL.md "Running a long stage as a job"). Short tools (`setup`, `idea`, `methods`, `classify`, `status`, `read_file`, `list_files`) stay synchronous. Always report full output to the supervisor after each stage.
+- Job state lives on disk under `<project_dir>/.denario_jobs/<job_id>/` (`spec.json`, `status.json`, `result.json`, `job.log`). It survives MCP server and container restarts. Every `denario_job_*` tool returns a string starting with `ERROR:` on failure instead of raising.
+- One active job per project. A second `denario_job_start` on a busy project returns the running job's status rather than starting another — that is not an error, wait on the job it reports.
 - Use `denario_status` to check project state before deciding next steps.
 - Use `denario_read_file` to read outputs — don't assume what they contain.
 - Every tool returns paths to **console log** and **output directory** at the end of its response. If a tool fails or produces unexpected results, read the console log and check the output directory for detailed logs:
@@ -60,13 +62,21 @@ This file is loaded at every session startup. Use it for standing instructions, 
 - If `git push` fails, report the error but don't block the research pipeline — retry after the next step.
 - The GitHub org is in `$GITHUB_ORG` and your scientist name is in `$SCIENTIST_NAME`.
 
-### Cancellation
-- The supervisor can type "stop" or "cancel" in Slack to kill a running MCP tool call.
-- This kills the MCP server and restarts the container (~15 seconds downtime).
-- **After restart, do NOT automatically resume any analysis.** Instead:
+### Cancellation (job-cancel protocol)
+- The supervisor can type "stop", "cancel", "abort" or "kill" in Slack.
+- **You handle it:** call `denario_job_cancel(job_id)` on your running job (`denario_job_list(project_dir)` if you need the id), then confirm to the supervisor what was cancelled (job id, stage, elapsed, last log line) and ask what to do next. The MCP server and the container keep running; nothing restarts.
+- **Fallback (you are unresponsive):** an independent cancel watcher also sees the message. It kills the running job's process group directly (SIGTERM, SIGKILL after 10 s) — you will see the job as `cancelled`/`lost` on your next `denario_job_status`. Only when **no** job is running (a legacy synchronous tool call is blocking the server) does it kill the MCP server and restart the container (~15 seconds downtime).
+- `denario_job_cancel` is idempotent — calling it on a finished or already-cancelled job just says so.
+- **After a cancel, do NOT automatically resume or restart the stage.** Report where things stand and wait for the supervisor.
+
+### Recovery after a container restart or `/new`
+- Jobs survive MCP server restarts, container restarts and `/new` — the job process is separate and its state is on disk. **Do not assume a restart killed the work.**
+- First call `denario_job_list(project_dir)` (with the project path — a freshly restarted server only knows the roots it has been told about; the no-argument form lists what it already knows). Listing indexes the jobs it shows, so `denario_job_status`/`denario_job_wait`/`denario_job_cancel` on those ids work afterwards; you can also pass `project_dir` to those three tools directly. A job that shows `running` is still running from before: **resume by waiting on it** (`denario_job_wait(job_id, 45)` loop) and report as usual when it finishes. **Never start a duplicate** — the server refuses anyway and returns the existing job's status.
+- A job that shows `lost` died with the restart (no heartbeat, no result). Read its `job.log`, report it as an infrastructure failure, and ask before restarting the stage.
+- Then, if nothing is running:
   1. Run `ls -lt /home/node/work/projects/` to find the most recently modified project
   2. Call `denario_status` on that project to see what was completed
-  3. Tell the supervisor where things were left off (e.g., "Project damped_oscillators_v2: Iteration 0 complete, Iteration 1 partially done")
+  3. Tell the supervisor where things were left off (e.g., "Project damped_oscillators_v2: Iteration 0 complete, Iteration 1 results job lost at step 3/7")
   4. Ask the supervisor what they want to do next
   5. Only continue if the supervisor explicitly says so
 

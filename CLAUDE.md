@@ -57,9 +57,20 @@ docker compose ps
 docker exec denario-1 tail -f /tmp/denario-mcp.log
 
 # Cancel a running operation from Slack: type "stop", "cancel", "abort", or "kill"
-# The cancel-watcher.py (independent Slack listener) kills the MCP server
-# and restarts the container (OpenClaw does not auto-respawn MCP processes).
+# The agent itself calls denario_job_cancel on its running job. Independently,
+# cancel-watcher.py (standalone Slack listener) kills every running Denario job
+# runner ("python -m denario.mcp_servers.jobs run <job_dir>") — its process
+# group plus all descendants, SIGTERM then SIGKILL after 10 s — and replies with
+# the job ids it killed; MCP server and container stay up. Only if NO job
+# runner is found (legacy synchronous tool call blocking the server) does it
+# fall back to killing the MCP server and restarting the container (OpenClaw
+# does not auto-respawn MCP processes).
 # cancel-watcher.py is mounted read-only; changes take effect on container restart.
+
+# List Denario jobs of a scientist from the host (state on disk, survives restarts)
+ls -lt scientists/denario-1/work/projects/*/.denario_jobs/
+cat scientists/denario-1/work/projects/<project>/.denario_jobs/<job_id>/status.json
+tail -f scientists/denario-1/work/projects/<project>/.denario_jobs/<job_id>/job.log
 
 # Tail cancel watcher logs
 docker exec denario-1 tail -f /tmp/cancel-watcher.log
@@ -87,6 +98,10 @@ Each scientist runs one of two runtimes, selected by `config.py:BACKEND_OVERRIDE
 - **`claude`** — a **Claude Code** session running the [`denario-claude-plugin`](../denario-claude-plugin) over MCP, driven via `claude --remote-control "<name>"`. Built from `Dockerfile.claude`, started by `entrypoint.claude.sh`. No OpenClaw, no Slack, **no inbound port** (Remote Control is outbound HTTPS) — you control it from **claude.ai/code** or the mobile app by session name. The plugin (mounted at `/opt/denario-plugin`, loaded with `--plugin-dir`) carries the workflow knowledge that `soul.md`/`agents.md` gave the OpenClaw agent, and its bundled `.mcp.json` auto-starts the denario + cmbagent_lg MCP servers (wired via `DENARIO_MCP_PYTHON`/`DENARIO_MCP_DIR`).
 
 Currently `denario-3` and `denario-6` are on the `claude` backend; the rest are `openclaw`. `setup.py` emits the right compose service + dirs per backend. Claude scientists need a logged-in **claude.ai subscription** seeded as credentials (mount `~/.claude/.credentials.json` via `CLAUDE_CREDENTIALS_FILE`), not an API key.
+
+### Job tools (Denario MCP)
+
+The long pipeline stages (`eda`, `literature`, `results`, `evaluate`, `paper`, `publish`, `audio_summary`) run as **jobs**, not as blocking tool calls: `denario_job_start(stage, project_dir, params_file, project_iteration, options_json)` spawns `python -m denario.mcp_servers.jobs run <job_dir>` as its own process group (cwd = project dir, env inherited from the MCP server) and returns a `job_id` of the form `<stage>-<YYYYmmdd-HHMMSS>-<6 hex>`. State lives in `<project_dir>/.denario_jobs/<job_id>/{spec.json,status.json,result.json,job.log,pid}` (or under `DENARIO_JOBS_DIR`), with a 5 s heartbeat on `status.json` so a dead runner is reported as `lost`. The agent polls with `denario_job_wait(job_id, 45)` (a timeout just returns "still running"), inspects with `denario_job_status`/`denario_job_list`, and stops with `denario_job_cancel` (SIGTERM the group, SIGKILL after 10 s, idempotent). One active job per project (`.denario_jobs/.active` lock, written atomically under an `flock` on `.denario_jobs/.lock`, so concurrent starts admit exactly one); the jobs root carries its own `.gitignore` (`*`) and the stage auto-commit excludes it, so job state never reaches the project's GitHub repo. Jobs survive MCP-server and container restarts, so `soul.md`/`agents.md` tell the agent to `denario_job_list(project_dir)` and resume running jobs after `/new` or a restart instead of starting duplicates (a fresh server only knows the roots it has been shown: listing a project — or passing `project_dir` to `denario_job_status`/`wait`/`cancel` — is what teaches it; the best-effort registry is a convenience; in the containers `entrypoint.sh` exports `DENARIO_JOBS_DIR=/home/node/work/.denario_jobs`, so both the jobs and the registry (`<DENARIO_JOBS_DIR>/registry.jsonl`) live on the per-container work volume, outside every project repo and outside the shared `~/.denario` mount, and `DENARIO_JOBS_DIR`, `DENARIO_JOB_REGISTRY` and the other `DENARIO_JOB*` knobs are in the MCP env allow-list). `setup`, `idea`, `methods`, `classify`, `status` and the file tools remain synchronous. `cancel-watcher.py` is job-aware: it targets these runner process groups first and only falls back to the kill-server + container-restart path when none is running.
 
 The OpenClaw Dockerfile extends OpenClaw with a Python 3.12 venv containing the Denario stack (cmbagent_lg → Denario). On startup, `entrypoint.sh`:
 1. Copies bootstrap files (`SOUL.md`, `AGENTS.md`, `.gitignore`) into the workspace before the gateway writes defaults
