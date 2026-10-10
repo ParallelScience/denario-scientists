@@ -71,8 +71,8 @@ def _emit_claude_lines(lines, s):
         # Langfuse tracing — cmbagent_lg's langfuse_callbacks() returns [] when
         # these are unset, so the pipeline runs either way; with them, every
         # LLM call in the graph is traced to the "denario" project.
-        "LANGFUSE_BASE_URL": "${LANGFUSE_BASE_URL:-https://langfuse.empyrean-labs.io}",
-        "LANGFUSE_HOST": "${LANGFUSE_HOST:-https://langfuse.empyrean-labs.io}",
+        "LANGFUSE_BASE_URL": "${LANGFUSE_BASE_URL:-https://langfuse.denario-labs.io}",
+        "LANGFUSE_HOST": "${LANGFUSE_HOST:-https://langfuse.denario-labs.io}",
         "LANGFUSE_PUBLIC_KEY": "${LANGFUSE_PUBLIC_KEY}",
         "LANGFUSE_SECRET_KEY": "${LANGFUSE_SECRET_KEY}",
         "MATERIALS_API_KEY": "${MATERIALS_API_KEY}",
@@ -196,8 +196,8 @@ def generate_compose(fleet):
                 # Langfuse tracing — cmbagent_lg's langfuse_callbacks() returns [] when
                 # these are unset, so the pipeline runs either way; with them, every
                 # LLM call in the graph is traced to the "denario" project.
-                "LANGFUSE_BASE_URL": "${LANGFUSE_BASE_URL:-https://langfuse.empyrean-labs.io}",
-                "LANGFUSE_HOST": "${LANGFUSE_HOST:-https://langfuse.empyrean-labs.io}",
+                "LANGFUSE_BASE_URL": "${LANGFUSE_BASE_URL:-https://langfuse.denario-labs.io}",
+                "LANGFUSE_HOST": "${LANGFUSE_HOST:-https://langfuse.denario-labs.io}",
                 "LANGFUSE_PUBLIC_KEY": "${LANGFUSE_PUBLIC_KEY}",
                 "LANGFUSE_SECRET_KEY": "${LANGFUSE_SECRET_KEY}",
                 # Host-side vLLM Gemma 4 31B (reached via host.docker.internal).
